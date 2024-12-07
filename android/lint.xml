@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<lint>
+    <!-- Disabilita il controllo per l'uso di API deprecate -->
+    <issue id="Deprecation" severity="ignore" />
+    <!-- Abilita un avviso per le pratiche di codice inefficienti -->
+    <issue id="UnusedResources" severity="warning" />
+</lint>
