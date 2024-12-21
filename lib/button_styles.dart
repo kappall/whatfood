@@ -1,0 +1,35 @@
+import 'package:flutter/material.dart';
+
+class ButtonStyles {
+  // Stile per ElevatedButton
+  static ButtonStyle elevatedButtonStyle({
+    Color backgroundColor = Colors.green,
+    Color foregroundColor = Colors.white,
+  }) {
+    return ElevatedButton.styleFrom(
+      backgroundColor: backgroundColor,
+      foregroundColor: foregroundColor,
+      padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 12),
+      textStyle: const TextStyle(
+        fontSize: 18,
+        fontWeight: FontWeight.bold,
+      ),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(20),
+      ),
+    );
+  }
+
+  // Stile per TextButton
+  static ButtonStyle textButtonStyle({
+    Color textColor = Colors.blue,
+  }) {
+    return TextButton.styleFrom(
+      foregroundColor: textColor,
+      textStyle: const TextStyle(
+        fontSize: 16,
+        fontWeight: FontWeight.bold,
+      ),
+    );
+  }
+}

@@ -2,6 +2,10 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
+	<key>NSCameraUsageDescription</key>
+	<string>Utilizziamo la fotocamera per scansionare i codici a barre.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>Questa applicazione necessita dell'accesso alla libreria per salvare o selezionare immagini.</string>
 	<key>CFBundleDevelopmentRegion</key>
 	<string>$(DEVELOPMENT_LANGUAGE)</string>
 	<key>CFBundleDisplayName</key>
