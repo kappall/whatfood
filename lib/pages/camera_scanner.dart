@@ -1,0 +1,517 @@
+import 'dart:async';
+import 'dart:io';
+import 'dart:math';
+
+import 'package:camera/camera.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:google_mlkit_barcode_scanning/google_mlkit_barcode_scanning.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert' as convert;
+
+import 'package:whatfood/pages/painters/barcode_detector_painter.dart';
+
+class CameraScanner extends StatefulWidget {
+  const CameraScanner({super.key});
+  @override
+  State<StatefulWidget> createState() => CameraScannerState();
+}
+
+class CameraScannerState extends State<CameraScanner> {
+  late final BarcodeScanner _barcodeScanner;
+  CustomPaint? _customPaint;
+  CameraController? _controller;
+  int _cameraIndex = -1;
+  static List<CameraDescription> _cameras = [];
+  bool _isInitialized = false;
+  bool _isBusy = false;
+  String _scannedCode = '';
+  Timer? _debounceTimer;
+  bool _isModalVisible = false;
+
+  double _currentZoomLevel = 1.0;
+  double _minAvailableZoom = 1.0;
+  double _maxAvailableZoom = 1.0;
+
+  @override
+  void initState() {
+    super.initState();
+    _barcodeScanner = BarcodeScanner(formats: [BarcodeFormat.all]);
+    _customPaint = CustomPaint(painter: null);
+    _initialize();
+  }
+
+  @override
+  void dispose() {
+    _stopLiveFeed();
+    _debounceTimer?.cancel();
+    _barcodeScanner.close();
+    super.dispose();
+  }
+
+  Future<void> _initialize() async {
+    try {
+      if (_cameras.isEmpty) {
+        _cameras = await availableCameras();
+      }
+      for (var i = 0; i < _cameras.length; i++) {
+        if (_cameras[i].lensDirection == CameraLensDirection.back) {
+          _cameraIndex = i;
+          break;
+        }
+      }
+      if (_cameraIndex != -1) {
+        _startLiveFeed();
+      }
+      setState(() => _isInitialized = true);
+    } catch (e) {
+      debugPrint('Error initializing camera: $e');
+    }
+  }
+
+  Future _startLiveFeed() async {
+    final camera = _cameras[_cameraIndex];
+
+    _controller = CameraController(
+      camera,
+      ResolutionPreset.high,
+      enableAudio: false,
+      imageFormatGroup: Platform.isAndroid
+          ? ImageFormatGroup.nv21
+          : ImageFormatGroup.bgra8888,
+    );
+
+    try {
+      if (!mounted) return;
+      await _controller?.initialize();
+
+      await _controller?.getMinZoomLevel().then((value) {
+        _currentZoomLevel = value;
+        _minAvailableZoom = value;
+      });
+
+      _maxAvailableZoom = min(await _controller?.getMaxZoomLevel() ?? 3.0, 3.0);
+
+      // Aggiungiamo un breve delay prima di avviare lo stream
+      await Future.delayed(const Duration(milliseconds: 500));
+      await _controller?.startImageStream(_processCameraImage);
+
+      setState(() {});
+    } catch (e) {
+      debugPrint('Error starting camera feed: $e');
+    }
+  }
+
+  Future<void> _stopLiveFeed() async {
+    try {
+      await _controller?.stopImageStream();
+      await _controller?.dispose();
+      _controller = null;
+    } catch (e) {
+      debugPrint('Error stopping camera feed: $e');
+    }
+  }
+
+  Future<void> _processCameraImage(CameraImage image) async {
+    if (_isBusy ||
+        _isModalVisible ||
+        _controller == null ||
+        !mounted ||
+        (_debounceTimer?.isActive ?? false)) {
+      return;
+    }
+
+    _isBusy = true;
+    _debounceTimer = Timer(const Duration(seconds: 3), () {
+      debugPrint("⏲️ Debounce timer completato");
+    });
+    try {
+      final inputImage = _inputImageFromCameraImage(image);
+      if (inputImage == null) return;
+      debugPrint(
+          "📸 Formato immagine: ${InputImageFormatValue.fromRawValue(image.format.raw)}");
+      debugPrint("📸 Dimensioni immagine: ${image.width}x${image.height}");
+      _processImage(inputImage);
+    } catch (e) {
+      debugPrint('Error processing image: $e');
+    } finally {
+      _isBusy = false;
+    }
+  }
+
+  Future<void> _processImage(InputImage image) async {
+    if (!mounted) return;
+
+    debugPrint("⭐️ Inizio processamento immagine");
+
+    final barcodes = await _barcodeScanner.processImage(image);
+    debugPrint("📱 Numero di codici trovati: ${barcodes.length}");
+
+    if (barcodes.isNotEmpty && barcodes.first.rawValue != null) {
+      debugPrint("🎯 Codice rilevato: ${barcodes.first.rawValue}");
+
+      final painter = BarcodeDetectorPainter(
+        barcodes,
+        image.metadata!.size,
+        image.metadata!.rotation,
+      );
+
+      setState(() {
+        _customPaint = CustomPaint(painter: painter);
+        _scannedCode = barcodes.first.rawValue!;
+      });
+      debugPrint(
+          "🎨 CustomPaint aggiornato con il nuovo codice: $_scannedCode");
+
+      debugPrint("🔄 Chiamata a showProductModal");
+      await _showProductModal();
+    }
+  }
+
+  Future<void> _showProductModal() async {
+    debugPrint("🚀 Inizio showProductModal");
+    debugPrint("Stato: mounted=$mounted, _isModalVisible=$_isModalVisible");
+
+    if (!mounted || _isModalVisible) {
+      debugPrint("❌ Uscita anticipata da showProductModal");
+      return;
+    }
+
+    setState(() => _isModalVisible = true);
+    debugPrint("🎯 Codice da cercare: $_scannedCode");
+
+    try {
+      final url = Uri.https(
+        'world.openfoodfacts.org',
+        '/api/v2/product/$_scannedCode.json',
+      );
+      debugPrint("🌐 URL richiesta: $url");
+
+      final response = await http.get(url);
+      debugPrint("📡 Status code risposta: ${response.statusCode}");
+
+      if (!mounted) {
+        debugPrint("❌ Widget non più mounted dopo la richiesta HTTP");
+        return;
+      }
+
+      if (response.statusCode == 200) {
+        debugPrint("✅ Risposta ricevuta con successo");
+        final jsonResponse =
+            convert.jsonDecode(response.body) as Map<String, dynamic>;
+        final productData = jsonResponse['product'] ?? {};
+        debugPrint("📦 Dati prodotto ricevuti: ${productData['product_name']}");
+
+        // Aggiungiamo un try-catch anche qui per catturare eventuali errori nel modal
+        try {
+          await showModalBottomSheet(
+            context: context,
+            isScrollControlled: true,
+            useSafeArea: true,
+            backgroundColor: Colors.transparent,
+            builder: (context) => _buildProductModal(productData),
+          ).whenComplete(() {
+            debugPrint("🏁 Modal chiuso");
+            setState(() {
+              _customPaint = null;
+              _isModalVisible = false;
+            });
+            _startLiveFeed();
+          });
+        } catch (e) {
+          debugPrint("❌ Errore durante la visualizzazione del modal: $e");
+        }
+      } else {
+        debugPrint("⚠️ Risposta non valida: ${response.statusCode}");
+        await _showErrorDialog().whenComplete(() {
+          setState(() {
+            _customPaint = null;
+            _isModalVisible = false;
+          });
+        });
+      }
+    } catch (e) {
+      debugPrint("❌ Errore in showProductModal: $e");
+      if (mounted) {
+        await _showErrorDialog();
+        setState(() => _isModalVisible = false);
+      }
+    } finally {
+      _startLiveFeed();
+    }
+  }
+
+  Widget _buildProductModal(Map<String, dynamic> productData) {
+    return Container(
+      width: MediaQuery.of(context).size.width,
+      decoration: const BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      child: DraggableScrollableSheet(
+        expand: false,
+        builder: (context, scrollController) => SingleChildScrollView(
+          controller: scrollController,
+          child: Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  height: 5,
+                  width: 50,
+                  margin: const EdgeInsets.only(bottom: 16),
+                  decoration: BoxDecoration(
+                    color: Colors.grey[300],
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                ),
+                Text(
+                  productData['product_name'] ??
+                      'Nome prodotto non disponibile',
+                  style: const TextStyle(
+                    fontSize: 22,
+                    fontWeight: FontWeight.bold,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 8),
+                if (productData['image_url']?.isNotEmpty ?? false)
+                  Image.network(productData['image_url']!),
+                const SizedBox(height: 16),
+                Text(
+                  productData['ingredients_text'] ??
+                      'Descrizione non disponibile',
+                  style: const TextStyle(
+                    fontSize: 16,
+                    color: Colors.black54,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  'Codice a barre: ${productData['code'] ?? 'Non disponibile'}',
+                  style: const TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.black54,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 16),
+                ElevatedButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: const Text('Chiudi'),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Future<void> _showErrorDialog() {
+    return showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Prodotto non trovato'),
+        content: const Text(
+          'Il prodotto che stai cercando non è presente nel nostro database.',
+        ),
+        actions: [
+          TextButton(
+            child: const Text('OK'),
+            onPressed: () => Navigator.pop(context),
+          ),
+        ],
+      ),
+    );
+  }
+
+  InputImage? _inputImageFromCameraImage(CameraImage image) {
+    debugPrint("📸 Elaborazione immagine dalla fotocamera");
+    if (_controller == null) {
+      debugPrint("❌ Controller fotocamera null");
+      return null;
+    }
+
+    final camera = _cameras[_cameraIndex];
+    debugPrint("📱 Orientamento sensore: ${camera.sensorOrientation}");
+
+    final sensorOrientation = camera.sensorOrientation;
+    InputImageRotation? rotation;
+
+    if (Platform.isIOS) {
+      rotation = InputImageRotationValue.fromRawValue(sensorOrientation);
+    } else if (Platform.isAndroid) {
+      var rotationCompensation =
+          _orientations[_controller!.value.deviceOrientation];
+      if (rotationCompensation == null) return null;
+
+      if (camera.lensDirection == CameraLensDirection.front) {
+        rotationCompensation = (sensorOrientation + rotationCompensation) % 360;
+      } else {
+        rotationCompensation =
+            (sensorOrientation - rotationCompensation + 360) % 360;
+      }
+      rotation = InputImageRotationValue.fromRawValue(rotationCompensation);
+    }
+    if (rotation == null) return null;
+
+    final format = InputImageFormatValue.fromRawValue(image.format.raw);
+
+    // Gestione formato YUV_420_888 (Android)
+    if (format == InputImageFormat.yuv_420_888 && Platform.isAndroid) {
+      debugPrint("✅ Convertendo YUV_420_888 a RGB...");
+      try {
+        final Uint8List nv21Bytes = yuv420ToNv21(image);
+
+        final sensorOrientation = camera.sensorOrientation ?? 0;
+        InputImageRotation? rotation =
+            InputImageRotationValue.fromRawValue(sensorOrientation);
+
+        if (rotation == null) {
+          debugPrint("❌ Rotazione non valida");
+          return null;
+        }
+
+        return InputImage.fromBytes(
+          bytes: nv21Bytes,
+          metadata: InputImageMetadata(
+            size: Size(image.width.toDouble(), image.height.toDouble()),
+            rotation: rotation,
+            format: InputImageFormat.nv21,
+            bytesPerRow:
+                image.planes[0].bytesPerRow, // Solo il piano Y è rilevante
+          ),
+        );
+      } catch (e) {
+        debugPrint("❌ Errore nella conversione YUV_420_888: $e");
+        return null;
+      }
+    }
+
+    // Per NV21 o BGRA8888
+    if (format == null ||
+        (Platform.isAndroid && format != InputImageFormat.nv21) ||
+        (Platform.isIOS && format != InputImageFormat.bgra8888) ||
+        image.planes.length != 1) {
+      debugPrint("❌ Formato immagine non supportato: $format");
+      return null;
+    }
+
+    final plane = image.planes.first;
+    debugPrint("✅ InputImage creata con successo");
+    return InputImage.fromBytes(
+      bytes: plane.bytes,
+      metadata: InputImageMetadata(
+        size: Size(image.width.toDouble(), image.height.toDouble()),
+        rotation: rotation,
+        format: format,
+        bytesPerRow: plane.bytesPerRow,
+      ),
+    );
+  }
+
+  /// Funzione per convertire YUV_420_888 in BGRA8888
+  Uint8List yuv420ToNv21(CameraImage image) {
+    final int width = image.width;
+    final int height = image.height;
+    final int ySize = width * height;
+
+    // Luminanza (Y)
+    final Uint8List nv21Bytes = Uint8List(ySize + (ySize ~/ 2));
+    nv21Bytes.setRange(0, ySize, image.planes[0].bytes);
+
+    // UV piani: li interleaviamo per creare il formato NV21
+    final Uint8List uPlane = image.planes[1].bytes;
+    final Uint8List vPlane = image.planes[2].bytes;
+
+    for (int i = 0; i < uPlane.length; i++) {
+      nv21Bytes[ySize + (i * 2) + 1] = uPlane[i]; // U
+      nv21Bytes[ySize + (i * 2)] = vPlane[i]; // V
+    }
+
+    return nv21Bytes;
+  }
+
+  final Map<DeviceOrientation, int> _orientations = {
+    DeviceOrientation.portraitUp: 0,
+    DeviceOrientation.landscapeLeft: 90,
+    DeviceOrientation.portraitDown: 180,
+    DeviceOrientation.landscapeRight: 270,
+  };
+
+  @override
+  Widget build(BuildContext context) {
+    if (!_isInitialized || _controller?.value.isInitialized != true) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
+    return ColoredBox(
+      color: Colors.black,
+      child: Stack(
+        fit: StackFit.expand,
+        children: <Widget>[
+          Center(
+            child: CameraPreview(
+              _controller!,
+              child: _customPaint ?? Container(), // Gestiamo il caso null
+            ),
+          ),
+          _zoomControl(),
+        ],
+      ),
+    );
+  }
+
+  Widget _zoomControl() => Positioned(
+        bottom: 16,
+        left: 0,
+        right: 0,
+        child: Align(
+          alignment: Alignment.bottomCenter,
+          child: SizedBox(
+            width: 250,
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                Expanded(
+                  child: Slider(
+                    value: _currentZoomLevel,
+                    min: _minAvailableZoom,
+                    max: _maxAvailableZoom,
+                    activeColor: Colors.white,
+                    inactiveColor: Colors.white30,
+                    onChanged: (value) async {
+                      setState(() {
+                        _currentZoomLevel = value;
+                      });
+                      await _controller?.setZoomLevel(value);
+                    },
+                  ),
+                ),
+                Container(
+                  width: 50,
+                  decoration: BoxDecoration(
+                    color: Colors.black54,
+                    borderRadius: BorderRadius.circular(10.0),
+                  ),
+                  child: Padding(
+                    padding: const EdgeInsets.all(8.0),
+                    child: Center(
+                      child: Text(
+                        '${_currentZoomLevel.toStringAsFixed(1)}x',
+                        style: TextStyle(color: Colors.white),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+}
