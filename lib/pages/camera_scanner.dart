@@ -72,18 +72,19 @@ class CameraScannerState extends State<CameraScanner> {
   Future _startLiveFeed() async {
     final camera = _cameras[_cameraIndex];
 
+    // Usiamo yuv420 per Android per maggiore compatibilità
     _controller = CameraController(
       camera,
       ResolutionPreset.high,
       enableAudio: false,
       imageFormatGroup: Platform.isAndroid
-          ? ImageFormatGroup.nv21
+          ? ImageFormatGroup.yuv420
           : ImageFormatGroup.bgra8888,
     );
 
     try {
-      if (!mounted) return;
       await _controller?.initialize();
+      if (!mounted) return;
 
       await _controller?.getMinZoomLevel().then((value) {
         _currentZoomLevel = value;
@@ -91,14 +92,31 @@ class CameraScannerState extends State<CameraScanner> {
       });
 
       _maxAvailableZoom = min(await _controller?.getMaxZoomLevel() ?? 3.0, 3.0);
-
-      // Aggiungiamo un breve delay prima di avviare lo stream
-      await Future.delayed(const Duration(milliseconds: 500));
       await _controller?.startImageStream(_processCameraImage);
-
       setState(() {});
     } catch (e) {
-      debugPrint('Error starting camera feed: $e');
+      // Errore di inizializzazione della fotocamera
+      return;
+    }
+  }
+
+  Future<void> _processCameraImage(CameraImage image) async {
+    // Preveniamo elaborazioni multiple
+    if (_isBusy || _isModalVisible || _controller == null || !mounted) {
+      return;
+    }
+    if (_debounceTimer?.isActive ?? false) {
+      _debounceTimer?.cancel();
+    }
+    _debounceTimer = Timer(const Duration(seconds: 5), () {});
+    _isBusy = true;
+    try {
+      final inputImage = _inputImageFromCameraImage(image);
+      if (inputImage != null) {
+        await _processImage(inputImage);
+      }
+    } finally {
+      _isBusy = false;
     }
   }
 
@@ -112,133 +130,77 @@ class CameraScannerState extends State<CameraScanner> {
     }
   }
 
-  Future<void> _processCameraImage(CameraImage image) async {
-    if (_isBusy ||
-        _isModalVisible ||
-        _controller == null ||
-        !mounted ||
-        (_debounceTimer?.isActive ?? false)) {
-      return;
-    }
-
-    _isBusy = true;
-    _debounceTimer = Timer(const Duration(seconds: 3), () {
-      debugPrint("⏲️ Debounce timer completato");
-    });
-    try {
-      final inputImage = _inputImageFromCameraImage(image);
-      if (inputImage == null) return;
-      debugPrint(
-          "📸 Formato immagine: ${InputImageFormatValue.fromRawValue(image.format.raw)}");
-      debugPrint("📸 Dimensioni immagine: ${image.width}x${image.height}");
-      _processImage(inputImage);
-    } catch (e) {
-      debugPrint('Error processing image: $e');
-    } finally {
-      _isBusy = false;
-    }
-  }
-
   Future<void> _processImage(InputImage image) async {
     if (!mounted) return;
 
-    debugPrint("⭐️ Inizio processamento immagine");
-
     final barcodes = await _barcodeScanner.processImage(image);
-    debugPrint("📱 Numero di codici trovati: ${barcodes.length}");
 
     if (barcodes.isNotEmpty && barcodes.first.rawValue != null) {
-      debugPrint("🎯 Codice rilevato: ${barcodes.first.rawValue}");
+      // Aggiorniamo il codice scansionato solo se è diverso dal precedente
+      if (_scannedCode != barcodes.first.rawValue) {
+        final painter = BarcodeDetectorPainter(
+          barcodes,
+          image.metadata!.size,
+          image.metadata!.rotation,
+        );
 
-      final painter = BarcodeDetectorPainter(
-        barcodes,
-        image.metadata!.size,
-        image.metadata!.rotation,
-      );
-
-      setState(() {
-        _customPaint = CustomPaint(painter: painter);
-        _scannedCode = barcodes.first.rawValue!;
-      });
-      debugPrint(
-          "🎨 CustomPaint aggiornato con il nuovo codice: $_scannedCode");
-
-      debugPrint("🔄 Chiamata a showProductModal");
-      await _showProductModal();
+        setState(() {
+          _customPaint = CustomPaint(painter: painter);
+          _scannedCode = barcodes.first.rawValue!;
+        });
+        await _showProductModal();
+      }
     }
   }
 
   Future<void> _showProductModal() async {
-    debugPrint("🚀 Inizio showProductModal");
-    debugPrint("Stato: mounted=$mounted, _isModalVisible=$_isModalVisible");
-
-    if (!mounted || _isModalVisible) {
-      debugPrint("❌ Uscita anticipata da showProductModal");
-      return;
-    }
+    if (!mounted || _isModalVisible) return;
 
     setState(() => _isModalVisible = true);
-    debugPrint("🎯 Codice da cercare: $_scannedCode");
 
     try {
       final url = Uri.https(
         'world.openfoodfacts.org',
         '/api/v2/product/$_scannedCode.json',
       );
-      debugPrint("🌐 URL richiesta: $url");
 
       final response = await http.get(url);
-      debugPrint("📡 Status code risposta: ${response.statusCode}");
-
-      if (!mounted) {
-        debugPrint("❌ Widget non più mounted dopo la richiesta HTTP");
-        return;
-      }
+      if (!mounted) return;
 
       if (response.statusCode == 200) {
-        debugPrint("✅ Risposta ricevuta con successo");
         final jsonResponse =
             convert.jsonDecode(response.body) as Map<String, dynamic>;
         final productData = jsonResponse['product'] ?? {};
-        debugPrint("📦 Dati prodotto ricevuti: ${productData['product_name']}");
 
-        // Aggiungiamo un try-catch anche qui per catturare eventuali errori nel modal
-        try {
-          await showModalBottomSheet(
-            context: context,
-            isScrollControlled: true,
-            useSafeArea: true,
-            backgroundColor: Colors.transparent,
-            builder: (context) => _buildProductModal(productData),
-          ).whenComplete(() {
-            debugPrint("🏁 Modal chiuso");
-            setState(() {
-              _customPaint = null;
-              _isModalVisible = false;
-            });
-            _startLiveFeed();
-          });
-        } catch (e) {
-          debugPrint("❌ Errore durante la visualizzazione del modal: $e");
-        }
+        await showModalBottomSheet(
+          context: context,
+          isScrollControlled: true,
+          useSafeArea: true,
+          backgroundColor: Colors.transparent,
+          builder: (context) => _buildProductModal(productData),
+        );
       } else {
-        debugPrint("⚠️ Risposta non valida: ${response.statusCode}");
-        await _showErrorDialog().whenComplete(() {
-          setState(() {
-            _customPaint = null;
-            _isModalVisible = false;
-          });
-        });
+        await _showErrorDialog();
       }
     } catch (e) {
-      debugPrint("❌ Errore in showProductModal: $e");
       if (mounted) {
         await _showErrorDialog();
-        setState(() => _isModalVisible = false);
       }
     } finally {
-      _startLiveFeed();
+      if (mounted) {
+        setState(() {
+          _customPaint = null;
+          _isModalVisible = false;
+        });
+      }
+      await _restartStream();
     }
+  }
+
+  Future<void> _restartStream() async {
+    await _controller?.stopImageStream();
+    await Future.delayed(Duration(seconds: 2)); // Pausa prima di riavviare
+    await _controller?.startImageStream(_processCameraImage);
   }
 
   Widget _buildProductModal(Map<String, dynamic> productData) {
@@ -330,14 +292,11 @@ class CameraScannerState extends State<CameraScanner> {
   }
 
   InputImage? _inputImageFromCameraImage(CameraImage image) {
-    debugPrint("📸 Elaborazione immagine dalla fotocamera");
     if (_controller == null) {
-      debugPrint("❌ Controller fotocamera null");
       return null;
     }
 
     final camera = _cameras[_cameraIndex];
-    debugPrint("📱 Orientamento sensore: ${camera.sensorOrientation}");
 
     final sensorOrientation = camera.sensorOrientation;
     InputImageRotation? rotation;
@@ -363,7 +322,6 @@ class CameraScannerState extends State<CameraScanner> {
 
     // Gestione formato YUV_420_888 (Android)
     if (format == InputImageFormat.yuv_420_888 && Platform.isAndroid) {
-      debugPrint("✅ Convertendo YUV_420_888 a RGB...");
       try {
         final Uint8List nv21Bytes = yuv420ToNv21(image);
 
@@ -372,7 +330,6 @@ class CameraScannerState extends State<CameraScanner> {
             InputImageRotationValue.fromRawValue(sensorOrientation);
 
         if (rotation == null) {
-          debugPrint("❌ Rotazione non valida");
           return null;
         }
 
@@ -387,7 +344,6 @@ class CameraScannerState extends State<CameraScanner> {
           ),
         );
       } catch (e) {
-        debugPrint("❌ Errore nella conversione YUV_420_888: $e");
         return null;
       }
     }
@@ -397,12 +353,10 @@ class CameraScannerState extends State<CameraScanner> {
         (Platform.isAndroid && format != InputImageFormat.nv21) ||
         (Platform.isIOS && format != InputImageFormat.bgra8888) ||
         image.planes.length != 1) {
-      debugPrint("❌ Formato immagine non supportato: $format");
       return null;
     }
 
     final plane = image.planes.first;
-    debugPrint("✅ InputImage creata con successo");
     return InputImage.fromBytes(
       bytes: plane.bytes,
       metadata: InputImageMetadata(
