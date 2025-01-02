@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:whatfood/pages/start_page.dart';
 
 class RecipePage extends StatelessWidget {
   const RecipePage({super.key});

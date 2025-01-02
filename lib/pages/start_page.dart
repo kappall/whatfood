@@ -3,6 +3,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:whatfood/button_styles.dart';
 import 'package:whatfood/firebase_options.dart';
+import 'package:whatfood/pages/camera_scanner.dart';
 import 'package:whatfood/pages/scanner_page.dart';
 import 'package:whatfood/views/login_view.dart';
 import 'package:whatfood/views/register_view.dart';
@@ -150,13 +151,13 @@ class _MainPageState extends State<MainPage> {
     // In base a isGuest, carica le pagine appropriate
     _pages = widget.isGuest
         ? [
-            ScannerPage(),
+            CameraScanner(),
             GuestRecipePage(),
             GuestHomePage(),
             GuestShopPage(),
           ]
         : [
-            ScannerPage(),
+            CameraScanner(),
             RecipePage(),
             HomePage(),
             ShopPage(),

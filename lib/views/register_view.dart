@@ -49,6 +49,7 @@ class _RegisterViewState extends State<RegisterView> {
                 case ConnectionState.done:
                   {
                     return Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         TextField(
                           controller: _emailController,

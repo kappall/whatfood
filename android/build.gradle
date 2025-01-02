@@ -5,6 +5,7 @@ allprojects {
     }
 }
 
+
 rootProject.buildDir = "../build"
 subprojects {
     buildDir = file("${rootProject.buildDir}/${project.name}")

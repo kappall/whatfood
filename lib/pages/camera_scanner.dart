@@ -7,9 +7,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_mlkit_barcode_scanning/google_mlkit_barcode_scanning.dart';
 import 'package:http/http.dart' as http;
+import 'package:image_picker/image_picker.dart';
 import 'dart:convert' as convert;
 
 import 'package:whatfood/pages/painters/barcode_detector_painter.dart';
+
+enum DetectorViewMode { liveFeed, gallery }
 
 class CameraScanner extends StatefulWidget {
   const CameraScanner({super.key});
@@ -28,15 +31,17 @@ class CameraScannerState extends State<CameraScanner> {
   String _scannedCode = '';
   Timer? _debounceTimer;
   bool _isModalVisible = false;
-
   double _currentZoomLevel = 1.0;
   double _minAvailableZoom = 1.0;
   double _maxAvailableZoom = 1.0;
+
+  ImagePicker? _imagePicker;
 
   @override
   void initState() {
     super.initState();
     _barcodeScanner = BarcodeScanner(formats: [BarcodeFormat.all]);
+    _imagePicker = ImagePicker();
     _customPaint = CustomPaint(painter: null);
     _initialize();
   }
@@ -75,7 +80,7 @@ class CameraScannerState extends State<CameraScanner> {
     // Usiamo yuv420 per Android per maggiore compatibilità
     _controller = CameraController(
       camera,
-      ResolutionPreset.high,
+      ResolutionPreset.max,
       enableAudio: false,
       imageFormatGroup: Platform.isAndroid
           ? ImageFormatGroup.yuv420
@@ -105,10 +110,6 @@ class CameraScannerState extends State<CameraScanner> {
     if (_isBusy || _isModalVisible || _controller == null || !mounted) {
       return;
     }
-    if (_debounceTimer?.isActive ?? false) {
-      _debounceTimer?.cancel();
-    }
-    _debounceTimer = Timer(const Duration(seconds: 5), () {});
     _isBusy = true;
     try {
       final inputImage = _inputImageFromCameraImage(image);
@@ -131,6 +132,9 @@ class CameraScannerState extends State<CameraScanner> {
   }
 
   Future<void> _processImage(InputImage image) async {
+
+    if (_debounceTimer?.isActive ?? false) return;
+    _debounceTimer = Timer(const Duration(seconds: 1), () {});
     if (!mounted) return;
 
     final barcodes = await _barcodeScanner.processImage(image);
@@ -138,14 +142,17 @@ class CameraScannerState extends State<CameraScanner> {
     if (barcodes.isNotEmpty && barcodes.first.rawValue != null) {
       // Aggiorniamo il codice scansionato solo se è diverso dal precedente
       if (_scannedCode != barcodes.first.rawValue) {
-        final painter = BarcodeDetectorPainter(
-          barcodes,
-          image.metadata!.size,
-          image.metadata!.rotation,
-        );
-
+        if (!_isGalleryMode) {
+          final painter = BarcodeDetectorPainter(
+            barcodes,
+            image.metadata?.size ?? const Size(400, 400),
+            image.metadata?.rotation ?? InputImageRotation.rotation0deg,
+          );
+          setState(() {
+            _customPaint = CustomPaint(painter: painter);
+          });
+        }
         setState(() {
-          _customPaint = CustomPaint(painter: painter);
           _scannedCode = barcodes.first.rawValue!;
         });
         await _showProductModal();
@@ -163,6 +170,7 @@ class CameraScannerState extends State<CameraScanner> {
         'world.openfoodfacts.org',
         '/api/v2/product/$_scannedCode.json',
       );
+      _scannedCode = '';
 
       final response = await http.get(url);
       if (!mounted) return;
@@ -198,9 +206,13 @@ class CameraScannerState extends State<CameraScanner> {
   }
 
   Future<void> _restartStream() async {
+    debugPrint("imageStream restarting;");
     await _controller?.stopImageStream();
-    await Future.delayed(Duration(seconds: 2)); // Pausa prima di riavviare
+    debugPrint("imageStream stopped\n");
+    await Future.delayed(
+        Duration(milliseconds: 1500)); // Pausa prima di riavviare
     await _controller?.startImageStream(_processCameraImage);
+    debugPrint("imageStream started\n\n\n");
   }
 
   Widget _buildProductModal(Map<String, dynamic> productData) {
@@ -278,7 +290,7 @@ class CameraScannerState extends State<CameraScanner> {
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('Prodotto non trovato'),
-        content: const Text(
+        content: Text(
           'Il prodotto che stai cercando non è presente nel nostro database.',
         ),
         actions: [
@@ -325,7 +337,7 @@ class CameraScannerState extends State<CameraScanner> {
       try {
         final Uint8List nv21Bytes = yuv420ToNv21(image);
 
-        final sensorOrientation = camera.sensorOrientation ?? 0;
+        final sensorOrientation = camera.sensorOrientation;
         InputImageRotation? rotation =
             InputImageRotationValue.fromRawValue(sensorOrientation);
 
@@ -397,27 +409,75 @@ class CameraScannerState extends State<CameraScanner> {
     DeviceOrientation.landscapeRight: 270,
   };
 
+  bool _isGalleryMode = false;
+
   @override
   Widget build(BuildContext context) {
-    if (!_isInitialized || _controller?.value.isInitialized != true) {
-      return const Center(child: CircularProgressIndicator());
-    }
+      if (!_isInitialized || _controller?.value.isInitialized != true) {
+        return const Center(child: CircularProgressIndicator());
+      }
 
-    return ColoredBox(
-      color: Colors.black,
-      child: Stack(
-        fit: StackFit.expand,
-        children: <Widget>[
-          Center(
-            child: CameraPreview(
-              _controller!,
-              child: _customPaint ?? Container(), // Gestiamo il caso null
+      return ColoredBox(
+        color: Colors.black,
+        child: Stack(
+          fit: StackFit.expand,
+          children: <Widget>[
+            Center(
+              child: CameraPreview(
+                _controller!,
+                child: !_isGalleryMode
+                    ? (_customPaint ?? Container())
+                    : Container(),
+              ),
+            ),
+            _detectionViewModeToggle(),
+            _zoomControl(),
+          ],
+        ),
+      );
+  }
+
+  Widget _detectionViewModeToggle() => Positioned(
+        bottom: 8,
+        left: 8,
+        child: SizedBox(
+          height: 50.0,
+          width: 50.0,
+          child: FloatingActionButton(
+            heroTag: Object(),
+            onPressed: () => _getImage(ImageSource.gallery),
+            backgroundColor: Colors.black54,
+            child: Icon(
+              Icons.photo_library_outlined,
+              size: 25,
             ),
           ),
-          _zoomControl(),
-        ],
-      ),
-    );
+        ),
+      );
+  Future _getImage(ImageSource source) async {
+    setState(() {
+      _isGalleryMode = true; // Imposta il flag quando usiamo la galleria
+      _customPaint = null; // Rimuovi il CustomPaint esistente
+    });
+    try {
+      final pickedFile = await _imagePicker?.pickImage(source: source);
+      if (pickedFile != null) {
+        _processFile(pickedFile.path);
+      }
+    } catch (e) {
+      debugPrint('Error picking image: $e');
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isGalleryMode = false; // Resetta il flag dopo aver finito
+        });
+      }
+    }
+  }
+
+  Future _processFile(String path) async {
+    final inputImage = InputImage.fromFilePath(path);
+    await _processImage(inputImage);
   }
 
   Widget _zoomControl() => Positioned(
