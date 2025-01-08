@@ -77,36 +77,37 @@ class CameraScannerState extends State<CameraScanner> {
   Future _startLiveFeed() async {
     final camera = _cameras[_cameraIndex];
 
-    // Usiamo yuv420 per Android per maggiore compatibilità
     _controller = CameraController(
       camera,
       ResolutionPreset.max,
       enableAudio: false,
       imageFormatGroup: Platform.isAndroid
-          ? ImageFormatGroup.yuv420
+          ? ImageFormatGroup.nv21
           : ImageFormatGroup.bgra8888,
     );
 
     try {
-      await _controller?.initialize();
-      if (!mounted) return;
+      _controller?.initialize().then((_) {
+        if (!mounted) return;
 
-      await _controller?.getMinZoomLevel().then((value) {
-        _currentZoomLevel = value;
-        _minAvailableZoom = value;
+        _controller?.getMinZoomLevel().then((value) {
+          _currentZoomLevel = value;
+          _minAvailableZoom = value;
+        });
+
+        _controller?.getMaxZoomLevel().then((value) {
+          _maxAvailableZoom = min(value, 3.0);
+        });
+        _controller?.startImageStream(_processCameraImage);
+        setState(() {});
       });
-
-      _maxAvailableZoom = min(await _controller?.getMaxZoomLevel() ?? 3.0, 3.0);
-      await _controller?.startImageStream(_processCameraImage);
-      setState(() {});
     } catch (e) {
-      // Errore di inizializzazione della fotocamera
+      debugPrint("Errore nell'avvio della fotocamera: $e");
       return;
     }
   }
 
-  Future<void> _processCameraImage(CameraImage image) async {
-    // Preveniamo elaborazioni multiple
+  void _processCameraImage(CameraImage image) {
     if (_isBusy || _isModalVisible || _controller == null || !mounted) {
       return;
     }
@@ -114,7 +115,7 @@ class CameraScannerState extends State<CameraScanner> {
     try {
       final inputImage = _inputImageFromCameraImage(image);
       if (inputImage != null) {
-        await _processImage(inputImage);
+        _processImage(inputImage);
       }
     } finally {
       _isBusy = false;
@@ -132,31 +133,32 @@ class CameraScannerState extends State<CameraScanner> {
   }
 
   Future<void> _processImage(InputImage image) async {
-
     if (_debounceTimer?.isActive ?? false) return;
     _debounceTimer = Timer(const Duration(seconds: 1), () {});
-    if (!mounted) return;
 
     final barcodes = await _barcodeScanner.processImage(image);
 
-    if (barcodes.isNotEmpty && barcodes.first.rawValue != null) {
-      // Aggiorniamo il codice scansionato solo se è diverso dal precedente
+    if (barcodes.isNotEmpty &&
+        barcodes.first.rawValue != null &&
+        image.metadata?.size != null &&
+        image.metadata?.rotation != null) {
       if (_scannedCode != barcodes.first.rawValue) {
         if (!_isGalleryMode) {
           final painter = BarcodeDetectorPainter(
             barcodes,
-            image.metadata?.size ?? const Size(400, 400),
-            image.metadata?.rotation ?? InputImageRotation.rotation0deg,
+            image.metadata!.size,
+            image.metadata!.rotation,
           );
           setState(() {
             _customPaint = CustomPaint(painter: painter);
           });
         }
-        setState(() {
-          _scannedCode = barcodes.first.rawValue!;
-        });
+        _scannedCode = barcodes.first.rawValue!;
         await _showProductModal();
       }
+    }
+    if (mounted) {
+      setState(() {});
     }
   }
 
@@ -309,8 +311,8 @@ class CameraScannerState extends State<CameraScanner> {
     }
 
     final camera = _cameras[_cameraIndex];
-
     final sensorOrientation = camera.sensorOrientation;
+
     InputImageRotation? rotation;
 
     if (Platform.isIOS) {
@@ -319,48 +321,18 @@ class CameraScannerState extends State<CameraScanner> {
       var rotationCompensation =
           _orientations[_controller!.value.deviceOrientation];
       if (rotationCompensation == null) return null;
-
-      if (camera.lensDirection == CameraLensDirection.front) {
-        rotationCompensation = (sensorOrientation + rotationCompensation) % 360;
-      } else {
-        rotationCompensation =
-            (sensorOrientation - rotationCompensation + 360) % 360;
-      }
+      rotationCompensation =
+          (sensorOrientation - rotationCompensation + 360) % 360;
       rotation = InputImageRotationValue.fromRawValue(rotationCompensation);
     }
     if (rotation == null) return null;
 
     final format = InputImageFormatValue.fromRawValue(image.format.raw);
 
-    // Gestione formato YUV_420_888 (Android)
-    if (format == InputImageFormat.yuv_420_888 && Platform.isAndroid) {
-      try {
-        final Uint8List nv21Bytes = yuv420ToNv21(image);
-
-        final sensorOrientation = camera.sensorOrientation;
-        InputImageRotation? rotation =
-            InputImageRotationValue.fromRawValue(sensorOrientation);
-
-        if (rotation == null) {
-          return null;
-        }
-
-        return InputImage.fromBytes(
-          bytes: nv21Bytes,
-          metadata: InputImageMetadata(
-            size: Size(image.width.toDouble(), image.height.toDouble()),
-            rotation: rotation,
-            format: InputImageFormat.nv21,
-            bytesPerRow:
-                image.planes[0].bytesPerRow, // Solo il piano Y è rilevante
-          ),
-        );
-      } catch (e) {
-        return null;
-      }
-    }
-
-    // Per NV21 o BGRA8888
+    // validate format depending on platform
+    // only supported formats:
+    // * nv21 for Android
+    // * bgra8888 for iOS
     if (format == null ||
         (Platform.isAndroid && format != InputImageFormat.nv21) ||
         (Platform.isIOS && format != InputImageFormat.bgra8888) ||
@@ -380,28 +352,6 @@ class CameraScannerState extends State<CameraScanner> {
     );
   }
 
-  /// Funzione per convertire YUV_420_888 in BGRA8888
-  Uint8List yuv420ToNv21(CameraImage image) {
-    final int width = image.width;
-    final int height = image.height;
-    final int ySize = width * height;
-
-    // Luminanza (Y)
-    final Uint8List nv21Bytes = Uint8List(ySize + (ySize ~/ 2));
-    nv21Bytes.setRange(0, ySize, image.planes[0].bytes);
-
-    // UV piani: li interleaviamo per creare il formato NV21
-    final Uint8List uPlane = image.planes[1].bytes;
-    final Uint8List vPlane = image.planes[2].bytes;
-
-    for (int i = 0; i < uPlane.length; i++) {
-      nv21Bytes[ySize + (i * 2) + 1] = uPlane[i]; // U
-      nv21Bytes[ySize + (i * 2)] = vPlane[i]; // V
-    }
-
-    return nv21Bytes;
-  }
-
   final Map<DeviceOrientation, int> _orientations = {
     DeviceOrientation.portraitUp: 0,
     DeviceOrientation.landscapeLeft: 90,
@@ -413,28 +363,27 @@ class CameraScannerState extends State<CameraScanner> {
 
   @override
   Widget build(BuildContext context) {
-      if (!_isInitialized || _controller?.value.isInitialized != true) {
-        return const Center(child: CircularProgressIndicator());
-      }
+    if (!_isInitialized || _controller?.value.isInitialized != true) {
+      return const Center(child: CircularProgressIndicator());
+    }
 
-      return ColoredBox(
-        color: Colors.black,
-        child: Stack(
-          fit: StackFit.expand,
-          children: <Widget>[
-            Center(
-              child: CameraPreview(
-                _controller!,
-                child: !_isGalleryMode
-                    ? (_customPaint ?? Container())
-                    : Container(),
-              ),
+    return ColoredBox(
+      color: Colors.black,
+      child: Stack(
+        fit: StackFit.expand,
+        children: <Widget>[
+          Center(
+            child: CameraPreview(
+              _controller!,
+              child:
+                  !_isGalleryMode ? (_customPaint ?? Container()) : Container(),
             ),
-            _detectionViewModeToggle(),
-            _zoomControl(),
-          ],
-        ),
-      );
+          ),
+          _detectionViewModeToggle(),
+          _zoomControl(),
+        ],
+      ),
+    );
   }
 
   Widget _detectionViewModeToggle() => Positioned(
@@ -456,8 +405,8 @@ class CameraScannerState extends State<CameraScanner> {
       );
   Future _getImage(ImageSource source) async {
     setState(() {
-      _isGalleryMode = true; // Imposta il flag quando usiamo la galleria
-      _customPaint = null; // Rimuovi il CustomPaint esistente
+      _isGalleryMode = true;
+      _customPaint = null;
     });
     try {
       final pickedFile = await _imagePicker?.pickImage(source: source);

@@ -4,7 +4,6 @@ import 'package:flutter/material.dart';
 import 'package:whatfood/button_styles.dart';
 import 'package:whatfood/firebase_options.dart';
 import 'package:whatfood/pages/camera_scanner.dart';
-import 'package:whatfood/pages/scanner_page.dart';
 import 'package:whatfood/views/login_view.dart';
 import 'package:whatfood/views/register_view.dart';
 import 'user_page.dart';
