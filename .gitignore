@@ -1,0 +1,41 @@
+# Flutter/Dart specific
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+.packages
+.pub-cache/
+.pubspec.lock
+
+# Generated files
+build/
+android/app/build/
+ios/Pods/
+ios/Flutter/App.framework
+ios/Flutter/Flutter.framework
+ios/.symlinks/
+ios/Flutter/Generated.xcconfig
+ios/Flutter/ephemeral/
+
+# IDE specific
+.idea/
+*.iml
+*.ipr
+*.iws
+.vscode/
+*.swp
+
+# Logs and temporary files
+*.log
+*.tmp
+.DS_Store
+Thumbs.db
+
+# Keys and sensitive files
+google-services.json
+GoogleService-Info.plist
+*.key
+*.pem
+
+# OS specific
+*.bak
+*.old
