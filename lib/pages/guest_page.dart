@@ -89,7 +89,7 @@ class GuestRecipePage extends StatelessWidget {
         Container(
           padding: const EdgeInsets.all(16),
           child: const Text(
-            'Ricette',
+            'Recipes',
             style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
           ),
         ),
@@ -135,7 +135,7 @@ class GuestProfilePage extends StatelessWidget {
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
-        backgroundColor: Colors.green,
+        backgroundColor: Colors.grey,
         title: const Text('Account'),
       ),
       body: Column(
@@ -173,6 +173,55 @@ class GuestProfilePage extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+}
+
+class GuestFavorites extends StatelessWidget {
+  const GuestFavorites({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        Container(
+          padding: const EdgeInsets.all(16),
+          child: const Text(
+            'Favorites',
+            style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+          ),
+        ),
+        Expanded(
+          child: Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                  child: const Text(
+                    'To access this function you need an accout',
+                    style: TextStyle(fontSize: 18),
+                    textAlign: TextAlign.center,
+                  ),
+                ),
+                const SizedBox(height: 20), // Spazio tra il testo e i pulsanti
+                ElevatedButton(
+                  onPressed: () {
+                    // Naviga alla pagina di accesso
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                          builder: (context) => const StartPage()),
+                    );
+                  },
+                  child: const Text('Return to start page'),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ],
     );
   }
 }

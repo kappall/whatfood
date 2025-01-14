@@ -20,68 +20,73 @@ class _StartPageState extends State<StartPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        automaticallyImplyLeading: false,
-        backgroundColor: Colors.green,
-        title: const Text(
-          "Welcome in Whatfood",
-          style: TextStyle(
-            color: Colors.white,
-            fontSize: 28,
-            fontWeight: FontWeight.bold,
-          ),
+      body: FutureBuilder(
+        future: Firebase.initializeApp(
+          options: DefaultFirebaseOptions.currentPlatform,
         ),
-      ),
-      body: Center(
-        child: FutureBuilder(
-          future: Firebase.initializeApp(
-            options: DefaultFirebaseOptions.currentPlatform,
-          ),
-          builder: (context, snapshot) {
-            switch (snapshot.connectionState) {
-              case ConnectionState.done:
-                final user = FirebaseAuth.instance.currentUser;
-                if (user?.emailVerified ?? false) {
-                  print(
-                      'You are a verified user\n ${user!.email}\n ${user.uid}');
-                } else {
-                  print('You need to verify your email');
-                }
-                return Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    ElevatedButton(
-                      onPressed: () {
-                        Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                                builder: (context) => const RegisterView()));
-                      },
-                      style: ButtonStyles.elevatedButtonStyle(
-                          backgroundColor: Colors.green),
-                      child: const Text('Register'),
+        builder: (context, snapshot) {
+          switch (snapshot.connectionState) {
+            case ConnectionState.done:
+              final user = FirebaseAuth.instance.currentUser;
+              if (user?.emailVerified ?? false) {
+                print('You are a verified user\n ${user!.email}\n ${user.uid}');
+              } else {
+                print('You need to verify your email');
+              }
+
+              return Stack(
+                children: [
+                  Align(
+                    alignment: const Alignment(0,
+                        -0.75), // Coordinata Y negativa per la metà superiore
+                    child: const Text(
+                      "Welcome in Whatfood",
+                      style: TextStyle(
+                        color: Colors.black,
+                        fontSize: 28,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
-                    const SizedBox(height: 20),
-                    ElevatedButton(
-                      onPressed: () {
-                        Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                                builder: (context) => const LoginView()));
-                      },
-                      style: ButtonStyles.elevatedButtonStyle(
-                          backgroundColor: Colors.green),
-                      child: const Text('Login'),
+                  ),
+                  Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        ElevatedButton(
+                          onPressed: () {
+                            Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                    builder: (context) =>
+                                        const RegisterView()));
+                          },
+                          style: ButtonStyles.elevatedButtonStyle(
+                              backgroundColor: Colors.lightGreen),
+                          child: const Text('Register'),
+                        ),
+                        const SizedBox(height: 20),
+                        ElevatedButton(
+                          onPressed: () {
+                            Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                    builder: (context) => const LoginView()));
+                          },
+                          style: ButtonStyles.elevatedButtonStyle(
+                              backgroundColor: Colors.lightGreen),
+                          child: const Text('Login'),
+                        ),
+                        const SizedBox(height: 20),
+                        const GuestAccessWidget(),
+                      ],
                     ),
-                    const SizedBox(height: 20),
-                    const GuestAccessWidget(),
-                  ],
-                );
-              default:
-                return const Text("Loading...");
-            }
-          },
-        ),
+                  ),
+                ],
+              );
+            default:
+              return const Center(child: Text("Loading..."));
+          }
+        },
       ),
     );
   }
@@ -139,77 +144,75 @@ class MainPage extends StatefulWidget {
 }
 
 class _MainPageState extends State<MainPage> {
-  int _selectedIndex = 2; // Home di default
+  int _selectedIndex = 2; // Indice iniziale per la pagina "Home"
 
-  late final List<Widget> _pages;
+  late final List<Widget> _pages; // Pagine basate su isGuest
 
   @override
   void initState() {
     super.initState();
 
-    // In base a isGuest, carica le pagine appropriate
-    _pages = widget.isGuest
-        ? [
-            CameraScanner(),
-            GuestRecipePage(),
-            GuestHomePage(),
-            GuestShopPage(),
-          ]
-        : [
-            CameraScanner(),
-            RecipePage(),
-            HomePage(),
-            ShopPage(),
-          ];
+    // Inizializzazione condizionale per ospiti e utenti registrati
+    if (widget.isGuest) {
+      _pages = [
+        CameraScanner(),
+        GuestRecipePage(),
+        GuestHomePage(),
+        GuestShopPage(),
+        GuestFavorites(),
+      ];
+    } else {
+      _pages = [
+        CameraScanner(),
+        RecipePage(),
+        HomePage(),
+        ShopPage(),
+        FavoritesPage(),
+      ];
+    }
   }
 
   void _onItemTapped(int index) {
     setState(() {
-      _selectedIndex = index;
+      _selectedIndex = index; // Aggiorna l'indice selezionato
     });
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: const Color.fromARGB(255, 235, 235, 235),
       appBar: AppBar(
-        backgroundColor: Colors.green,
+        backgroundColor: Colors.white,
         automaticallyImplyLeading: false,
-        title: const Text(
-          'Whatfood',
-          style: TextStyle(
+        title: Text(
+          'Whatfood', // Mostra il titolo in base all'indice
+          style: const TextStyle(
             fontSize: 28,
             fontWeight: FontWeight.bold,
-            color: Colors.white,
-            shadows: [
-              Shadow(
-                offset: Offset(3, 2), // Posizione dell'ombra
-                blurRadius: 1.0, // Sfocatura
-                color: Colors.black, // Colore dell'ombra
-              ),
-            ],
+            color: Colors.black,
           ),
         ),
         actions: [
           IconButton(
             icon: const Icon(
-              Icons.person,
+              Icons.person_outline,
               color: Colors.black,
             ),
             onPressed: () {
               Navigator.push(
                 context,
                 MaterialPageRoute(
-                    builder: (context) => widget.isGuest
-                        ? const GuestProfilePage()
-                        : const ProfilePage()),
+                  builder: (context) => widget.isGuest
+                      ? const GuestProfilePage()
+                      : const ProfilePage(),
+                ),
               );
             },
           ),
         ],
       ),
-      body: _pages[_selectedIndex],
+      body: _pages[_selectedIndex], // Mostra la pagina corrispondente
       bottomNavigationBar: BottomNavigationBar(
         items: const [
           BottomNavigationBarItem(
@@ -217,25 +220,28 @@ class _MainPageState extends State<MainPage> {
             label: 'Scanner',
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.book),
-            label: 'Ricette',
+            icon: Icon(Icons.book_outlined),
+            label: 'Recipes',
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.home),
+            icon: Icon(Icons.home_outlined),
             label: 'Home',
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.store),
-            label: 'Shop',
+            icon: Icon(Icons.shopping_cart_outlined),
+            label: 'Items',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.star_outline),
+            label: 'Favorites',
           ),
         ],
         currentIndex: _selectedIndex,
-        backgroundColor: Colors.green,
-        selectedItemColor: Colors.white, // Colore delle icone selezionate
-        unselectedItemColor: Colors.black, // Colore delle icone non selezionate
+        backgroundColor: Colors.white,
+        selectedItemColor: Colors.black,
+        unselectedItemColor: Colors.grey,
         onTap: _onItemTapped,
-        type:
-            BottomNavigationBarType.fixed, // per applicare i colori di sofondo
+        type: BottomNavigationBarType.fixed,
       ),
     );
   }
