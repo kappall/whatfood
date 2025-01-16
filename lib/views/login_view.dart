@@ -1,7 +1,5 @@
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
-import 'package:whatfood/firebase_options.dart';
 
 class LoginView extends StatefulWidget {
   const LoginView({super.key});
@@ -13,6 +11,7 @@ class LoginView extends StatefulWidget {
 class _LoginViewState extends State<LoginView> {
   late final TextEditingController _email;
   late final TextEditingController _password;
+
   @override
   void initState() {
     _email = TextEditingController();
@@ -30,87 +29,145 @@ class _LoginViewState extends State<LoginView> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: const Color(0xFFF5F5F5),
       appBar: AppBar(
-        title: Text(
-          style: TextStyle(
-            fontSize: 28,
-            fontWeight: FontWeight.bold,
-          ),
-          "Login",
-        ),
+        title: const Text('Login'),
+        backgroundColor: Colors.lightGreen,
+        centerTitle: true,
       ),
-      body: Center(
-        child: FutureBuilder(
-            future: Firebase.initializeApp(
-              options: DefaultFirebaseOptions.currentPlatform,
+      body: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 20.0),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            const Align(
+              alignment: Alignment.center,
+              child: Text(
+                "Welcome Back!",
+                style: TextStyle(
+                  fontSize: 28,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.black,
+                ),
+              ),
             ),
-            builder: (context, snapshot) {
-              switch (snapshot.connectionState) {
-                case ConnectionState.done:
-                  {
-                    return Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        TextField(
-                          controller: _email,
-                          enableSuggestions: true,
-                          autocorrect: false,
-                          keyboardType: TextInputType.emailAddress,
-                          decoration: InputDecoration(
-                              hintText: "Enter your email here",
-                              hintStyle: TextStyle(color: Colors.grey)),
-                        ),
-                        TextField(
-                          controller: _password,
-                          obscureText: true,
-                          enableSuggestions: false,
-                          autocorrect: false,
-                          decoration: InputDecoration(
-                              hintText: "Enter your password here",
-                              hintStyle: TextStyle(color: Colors.grey)),
-                        ),
-                        const SizedBox(height: 10),
-                        ElevatedButton(
-                          onPressed: () async {
-                            final email = _email.text;
-                            final password = _password.text;
-                            try {
-                              final userCredential = await FirebaseAuth.instance
-                                  .signInWithEmailAndPassword(
-                                      email: email, password: password);
-                            } on FirebaseAuthException catch (e) {
-                              // in realtà solo  l'eccezione Invalid credential è lanciata, guarda https://cloud.google.com/identity-platform/docs/admin/email-enumeration-protection?hl=it
-                              setState(() {
-                                switch (e.code) {
-                                  case 'user-not-found':
-                                    print('No user found with this email.');
-                                    break;
-                                  case 'wrong-password':
-                                    print('Incorrect password.');
-                                    break;
-                                  case 'invalid-email':
-                                    print('The email address is not valid.');
-                                    break;
-                                  default:
-                                    print('Login failed: ${e.message}');
-                                }
-                              });
-                            } catch (e) {
-                              // Gestione generica di altri errori
-                              setState(() {
-                                print('An unexpected error occurred: $e');
-                              });
-                            }
-                          },
-                          child: const Text('Login'),
-                        ),
-                      ],
-                    );
+            const SizedBox(height: 20),
+            TextField(
+              controller: _email,
+              enableSuggestions: true,
+              autocorrect: false,
+              keyboardType: TextInputType.emailAddress,
+              decoration: InputDecoration(
+                hintText: "Enter your email",
+                hintStyle: const TextStyle(color: Colors.grey),
+                filled: true,
+                fillColor: Colors.white,
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(10),
+                  borderSide: BorderSide.none,
+                ),
+              ),
+            ),
+            const SizedBox(height: 15),
+            TextField(
+              controller: _password,
+              obscureText: true,
+              enableSuggestions: false,
+              autocorrect: false,
+              decoration: InputDecoration(
+                hintText: "Enter your password",
+                hintStyle: const TextStyle(color: Colors.grey),
+                filled: true,
+                fillColor: Colors.white,
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(10),
+                  borderSide: BorderSide.none,
+                ),
+              ),
+            ),
+            const SizedBox(height: 30),
+            FilledButton(
+              onPressed: () async {
+                final email = _email.text.trim();
+                final password = _password.text.trim();
+                try {
+                  final userCredential = await FirebaseAuth.instance
+                      .signInWithEmailAndPassword(
+                          email: email, password: password);
+
+                  if (!context.mounted) return;
+
+                  Navigator.of(context).pushNamedAndRemoveUntil(
+                    '/main_page/',
+                    (route) => false,
+                  );
+                } on FirebaseAuthException catch (e) {
+                  String errorMessage;
+                  switch (e.code) {
+                    case 'user-not-found':
+                      errorMessage = 'No user found with this email.';
+                      break;
+                    case 'wrong-password':
+                      errorMessage = 'Incorrect password.';
+                      break;
+                    case 'invalid-email':
+                      errorMessage = 'The email address is not valid.';
+                      break;
+                    default:
+                      errorMessage = 'Login failed: ${e.message}';
                   }
-                default:
-                  return Text("Loading...");
-              }
-            }),
+
+                  // Mostra il messaggio di errore all'utente
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text(
+                        errorMessage,
+                        style: const TextStyle(color: Colors.white),
+                      ),
+                      backgroundColor: Colors.red,
+                    ),
+                  );
+                } catch (e) {
+                  // Gestione generica di altri errori
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text(
+                        'An unexpected error occurred: $e',
+                        style: const TextStyle(color: Colors.white),
+                      ),
+                      backgroundColor: Colors.red,
+                    ),
+                  );
+                }
+              },
+              style: FilledButton.styleFrom(
+                backgroundColor: Colors.lightGreen,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                padding: const EdgeInsets.symmetric(vertical: 15),
+              ),
+              child: const Text(
+                'Login',
+                style: TextStyle(fontSize: 18, color: Colors.white),
+              ),
+            ),
+            const SizedBox(height: 15),
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pushNamedAndRemoveUntil(
+                  '/register/',
+                  (route) => false,
+                );
+              },
+              child: const Text(
+                'Not registered yet? Register here!',
+                style: TextStyle(fontSize: 16, color: Colors.lightGreen),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

@@ -1,11 +1,8 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
-import 'package:whatfood/button_styles.dart';
 import 'package:whatfood/firebase_options.dart';
 import 'package:whatfood/pages/camera_scanner.dart';
-import 'package:whatfood/views/login_view.dart';
-import 'package:whatfood/views/register_view.dart';
 import 'user_page.dart';
 import 'guest_page.dart';
 
@@ -19,75 +16,142 @@ class StartPage extends StatefulWidget {
 class _StartPageState extends State<StartPage> {
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: FutureBuilder(
-        future: Firebase.initializeApp(
-          options: DefaultFirebaseOptions.currentPlatform,
-        ),
-        builder: (context, snapshot) {
-          switch (snapshot.connectionState) {
-            case ConnectionState.done:
-              final user = FirebaseAuth.instance.currentUser;
-              if (user?.emailVerified ?? false) {
-                print('You are a verified user\n ${user!.email}\n ${user.uid}');
-              } else {
-                print('You need to verify your email');
-              }
+    return FutureBuilder(
+      future: Firebase.initializeApp(
+        options: DefaultFirebaseOptions.currentPlatform,
+      ),
+      builder: (context, snapshot) {
+        switch (snapshot.connectionState) {
+          case ConnectionState.done:
+            final user = FirebaseAuth.instance.currentUser;
 
-              return Stack(
-                children: [
-                  Align(
-                    alignment: const Alignment(0,
-                        -0.75), // Coordinata Y negativa per la metà superiore
-                    child: const Text(
-                      "Welcome in Whatfood",
-                      style: TextStyle(
-                        color: Colors.black,
-                        fontSize: 28,
-                        fontWeight: FontWeight.bold,
+            if (user?.emailVerified ?? false) {
+              Navigator.of(context).pushNamedAndRemoveUntil(
+                '/main_page/',
+                (route) => false,
+              );
+            }
+            return Scaffold(
+              backgroundColor:
+                  const Color(0xFFF5F5F5), // Sfondo chiaro e neutro
+              body: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20.0),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Spacer(),
+                    const Align(
+                      alignment: Alignment.center,
+                      child: Text(
+                        "Welcome to Whatfood",
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          color: Colors.black,
+                          fontSize: 32,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
                     ),
-                  ),
-                  Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        ElevatedButton(
-                          onPressed: () {
-                            Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                    builder: (context) =>
-                                        const RegisterView()));
-                          },
-                          style: ButtonStyles.elevatedButtonStyle(
-                              backgroundColor: Colors.lightGreen),
-                          child: const Text('Register'),
+                    const Spacer(),
+                    FilledButton(
+                      onPressed: () {
+                        Navigator.of(context).pushNamedAndRemoveUntil(
+                          '/register/',
+                          (route) => true,
+                        );
+                      },
+                      style: FilledButton.styleFrom(
+                        backgroundColor: Colors.lightGreen,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
                         ),
-                        const SizedBox(height: 20),
-                        ElevatedButton(
-                          onPressed: () {
-                            Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                    builder: (context) => const LoginView()));
-                          },
-                          style: ButtonStyles.elevatedButtonStyle(
-                              backgroundColor: Colors.lightGreen),
-                          child: const Text('Login'),
+                        padding: const EdgeInsets.symmetric(
+                          vertical: 15,
+                          horizontal: 30,
                         ),
-                        const SizedBox(height: 20),
-                        const GuestAccessWidget(),
-                      ],
+                      ),
+                      child: const Text(
+                        'Register',
+                        style: TextStyle(
+                          fontSize: 18,
+                          color: Colors.white,
+                        ),
+                      ),
                     ),
-                  ),
-                ],
-              );
-            default:
-              return const Center(child: Text("Loading..."));
-          }
-        },
-      ),
+                    const SizedBox(height: 15),
+                    OutlinedButton(
+                      onPressed: () {
+                        Navigator.of(context).pushNamedAndRemoveUntil(
+                          '/login/',
+                          (route) => true,
+                        );
+                      },
+                      style: OutlinedButton.styleFrom(
+                        side: const BorderSide(color: Colors.lightGreen),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        padding: const EdgeInsets.symmetric(
+                          vertical: 15,
+                          horizontal: 30,
+                        ),
+                      ),
+                      child: const Text(
+                        'Already registered? Login here!',
+                        style: TextStyle(
+                          fontSize: 16,
+                          color: Colors.lightGreen,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 15),
+                    TextButton(
+                      onPressed: () async {
+                        try {
+                          await FirebaseAuth.instance.signInAnonymously();
+                          Navigator.of(context).pushNamedAndRemoveUntil(
+                            '/main_page_guest/',
+                            (route) => false,
+                          );
+                        } catch (e) {
+                          print('Errore durante il login anonimo: $e');
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text(
+                                'Error during guest login: $e',
+                                style: const TextStyle(color: Colors.white),
+                              ),
+                              backgroundColor: Colors.red,
+                            ),
+                          );
+                        }
+                      },
+                      child: const Text(
+                        'Enter as Guest',
+                        style: TextStyle(
+                          fontSize: 16,
+                          color: Colors.black,
+                          decoration: TextDecoration.underline,
+                        ),
+                      ),
+                    ),
+                    const Spacer(),
+                  ],
+                ),
+              ),
+            );
+
+          default:
+            return const Scaffold(
+              backgroundColor: Color(0xFFF5F5F5),
+              body: Center(
+                child: CircularProgressIndicator(
+                  valueColor: AlwaysStoppedAnimation<Color>(Colors.lightGreen),
+                ),
+              ),
+            );
+        }
+      },
     );
   }
 }
@@ -105,12 +169,8 @@ class GuestAccessWidget extends StatelessWidget {
           await FirebaseAuth.instance.signInAnonymously();
           // Naviga alla pagina principale come ospite
           if (!context.mounted) return;
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (context) => const MainPage(isGuest: true),
-            ),
-          );
+          Navigator.of(context)
+              .pushNamedAndRemoveUntil('/main_page_guest/', (route) => false);
         } catch (e) {
           // Gestione degli errori
           print('Errore durante il login anonimo: $e');
@@ -125,10 +185,8 @@ class GuestAccessWidget extends StatelessWidget {
           );
         }
       },
-      style: ButtonStyles.textButtonStyle(textColor: Colors.blue),
       child: const Text(
         'Enter as guest',
-        style: TextStyle(fontSize: 16),
       ),
     );
   }
