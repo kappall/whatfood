@@ -3,11 +3,9 @@
 <plist version="1.0">
 	<dict>
 		<key>NSCameraUsageDescription</key>
-		<string>Utilizziamo la fotocamera per scansionare i codici a barre.</string>
+		<string>We need access to your camera to scan barcodes.</string>
 		<key>NSPhotoLibraryUsageDescription</key>
-		<string>L'app necessita di accedere alla libreria fotografica per selezionare immagini.</string>
-		<key>NSPhotoLibraryAddUsageDescription</key>
-		<string>L'app necessita di salvare immagini nella libreria fotografica.</string>
+		<string>We need access to your photo library to select images.</string>
 		<key>CFBundleDevelopmentRegion</key>
 		<string>$(DEVELOPMENT_LANGUAGE)</string>
 		<key>CFBundleDisplayName</key>
@@ -53,5 +51,17 @@
 		<true/>
 		<key>UIStatusBarHidden</key>
 		<false/>
+		<key>CFBundleURLTypes</key>
+		<array>
+			<dict>
+				<key>CFBundleTypeRole</key>
+				<string>Editor</string>
+				<key>CFBundleURLSchemes</key>
+				<array>
+					<string>com.googleusercontent.apps.739142201079-cjdmb2pnkrqp44rbkrrlr7t6vq1mq3mr</string>
+				</array>
+			</dict>
+		</array>
+
 	</dict>
 </plist>

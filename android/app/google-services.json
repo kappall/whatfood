@@ -12,7 +12,20 @@
           "package_name": "it.whatfood.whatfood"
         }
       },
-      "oauth_client": [],
+      "oauth_client": [
+        {
+          "client_id": "739142201079-sbj49qt20mkf02civ178mcj24e69igoc.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "it.whatfood.whatfood",
+            "certificate_hash": "e4b4b18baa8aa1541ba4e2acd64bffb99d54d915"
+          }
+        },
+        {
+          "client_id": "739142201079-m470gnqkieuimk5gcopruukiriiqsnuq.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
       "api_key": [
         {
           "current_key": "AIzaSyBv4LJW5GP6_QdltTay1q7A2iLrOtQ4a14"
@@ -20,7 +33,19 @@
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": []
+          "other_platform_oauth_client": [
+            {
+              "client_id": "739142201079-m470gnqkieuimk5gcopruukiriiqsnuq.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "739142201079-cjdmb2pnkrqp44rbkrrlr7t6vq1mq3mr.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "it.whatfood.whatfood"
+              }
+            }
+          ]
         }
       }
     }

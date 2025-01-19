@@ -1,162 +1,136 @@
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
-import 'package:whatfood/firebase_options.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:whatfood/common/google_signin_button.dart';
+import 'package:whatfood/common/loader.dart';
 import 'package:whatfood/pages/camera_scanner.dart';
+import 'package:whatfood/pages/controller/auth_controller.dart';
+import 'home_page.dart';
 import 'user_page.dart';
 import 'guest_page.dart';
 
-class StartPage extends StatefulWidget {
+class StartPage extends ConsumerWidget {
   const StartPage({super.key});
 
   @override
-  State<StartPage> createState() => _StartPageState();
-}
+  Widget build(BuildContext context, WidgetRef ref) {
+    final isLoading = ref.watch(authControllerProvider);
 
-class _StartPageState extends State<StartPage> {
-  @override
-  Widget build(BuildContext context) {
-    return FutureBuilder(
-      future: Firebase.initializeApp(
-        options: DefaultFirebaseOptions.currentPlatform,
-      ),
-      builder: (context, snapshot) {
-        switch (snapshot.connectionState) {
-          case ConnectionState.done:
-            final user = FirebaseAuth.instance.currentUser;
-
-            if (user?.emailVerified ?? false) {
-              Navigator.of(context).pushNamedAndRemoveUntil(
-                '/main_page/',
-                (route) => false,
-              );
-            }
-            return Scaffold(
-              backgroundColor:
-                  const Color(0xFFF5F5F5), // Sfondo chiaro e neutro
-              body: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20.0),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    const Spacer(),
-                    const Align(
-                      alignment: Alignment.center,
-                      child: Text(
-                        "Welcome to Whatfood",
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                          color: Colors.black,
-                          fontSize: 32,
-                          fontWeight: FontWeight.bold,
-                        ),
+    return Scaffold(
+      backgroundColor: const Color(0xFFF5F5F5),
+      body: isLoading
+          ? const Loader()
+          : Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 40.0),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Spacer(),
+                  const Align(
+                    alignment: Alignment.center,
+                    child: Text(
+                      "Welcome to Whatfood",
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        color: Colors.black,
+                        fontSize: 32,
+                        fontWeight: FontWeight.bold,
                       ),
                     ),
-                    const Spacer(),
-                    FilledButton(
-                      onPressed: () {
+                  ),
+                  const Spacer(),
+                  FilledButton(
+                    onPressed: () {
+                      Navigator.of(context).pushNamedAndRemoveUntil(
+                        '/register/',
+                        (route) => true,
+                      );
+                    },
+                    style: FilledButton.styleFrom(
+                      backgroundColor: Colors.lightGreen,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      padding: const EdgeInsets.symmetric(
+                        vertical: 15,
+                        horizontal: 30,
+                      ),
+                    ),
+                    child: const Text(
+                      'Register',
+                      style: TextStyle(
+                        fontSize: 18,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 15),
+                  OutlinedButton(
+                    onPressed: () {
+                      Navigator.of(context).pushNamedAndRemoveUntil(
+                        '/login/',
+                        (route) => true,
+                      );
+                    },
+                    style: OutlinedButton.styleFrom(
+                      side: const BorderSide(color: Colors.lightGreen),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      padding: const EdgeInsets.symmetric(
+                        vertical: 15,
+                        horizontal: 30,
+                      ),
+                    ),
+                    child: const Text(
+                      'Already registered? Login here!',
+                      style: TextStyle(
+                        fontSize: 16,
+                        color: Colors.lightGreen,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 15),
+                  const GoogleSigninButton(),
+                  const SizedBox(height: 30),
+                  TextButton(
+                    onPressed: () async {
+                      try {
+                        await FirebaseAuth.instance.signInAnonymously();
                         Navigator.of(context).pushNamedAndRemoveUntil(
-                          '/register/',
-                          (route) => true,
+                          '/main_page_guest/',
+                          (route) => false,
                         );
-                      },
-                      style: FilledButton.styleFrom(
-                        backgroundColor: Colors.lightGreen,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                        padding: const EdgeInsets.symmetric(
-                          vertical: 15,
-                          horizontal: 30,
-                        ),
-                      ),
-                      child: const Text(
-                        'Register',
-                        style: TextStyle(
-                          fontSize: 18,
-                          color: Colors.white,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 15),
-                    OutlinedButton(
-                      onPressed: () {
-                        Navigator.of(context).pushNamedAndRemoveUntil(
-                          '/login/',
-                          (route) => true,
-                        );
-                      },
-                      style: OutlinedButton.styleFrom(
-                        side: const BorderSide(color: Colors.lightGreen),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                        padding: const EdgeInsets.symmetric(
-                          vertical: 15,
-                          horizontal: 30,
-                        ),
-                      ),
-                      child: const Text(
-                        'Already registered? Login here!',
-                        style: TextStyle(
-                          fontSize: 16,
-                          color: Colors.lightGreen,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 15),
-                    TextButton(
-                      onPressed: () async {
-                        try {
-                          await FirebaseAuth.instance.signInAnonymously();
-                          Navigator.of(context).pushNamedAndRemoveUntil(
-                            '/main_page_guest/',
-                            (route) => false,
-                          );
-                        } catch (e) {
-                          print('Errore durante il login anonimo: $e');
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: Text(
-                                'Error during guest login: $e',
-                                style: const TextStyle(color: Colors.white),
-                              ),
-                              backgroundColor: Colors.red,
+                      } catch (e) {
+                        print('Errore durante il login anonimo: $e');
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text(
+                              'Error during guest login: $e',
+                              style: const TextStyle(color: Colors.white),
                             ),
-                          );
-                        }
-                      },
-                      child: const Text(
-                        'Enter as Guest',
-                        style: TextStyle(
-                          fontSize: 16,
-                          color: Colors.black,
-                          decoration: TextDecoration.underline,
-                        ),
+                            backgroundColor: Colors.red,
+                          ),
+                        );
+                      }
+                    },
+                    child: const Text(
+                      'Enter as Guest',
+                      style: TextStyle(
+                        fontSize: 16,
+                        color: Colors.black,
+                        decoration: TextDecoration.underline,
                       ),
                     ),
-                    const Spacer(),
-                  ],
-                ),
+                  ),
+                  const Spacer(),
+                ],
               ),
-            );
-
-          default:
-            return const Scaffold(
-              backgroundColor: Color(0xFFF5F5F5),
-              body: Center(
-                child: CircularProgressIndicator(
-                  valueColor: AlwaysStoppedAnimation<Color>(Colors.lightGreen),
-                ),
-              ),
-            );
-        }
-      },
+            ),
     );
   }
 }
 
-/// Widget separato per l'accesso come ospite
 class GuestAccessWidget extends StatelessWidget {
   const GuestAccessWidget({super.key});
 
@@ -165,14 +139,11 @@ class GuestAccessWidget extends StatelessWidget {
     return TextButton(
       onPressed: () async {
         try {
-          // Effettua il login anonimo
           await FirebaseAuth.instance.signInAnonymously();
-          // Naviga alla pagina principale come ospite
           if (!context.mounted) return;
           Navigator.of(context)
               .pushNamedAndRemoveUntil('/main_page_guest/', (route) => false);
         } catch (e) {
-          // Gestione degli errori
           print('Errore durante il login anonimo: $e');
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
@@ -202,15 +173,13 @@ class MainPage extends StatefulWidget {
 }
 
 class _MainPageState extends State<MainPage> {
-  int _selectedIndex = 2; // Indice iniziale per la pagina "Home"
-
-  late final List<Widget> _pages; // Pagine basate su isGuest
+  int _selectedIndex = 2;
+  late final List<Widget> _pages;
 
   @override
   void initState() {
     super.initState();
 
-    // Inizializzazione condizionale per ospiti e utenti registrati
     if (widget.isGuest) {
       _pages = [
         CameraScanner(),
@@ -232,7 +201,7 @@ class _MainPageState extends State<MainPage> {
 
   void _onItemTapped(int index) {
     setState(() {
-      _selectedIndex = index; // Aggiorna l'indice selezionato
+      _selectedIndex = index;
     });
   }
 
@@ -240,37 +209,7 @@ class _MainPageState extends State<MainPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color.fromARGB(255, 235, 235, 235),
-      appBar: AppBar(
-        backgroundColor: Colors.white,
-        automaticallyImplyLeading: false,
-        title: Text(
-          'Whatfood', // Mostra il titolo in base all'indice
-          style: const TextStyle(
-            fontSize: 28,
-            fontWeight: FontWeight.bold,
-            color: Colors.black,
-          ),
-        ),
-        actions: [
-          IconButton(
-            icon: const Icon(
-              Icons.person_outline,
-              color: Colors.black,
-            ),
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => widget.isGuest
-                      ? const GuestProfilePage()
-                      : const ProfilePage(),
-                ),
-              );
-            },
-          ),
-        ],
-      ),
-      body: _pages[_selectedIndex], // Mostra la pagina corrispondente
+      body: _pages[_selectedIndex],
       bottomNavigationBar: BottomNavigationBar(
         items: const [
           BottomNavigationBarItem(
