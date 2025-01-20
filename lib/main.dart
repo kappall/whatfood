@@ -3,7 +3,14 @@ import 'dart:io';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:routemaster/routemaster.dart';
+import 'package:whatfood/common/error_text.dart';
+import 'package:whatfood/common/loader.dart';
+import 'package:whatfood/core/providers/firebase_providers.dart';
 import 'package:whatfood/firebase_options.dart';
+import 'package:whatfood/models/user_model.dart';
+import 'package:whatfood/pages/controller/auth_controller.dart';
+import 'package:whatfood/router.dart';
 import 'package:whatfood/views/login_view.dart';
 import 'package:whatfood/views/register_view.dart';
 import 'pages/start_page.dart';
@@ -27,30 +34,41 @@ class MyApp extends ConsumerStatefulWidget {
 }
 
 class _MyAppState extends ConsumerState<MyApp> {
+  UserModel? userModel;
+  void getData(WidgetRef, User data) async {
+    userModel = await ref
+        .watch(authControllerProvider.notifier)
+        .getUserData(data.uid)
+        .first;
+    ref.read(userProvider.notifier).update((state) => userModel);
+    setState(() {});
+  }
+
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      debugShowCheckedModeBanner: false,
-      title: 'Start',
-      theme: ThemeData(primarySwatch: Colors.blue),
-      // Verifica se l'utente è già loggato
-      home: _getInitialPage(),
-      routes: {
-        '/login/': (context) => const LoginView(),
-        '/register/': (context) => const RegisterView(),
-        '/main_page/': (context) => const MainPage(
-              isGuest: false,
+    return ref.watch(authStateChangeProvider).when(
+        data: (data) => MaterialApp.router(
+              debugShowCheckedModeBanner: false,
+              title: 'Start',
+              theme: ThemeData(primarySwatch: Colors.blue),
+              routerDelegate: RoutemasterDelegate(routesBuilder: (context) {
+                if (data != null) {
+                  getData(WidgetRef, data);
+                  if (userModel != null) {
+                    return loggedInRoutes;
+                  }
+                }
+                return loggedOutRoutes;
+              }),
+              routeInformationParser: const RoutemasterParser(),
             ),
-        '/main_page_guest/': (context) => const MainPage(
-              isGuest: true,
-            ),
-      },
-    );
+        error: (error, stackTrace) => ErrorText(error: error.toString()),
+        loading: () => const Loader());
   }
 
   // Funzione che determina quale pagina mostrare come home
-  Widget _getInitialPage() {
-    FirebaseAuth.instance.signOut(); //if logout is needed uncomment this
+  /*Widget _getInitialPage() {
+    //FirebaseAuth.instance.signOut(); //if logout is needed uncomment this
     final user = FirebaseAuth.instance.currentUser;
 
     if (user != null) {
@@ -58,7 +76,7 @@ class _MyAppState extends ConsumerState<MyApp> {
     } else {
       return const StartPage();
     }
-  }
+  }*/
 }
 
 Future<void> _initializeGoogleProvider() async {
