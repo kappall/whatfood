@@ -1,5 +1,5 @@
 import 'package:fpdart/fpdart.dart';
-import 'package:whatfood/pages/controller/failure.dart';
+import 'package:whatfood/core/failure.dart';
 
 typedef FutureEither<T> = Future<Either<Failure, T>>;
 typedef FutureVoid = FutureEither<void>;

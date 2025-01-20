@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:routemaster/routemaster.dart';
 import 'package:whatfood/pages/start_page.dart';
-import 'package:whatfood/views/login_view.dart';
+import 'package:whatfood/features/auth/views/login_view.dart';
 
 final loggedOutRoutes = RouteMap(routes: {
   '/login/': (_) => const MaterialPage(child: LoginView()),

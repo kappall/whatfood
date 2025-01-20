@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:whatfood/core/utils.dart';
 import 'package:whatfood/models/user_model.dart';
-import 'package:whatfood/repository/auth_repository.dart';
+import 'package:whatfood/features/auth/repository/auth_repository.dart';
 
 final userProvider = StateProvider<UserModel?>((ref) => null);
 final authControllerProvider =

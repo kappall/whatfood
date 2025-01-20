@@ -1,11 +1,11 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:whatfood/common/google_signin_button.dart';
-import 'package:whatfood/common/loader.dart';
-import 'package:whatfood/pages/camera_scanner.dart';
-import 'package:whatfood/pages/controller/auth_controller.dart';
-import 'home_page.dart';
+import 'package:whatfood/core/common/google_signin_button.dart';
+import 'package:whatfood/core/common/loader.dart';
+import 'package:whatfood/features/scanner/camera_scanner.dart';
+import 'package:whatfood/features/auth/controller/auth_controller.dart';
+import '../features/home/pages/home_page.dart';
 import 'user_page.dart';
 import 'guest_page.dart';
 

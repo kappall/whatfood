@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:whatfood/core/constants/costants.dart';
-import 'package:whatfood/pages/controller/auth_controller.dart';
+import 'package:whatfood/features/auth/controller/auth_controller.dart';
 
 class GoogleSigninButton extends ConsumerWidget {
   final bool isFromLogin;

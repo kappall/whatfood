@@ -8,7 +8,7 @@ import 'package:whatfood/core/constants/firebase_constants.dart';
 import 'package:whatfood/core/providers/firebase_providers.dart';
 import 'package:whatfood/core/type_def.dart';
 import 'package:whatfood/models/user_model.dart';
-import 'package:whatfood/pages/controller/failure.dart';
+import 'package:whatfood/core/failure.dart';
 
 final authRepositoryProvider = Provider((ref) => AuthRepository(
     firestore: ref.read(firestoreProvider),
