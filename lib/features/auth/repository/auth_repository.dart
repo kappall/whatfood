@@ -10,15 +10,18 @@ import 'package:whatfood/core/type_def.dart';
 import 'package:whatfood/models/user_model.dart';
 import 'package:whatfood/core/failure.dart';
 
-final authRepositoryProvider = Provider((ref) => AuthRepository(
+final authRepositoryProvider = Provider(
+  (ref) => AuthRepository(
     firestore: ref.read(firestoreProvider),
     auth: ref.read(authProvider),
-    googleSignIn: ref.read(googleSignInProvider)));
+    googleSignIn: ref.read(googleSignInProvider),
+  ),
+);
 
 class AuthRepository {
-  FirebaseFirestore _firestore;
-  FirebaseAuth _auth;
-  GoogleSignIn _googleSignIn;
+  final FirebaseFirestore _firestore;
+  final FirebaseAuth _auth;
+  final GoogleSignIn _googleSignIn;
 
   AuthRepository({
     required FirebaseFirestore firestore,
@@ -32,16 +35,19 @@ class AuthRepository {
       _firestore.collection(FirebaseConstants.usersCollection);
 
   Stream<User?> get authStateChange => _auth.authStateChanges();
+
   FutureEither<UserModel> signInWithGoogle(bool isFromLogin) async {
     try {
+      UserCredential userCredential;
+
       final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
+
       final googleAuth = await googleUser?.authentication;
+
       final credential = GoogleAuthProvider.credential(
         accessToken: googleAuth?.accessToken,
         idToken: googleAuth?.idToken,
       );
-      UserCredential userCredential =
-          await _auth.signInWithCredential(credential);
 
       if (isFromLogin) {
         userCredential = await _auth.signInWithCredential(credential);
@@ -51,29 +57,56 @@ class AuthRepository {
       }
 
       UserModel userModel;
-      final user = userCredential.user;
+
       if (userCredential.additionalUserInfo!.isNewUser) {
         userModel = UserModel(
-            name: user!.displayName ?? 'Anonymus',
-            profilePic: user.photoURL ?? Constants.avatarDefault,
-            banner: Constants.bannerDefault,
-            uid: user.uid,
-            isAuthenticated: true);
-
-        await _users.doc(user.uid).set(userModel.toMap());
+          name: userCredential.user!.displayName ?? 'No Name',
+          profilePic: userCredential.user!.photoURL ?? Constants.avatarDefault,
+          banner: Constants.bannerDefault,
+          uid: userCredential.user!.uid,
+          isAuthenticated: true,
+        );
+        await _users.doc(userCredential.user!.uid).set(userModel.toMap());
       } else {
-        userModel = await getUserData(user!.uid).first;
+        userModel = await getUserData(userCredential.user!.uid).first;
       }
       return right(userModel);
     } on FirebaseException catch (e) {
-      return left(Failure('Firebase exception occurred: ${e.message}'));
+      throw e.message!;
     } catch (e) {
-      return left(Failure('Unexpected error: ${e.toString()}'));
+      return left(Failure(e.toString()));
+    }
+  }
+
+  FutureEither<UserModel> signInAsGuest() async {
+    try {
+      var userCredential = await _auth.signInAnonymously();
+
+      UserModel userModel = UserModel(
+        name: 'Guest',
+        profilePic: Constants.avatarDefault,
+        banner: Constants.bannerDefault,
+        uid: userCredential.user!.uid,
+        isAuthenticated: false,
+      );
+
+      await _users.doc(userCredential.user!.uid).set(userModel.toMap());
+
+      return right(userModel);
+    } on FirebaseException catch (e) {
+      throw e.message!;
+    } catch (e) {
+      return left(Failure(e.toString()));
     }
   }
 
   Stream<UserModel> getUserData(String uid) {
     return _users.doc(uid).snapshots().map(
         (event) => UserModel.fromMap(event.data() as Map<String, dynamic>));
+  }
+
+  void logOut() async {
+    await _googleSignIn.signOut();
+    await _auth.signOut();
   }
 }
