@@ -18,8 +18,6 @@ class GoogleSigninButton extends ConsumerWidget {
     return FilledButton.icon(
       onPressed: () {
         signInWIthGoogle(context, ref);
-        /*Navigator.of(context)
-            .pushNamedAndRemoveUntil('/main_page/', (route) => false);*/
       },
       icon: Image.asset(
         Constants.googlePath,
