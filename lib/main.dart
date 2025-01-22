@@ -31,28 +31,11 @@ class MyApp extends ConsumerStatefulWidget {
 
 class _MyAppState extends ConsumerState<MyApp> {
   UserModel? userModel;
-  bool isLoading = true;
 
-  @override
-  void initState() {
-    super.initState();
-    checkAuthState();
-  }
-
-  void checkAuthState() async {
-    final currentUser = FirebaseAuth.instance.currentUser;
-    if (currentUser != null) {
-      await getUserData(currentUser);
-    }
-    setState(() {
-      isLoading = false;
-    });
-  }
-
-  Future<void> getUserData(User user) async {
+  void getData(WidgetRef ref, User data) async {
     userModel = await ref
-        .read(authControllerProvider.notifier)
-        .getUserData(user.uid)
+        .watch(authControllerProvider.notifier)
+        .getUserData(data.uid)
         .first;
     ref.read(userProvider.notifier).update((state) => userModel);
   }
@@ -60,28 +43,30 @@ class _MyAppState extends ConsumerState<MyApp> {
   @override
   Widget build(BuildContext context) {
     return ref.watch(authStateChangeProvider).when(
-          data: (data) => MaterialApp.router(
-            debugShowCheckedModeBanner: false,
-            title: 'Whatfood',
-            theme: ThemeData(primarySwatch: Colors.blue),
-            routerDelegate: RoutemasterDelegate(
-              routesBuilder: (context) {
-                if (data != null) {
-                  if (userModel == null) {
-                    getUserData(data);
-                    return RouteMap(routes: {
-                      '/': (_) => const MaterialPage(child: Loader())
-                    });
-                  }
-                  return loggedInRoutes;
-                }
-                return loggedOutRoutes;
-              },
-            ),
-            routeInformationParser: const RoutemasterParser(),
+      data: (data) => MaterialApp.router(
+        debugShowCheckedModeBanner: false,
+        title: 'Whatfood',
+        theme: ThemeData(primarySwatch: Colors.blue),
+        routerDelegate: RoutemasterDelegate(
+          routesBuilder: (context) {
+            if (data != null) {
+              getData(ref, data);
+              return loggedInRoutes;
+            }
+            return loggedOutRoutes;
+          },
+        ),
+        routeInformationParser: const RoutemasterParser(),
+      ),
+      error: (error, stackTrace) => Material(
+        child: Directionality(
+          textDirection: TextDirection.ltr,
+          child: ErrorText(
+            error: error.toString(),
           ),
-          error: (error, stackTrace) => ErrorText(error: error.toString()),
-          loading: () => const Loader(),
-        );
+        ),
+      ),
+      loading: () => const Material(child: Loader()),
+    );
   }
 }

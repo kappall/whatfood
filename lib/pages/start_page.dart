@@ -1,12 +1,15 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:routemaster/routemaster.dart';
 import 'package:whatfood/core/common/google_signin_button.dart';
 import 'package:whatfood/core/common/loader.dart';
+import 'package:whatfood/core/utils.dart';
 import 'package:whatfood/features/home/drawers/profile_drawer.dart';
+import 'package:whatfood/features/home/pages/home_page.dart';
 import 'package:whatfood/features/scanner/camera_scanner.dart';
 import 'package:whatfood/features/auth/controller/auth_controller.dart';
-import '../features/home/pages/home_page.dart';
+import 'package:whatfood/router.dart';
 import 'user_page.dart';
 import 'guest_page.dart';
 
@@ -41,12 +44,7 @@ class StartPage extends ConsumerWidget {
                   ),
                   const Spacer(),
                   FilledButton(
-                    onPressed: () {
-                      Navigator.of(context).pushNamedAndRemoveUntil(
-                        '/register/',
-                        (route) => true,
-                      );
-                    },
+                    onPressed: () => Routemaster.of(context).push('/register'),
                     style: FilledButton.styleFrom(
                       backgroundColor: Colors.lightGreen,
                       shape: RoundedRectangleBorder(
@@ -67,12 +65,7 @@ class StartPage extends ConsumerWidget {
                   ),
                   const SizedBox(height: 15),
                   OutlinedButton(
-                    onPressed: () {
-                      Navigator.of(context).pushNamedAndRemoveUntil(
-                        '/login/',
-                        (route) => true,
-                      );
-                    },
+                    onPressed: () => Routemaster.of(context).push('/login/'),
                     style: OutlinedButton.styleFrom(
                       side: const BorderSide(color: Colors.lightGreen),
                       shape: RoundedRectangleBorder(
@@ -94,36 +87,7 @@ class StartPage extends ConsumerWidget {
                   const SizedBox(height: 15),
                   const GoogleSigninButton(),
                   const SizedBox(height: 30),
-                  TextButton(
-                    onPressed: () async {
-                      try {
-                        await FirebaseAuth.instance.signInAnonymously();
-                        Navigator.of(context).pushNamedAndRemoveUntil(
-                          '/main_page_guest/',
-                          (route) => false,
-                        );
-                      } catch (e) {
-                        print('Errore durante il login anonimo: $e');
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text(
-                              'Error during guest login: $e',
-                              style: const TextStyle(color: Colors.white),
-                            ),
-                            backgroundColor: Colors.red,
-                          ),
-                        );
-                      }
-                    },
-                    child: const Text(
-                      'Enter as Guest',
-                      style: TextStyle(
-                        fontSize: 16,
-                        color: Colors.black,
-                        decoration: TextDecoration.underline,
-                      ),
-                    ),
-                  ),
+                  const GuestAccessWidget(),
                   const Spacer(),
                 ],
               ),
@@ -142,23 +106,22 @@ class GuestAccessWidget extends StatelessWidget {
         try {
           await FirebaseAuth.instance.signInAnonymously();
           if (!context.mounted) return;
-          Navigator.of(context)
-              .pushNamedAndRemoveUntil('/main_page_guest/', (route) => false);
-        } catch (e) {
-          print('Errore durante il login anonimo: $e');
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(
-                'Errore durante l\'accesso anonimo: $e',
-                style: const TextStyle(color: Colors.white),
-              ),
-              backgroundColor: Colors.red,
-            ),
+          MaterialApp.router(
+            routerDelegate:
+                RoutemasterDelegate(routesBuilder: (context) => guestRoutes),
+            routeInformationParser: const RoutemasterParser(),
           );
+        } catch (e) {
+          showSnackBar(context, 'Error during guest login: ${e.toString()}');
         }
       },
       child: const Text(
-        'Enter as guest',
+        'Enter as Guest',
+        style: TextStyle(
+          fontSize: 16,
+          color: Colors.black,
+          decoration: TextDecoration.underline,
+        ),
       ),
     );
   }
