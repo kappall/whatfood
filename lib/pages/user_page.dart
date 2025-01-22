@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 //TODO: temp, evry class should have a file when implmented
 class RecipePage extends StatelessWidget {
-  const RecipePage({super.key});
+  const RecipePage({super.key, required GlobalKey<ScaffoldState> scaffoldKey});
 
   @override
   Widget build(BuildContext context) {
@@ -11,7 +11,7 @@ class RecipePage extends StatelessWidget {
 }
 
 class ShopPage extends StatelessWidget {
-  const ShopPage({super.key});
+  const ShopPage({super.key, required GlobalKey<ScaffoldState> scaffoldKey});
 
   @override
   Widget build(BuildContext context) {
@@ -20,7 +20,8 @@ class ShopPage extends StatelessWidget {
 }
 
 class FavoritesPage extends StatelessWidget {
-  const FavoritesPage({super.key});
+  const FavoritesPage(
+      {super.key, required GlobalKey<ScaffoldState> scaffoldKey});
 
   @override
   Widget build(BuildContext context) {

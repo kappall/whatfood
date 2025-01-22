@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:whatfood/core/common/google_signin_button.dart';
 import 'package:whatfood/core/common/loader.dart';
+import 'package:whatfood/features/home/drawers/profile_drawer.dart';
 import 'package:whatfood/features/scanner/camera_scanner.dart';
 import 'package:whatfood/features/auth/controller/auth_controller.dart';
 import '../features/home/pages/home_page.dart';
@@ -165,7 +166,6 @@ class GuestAccessWidget extends StatelessWidget {
 
 class MainPage extends StatefulWidget {
   final bool isGuest;
-
   const MainPage({super.key, required this.isGuest});
 
   @override
@@ -174,27 +174,27 @@ class MainPage extends StatefulWidget {
 
 class _MainPageState extends State<MainPage> {
   int _selectedIndex = 2;
+  final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
   late final List<Widget> _pages;
 
   @override
   void initState() {
     super.initState();
-
     if (widget.isGuest) {
       _pages = [
         CameraScanner(),
-        GuestRecipePage(),
-        GuestHomePage(),
-        GuestShopPage(),
-        GuestFavorites(),
+        GuestRecipePage(scaffoldKey: _scaffoldKey),
+        GuestHomePage(scaffoldKey: _scaffoldKey),
+        GuestShopPage(scaffoldKey: _scaffoldKey),
+        GuestFavorites(scaffoldKey: _scaffoldKey),
       ];
     } else {
       _pages = [
         CameraScanner(),
-        RecipePage(),
-        HomePage(),
-        ShopPage(),
-        FavoritesPage(),
+        RecipePage(scaffoldKey: _scaffoldKey),
+        HomePage(scaffoldKey: _scaffoldKey),
+        ShopPage(scaffoldKey: _scaffoldKey),
+        FavoritesPage(scaffoldKey: _scaffoldKey),
       ];
     }
   }
@@ -207,38 +207,42 @@ class _MainPageState extends State<MainPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: const Color.fromARGB(255, 235, 235, 235),
-      body: _pages[_selectedIndex],
-      bottomNavigationBar: BottomNavigationBar(
-        items: const [
-          BottomNavigationBarItem(
-            icon: Icon(Icons.document_scanner_outlined),
-            label: 'Scanner',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.book_outlined),
-            label: 'Recipes',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.home_outlined),
-            label: 'Home',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.shopping_cart_outlined),
-            label: 'Items',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.star_outline),
-            label: 'Favorites',
-          ),
-        ],
-        currentIndex: _selectedIndex,
-        backgroundColor: Colors.white,
-        selectedItemColor: Colors.black,
-        unselectedItemColor: Colors.grey,
-        onTap: _onItemTapped,
-        type: BottomNavigationBarType.fixed,
+    return SafeArea(
+      child: Scaffold(
+        key: _scaffoldKey,
+        backgroundColor: const Color.fromARGB(255, 235, 235, 235),
+        body: _pages[_selectedIndex],
+        endDrawer: ProfileDrawer(),
+        bottomNavigationBar: BottomNavigationBar(
+          items: const [
+            BottomNavigationBarItem(
+              icon: Icon(Icons.document_scanner_outlined),
+              label: 'Scanner',
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.book_outlined),
+              label: 'Recipes',
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.home_outlined),
+              label: 'Home',
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.shopping_cart_outlined),
+              label: 'Items',
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.star_outline),
+              label: 'Favorites',
+            ),
+          ],
+          currentIndex: _selectedIndex,
+          backgroundColor: Colors.white,
+          selectedItemColor: Colors.black,
+          unselectedItemColor: Colors.grey,
+          onTap: _onItemTapped,
+          type: BottomNavigationBarType.fixed,
+        ),
       ),
     );
   }

@@ -2,7 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:whatfood/pages/start_page.dart';
 
 class GuestHomePage extends StatelessWidget {
-  const GuestHomePage({super.key});
+  const GuestHomePage(
+      {super.key, required GlobalKey<ScaffoldState> scaffoldKey});
 
   @override
   Widget build(BuildContext context) {
@@ -30,7 +31,8 @@ class GuestHomePage extends StatelessWidget {
 }
 
 class GuestShopPage extends StatelessWidget {
-  const GuestShopPage({super.key});
+  const GuestShopPage(
+      {super.key, required GlobalKey<ScaffoldState> scaffoldKey});
 
   @override
   Widget build(BuildContext context) {
@@ -79,7 +81,8 @@ class GuestShopPage extends StatelessWidget {
 }
 
 class GuestRecipePage extends StatelessWidget {
-  const GuestRecipePage({super.key});
+  const GuestRecipePage(
+      {super.key, required GlobalKey<ScaffoldState> scaffoldKey});
 
   @override
   Widget build(BuildContext context) {
@@ -178,7 +181,8 @@ class GuestProfilePage extends StatelessWidget {
 }
 
 class GuestFavorites extends StatelessWidget {
-  const GuestFavorites({super.key});
+  const GuestFavorites(
+      {super.key, required GlobalKey<ScaffoldState> scaffoldKey});
 
   @override
   Widget build(BuildContext context) {

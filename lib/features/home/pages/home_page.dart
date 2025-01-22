@@ -3,39 +3,52 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:whatfood/features/auth/controller/auth_controller.dart';
 
 class HomePage extends ConsumerWidget {
-  const HomePage({super.key});
+  final GlobalKey<ScaffoldState> scaffoldKey;
+
+  const HomePage({
+    super.key,
+    required this.scaffoldKey,
+  });
+
+  void displayEndDrawer(BuildContext context) {
+    Scaffold.of(context).openEndDrawer();
+  }
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final user = ref.watch(userProvider)!;
 
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Home'),
-        titleTextStyle: TextStyle(
-          fontSize: 32,
-          fontWeight: FontWeight.bold,
-          color: Colors.black,
-        ),
-        toolbarHeight: 100.0,
-        centerTitle: false,
-        actions: [
-          IconButton(
-            onPressed: () {},
-            icon: const Icon(Icons.search),
-            iconSize: 32,
+    return Column(
+      children: [
+        AppBar(
+          title: const Text('Home'),
+          titleTextStyle: const TextStyle(
+            fontSize: 32,
+            fontWeight: FontWeight.bold,
+            color: Colors.black,
           ),
-          Padding(
-              padding: const EdgeInsets.only(right: 16.0),
-              child: IconButton(
+          centerTitle: false,
+          actions: [
+            IconButton(
+              onPressed: () {},
+              icon: const Icon(Icons.search),
+              iconSize: 32,
+            ),
+            Builder(builder: (context) {
+              return IconButton(
                 icon: CircleAvatar(
                   backgroundImage: NetworkImage(user.profilePic),
                   radius: 20,
                 ),
-                onPressed: () {},
-              )),
-        ],
-      ),
+                onPressed: () {
+                  scaffoldKey.currentState?.openEndDrawer();
+                },
+              );
+            }),
+          ],
+        ),
+        Expanded(child: Text('data'))
+      ],
     );
   }
 }
