@@ -1,5 +1,6 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:routemaster/routemaster.dart';
 import 'package:whatfood/features/auth/views/verify_email_view.dart';
 
 class RegisterView extends StatefulWidget {
@@ -133,9 +134,7 @@ class _RegisterViewState extends State<RegisterView> {
             ),
             const SizedBox(height: 15),
             TextButton(
-              onPressed: () {
-                Navigator.of(context).pushNamed('/login/');
-              },
+              onPressed: () => Navigator.of(context).pushNamedAndRemoveUntil('/login/', (_)=>false),
               child: const Text(
                 'Already have an account? Login here',
                 style: TextStyle(fontSize: 16, color: Colors.lightGreen),

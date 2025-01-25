@@ -1,7 +1,7 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:routemaster/routemaster.dart';
+import 'package:uuid/uuid.dart';
 import 'package:whatfood/core/common/google_signin_button.dart';
 import 'package:whatfood/core/common/loader.dart';
 import 'package:whatfood/core/utils.dart';
@@ -44,7 +44,7 @@ class StartPage extends ConsumerWidget {
                   ),
                   const Spacer(),
                   FilledButton(
-                    onPressed: () => Routemaster.of(context).push('/register'),
+                    onPressed: () => Navigator.of(context).pushNamedAndRemoveUntil('/register',(_)=>true),
                     style: FilledButton.styleFrom(
                       backgroundColor: Colors.lightGreen,
                       shape: RoundedRectangleBorder(
@@ -65,7 +65,7 @@ class StartPage extends ConsumerWidget {
                   ),
                   const SizedBox(height: 15),
                   OutlinedButton(
-                    onPressed: () => Routemaster.of(context).push('/login/'),
+                    onPressed: () => Navigator.of(context).pushNamedAndRemoveUntil('/login/',(_)=>true),
                     style: OutlinedButton.styleFrom(
                       side: const BorderSide(color: Colors.lightGreen),
                       shape: RoundedRectangleBorder(
@@ -106,11 +106,7 @@ class GuestAccessWidget extends StatelessWidget {
         try {
           await FirebaseAuth.instance.signInAnonymously();
           if (!context.mounted) return;
-          MaterialApp.router(
-            routerDelegate:
-                RoutemasterDelegate(routesBuilder: (context) => guestRoutes),
-            routeInformationParser: const RoutemasterParser(),
-          );
+          Navigator.of(context).pushNamedAndRemoveUntil('main_gurest', (_)=>false);
         } catch (e) {
           showSnackBar(context, 'Error during guest login: ${e.toString()}');
         }
@@ -175,7 +171,7 @@ class _MainPageState extends State<MainPage> {
         key: _scaffoldKey,
         backgroundColor: const Color.fromARGB(255, 235, 235, 235),
         body: _pages[_selectedIndex],
-        endDrawer: ProfileDrawer(),
+        endDrawer: ProfileDrawer(user: widget.isGuest? null : FirebaseAuth.instance.currentUser),
         bottomNavigationBar: BottomNavigationBar(
           items: const [
             BottomNavigationBarItem(

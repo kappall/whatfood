@@ -1,5 +1,8 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:routemaster/routemaster.dart';
+import 'package:whatfood/router.dart';
+
 
 class LoginView extends StatefulWidget {
   const LoginView({super.key});
@@ -94,14 +97,8 @@ class _LoginViewState extends State<LoginView> {
                 try {
                   final userCredential = await FirebaseAuth.instance
                       .signInWithEmailAndPassword(
-                          email: email, password: password);
-
-                  if (!context.mounted) return;
-
-                  Navigator.of(context).pushNamedAndRemoveUntil(
-                    '/main_page/',
-                    (route) => false,
-                  );
+                      email: email, password: password);
+                  debugPrint(userCredential.toString());
                 } on FirebaseAuthException catch (e) {
                   String errorMessage;
                   switch (e.code) {
@@ -118,7 +115,6 @@ class _LoginViewState extends State<LoginView> {
                       errorMessage = 'Login failed: ${e.message}';
                   }
 
-                  // Mostra il messaggio di errore all'utente
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
                       content: Text(
@@ -158,7 +154,7 @@ class _LoginViewState extends State<LoginView> {
               onPressed: () {
                 Navigator.of(context).pushNamedAndRemoveUntil(
                   '/register/',
-                  (route) => false,
+                      (route) => false,
                 );
               },
               child: const Text(

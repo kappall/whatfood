@@ -14,8 +14,9 @@ class ButtonStyles {
         fontSize: 18,
         fontWeight: FontWeight.bold,
       ),
+      minimumSize: const Size(double.infinity, 50),
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(12),
       ),
     );
   }

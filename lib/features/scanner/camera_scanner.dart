@@ -10,7 +10,7 @@ import 'package:http/http.dart' as http;
 import 'package:image_picker/image_picker.dart';
 import 'dart:convert' as convert;
 
-import 'package:whatfood/pages/painters/barcode_detector_painter.dart';
+import 'package:whatfood/features/scanner/painters/barcode_detector_painter.dart';
 
 enum DetectorViewMode { liveFeed, gallery }
 
