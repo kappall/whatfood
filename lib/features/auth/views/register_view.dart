@@ -1,7 +1,10 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:routemaster/routemaster.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:whatfood/core/constants/costants.dart';
+import 'package:whatfood/core/utils.dart';
 import 'package:whatfood/features/auth/views/verify_email_view.dart';
+import 'package:whatfood/models/user_model.dart';
 
 class RegisterView extends StatefulWidget {
   const RegisterView({super.key});
@@ -13,11 +16,13 @@ class RegisterView extends StatefulWidget {
 class _RegisterViewState extends State<RegisterView> {
   late final TextEditingController _emailController;
   late final TextEditingController _passwordController;
+  late final TextEditingController _nameController;
 
   @override
   void initState() {
     _emailController = TextEditingController();
     _passwordController = TextEditingController();
+    _nameController = TextEditingController();
     super.initState();
   }
 
@@ -25,6 +30,7 @@ class _RegisterViewState extends State<RegisterView> {
   void dispose() {
     _emailController.dispose();
     _passwordController.dispose();
+    _nameController.dispose();
     super.dispose();
   }
 
@@ -55,6 +61,20 @@ class _RegisterViewState extends State<RegisterView> {
               ),
             ),
             const SizedBox(height: 20),
+            TextField(
+              controller: _nameController,
+              decoration: InputDecoration(
+                hintText: "Enter your name",
+                hintStyle: const TextStyle(color: Colors.grey),
+                filled: true,
+                fillColor: Colors.white,
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(10),
+                  borderSide: BorderSide.none,
+                ),
+              ),
+            ),
+            const SizedBox(height: 15),
             TextField(
               controller: _emailController,
               enableSuggestions: true,
@@ -93,31 +113,37 @@ class _RegisterViewState extends State<RegisterView> {
               onPressed: () async {
                 final email = _emailController.text.trim();
                 final password = _passwordController.text.trim();
+                final name = _nameController.text.trim();
                 try {
                   final userCredential = await FirebaseAuth.instance
                       .createUserWithEmailAndPassword(
                           email: email, password: password);
 
-                  // Invia email di verifica
                   final user = userCredential.user;
                   await user?.sendEmailVerification();
+                  final userModel = UserModel(
+                    name: name,
+                    profilePic: Constants.avatarDefault,
+                    banner: Constants.bannerDefault,
+                    uid: user!.uid,
+                    isAuthenticated:
+                        false, // Imposta isAuthenticated su false inizialmente
+                  );
+
+                  await FirebaseFirestore.instance
+                      .collection('users')
+                      .doc(user.uid)
+                      .set(userModel.toMap());
+
                   if (!context.mounted) return;
-                  // Naviga alla schermata di verifica email
+
                   Navigator.of(context).pushReplacement(
                     MaterialPageRoute(
                       builder: (context) => const VerifyEmailView(),
                     ),
                   );
                 } on FirebaseAuthException catch (e) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text(
-                        e.message ?? 'Registration failed',
-                        style: const TextStyle(color: Colors.white),
-                      ),
-                      backgroundColor: Colors.red,
-                    ),
-                  );
+                  showSnackBar(context, e.message ?? 'Registration failed');
                 }
               },
               style: FilledButton.styleFrom(
@@ -134,7 +160,8 @@ class _RegisterViewState extends State<RegisterView> {
             ),
             const SizedBox(height: 15),
             TextButton(
-              onPressed: () => Navigator.of(context).pushNamedAndRemoveUntil('/login/', (_)=>false),
+              onPressed: () => Navigator.of(context)
+                  .pushNamedAndRemoveUntil('/login/', (_) => false),
               child: const Text(
                 'Already have an account? Login here',
                 style: TextStyle(fontSize: 16, color: Colors.lightGreen),

@@ -1,5 +1,7 @@
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:whatfood/core/utils.dart';
 
 class VerifyEmailView extends StatefulWidget {
   const VerifyEmailView({super.key});
@@ -48,15 +50,7 @@ class _VerifyEmailViewState extends State<VerifyEmailView> {
                 final user = FirebaseAuth.instance.currentUser;
                 await user?.sendEmailVerification();
                 if (!context.mounted) return;
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text(
-                      'Verification email sent again!',
-                      style: TextStyle(color: Colors.white),
-                    ),
-                    backgroundColor: Colors.green,
-                  ),
-                );
+                showSnackBar(context, 'Verification email sent!');
               },
               style: FilledButton.styleFrom(
                 backgroundColor: Colors.lightGreen,
@@ -79,6 +73,13 @@ class _VerifyEmailViewState extends State<VerifyEmailView> {
                 if (!context.mounted) return;
 
                 if (user?.emailVerified ?? false) {
+                  await FirebaseFirestore.instance
+                      .collection('users')
+                      .doc(user?.uid)
+                      .update({
+                    'isAuthenticated': true,
+                  });
+                  if (!context.mounted) return;
                   Navigator.of(context).pushNamedAndRemoveUntil(
                     '/main_page/',
                     (route) => false,

@@ -12,8 +12,8 @@ import 'features/auth/views/verify_email_view.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
-  runApp(
-    ProviderScope(child: MaterialApp(
+  runApp(ProviderScope(
+    child: MaterialApp(
       title: 'Flutter Demo',
       theme: ThemeData(
         primarySwatch: Colors.blue,
@@ -23,9 +23,10 @@ void main() {
         '/login/': (context) => const LoginView(),
         '/register/': (context) => const RegisterView(),
         '/main_guest/': (context) => const MainPage(isGuest: true),
+        '/main_page/': (context) => MainPage(isGuest: false),
       },
-    ),)
-  );
+    ),
+  ));
 }
 
 class HomePage extends StatelessWidget {

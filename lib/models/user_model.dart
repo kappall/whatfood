@@ -4,6 +4,7 @@ class UserModel {
   final String banner;
   final String uid;
   final bool isAuthenticated;
+
   UserModel({
     required this.name,
     required this.profilePic,
@@ -67,9 +68,9 @@ class UserModel {
   @override
   int get hashCode {
     return name.hashCode ^
-        profilePic.hashCode ^
-        banner.hashCode ^
-        uid.hashCode ^
-        isAuthenticated.hashCode;
+    profilePic.hashCode ^
+    banner.hashCode ^
+    uid.hashCode ^
+    isAuthenticated.hashCode;
   }
 }

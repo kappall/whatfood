@@ -9,6 +9,7 @@ import 'package:whatfood/core/providers/firebase_providers.dart';
 import 'package:whatfood/core/type_def.dart';
 import 'package:whatfood/models/user_model.dart';
 import 'package:whatfood/core/failure.dart';
+import 'package:rxdart/rxdart.dart';
 
 final authRepositoryProvider = Provider(
   (ref) => AuthRepository(
@@ -34,7 +35,11 @@ class AuthRepository {
   CollectionReference get _users =>
       _firestore.collection(FirebaseConstants.usersCollection);
 
-  Stream<User?> get authStateChange => _auth.authStateChanges();
+  Stream<User?> get authStateChange {
+    return _auth.authStateChanges().doOnData((user) {
+      print("Auth state change: $user");
+    });
+  }
 
   FutureEither<UserModel> signInWithGoogle(bool isFromLogin) async {
     try {

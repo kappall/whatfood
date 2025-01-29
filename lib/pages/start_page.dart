@@ -1,7 +1,7 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:uuid/uuid.dart';
 import 'package:whatfood/core/common/google_signin_button.dart';
 import 'package:whatfood/core/common/loader.dart';
 import 'package:whatfood/core/utils.dart';
@@ -9,7 +9,7 @@ import 'package:whatfood/features/home/drawers/profile_drawer.dart';
 import 'package:whatfood/features/home/pages/home_page.dart';
 import 'package:whatfood/features/scanner/camera_scanner.dart';
 import 'package:whatfood/features/auth/controller/auth_controller.dart';
-import 'package:whatfood/router.dart';
+import 'package:whatfood/models/user_model.dart';
 import 'user_page.dart';
 import 'guest_page.dart';
 
@@ -44,7 +44,8 @@ class StartPage extends ConsumerWidget {
                   ),
                   const Spacer(),
                   FilledButton(
-                    onPressed: () => Navigator.of(context).pushNamedAndRemoveUntil('/register',(_)=>true),
+                    onPressed: () => Navigator.of(context)
+                        .pushNamedAndRemoveUntil('/register', (_) => true),
                     style: FilledButton.styleFrom(
                       backgroundColor: Colors.lightGreen,
                       shape: RoundedRectangleBorder(
@@ -65,7 +66,8 @@ class StartPage extends ConsumerWidget {
                   ),
                   const SizedBox(height: 15),
                   OutlinedButton(
-                    onPressed: () => Navigator.of(context).pushNamedAndRemoveUntil('/login/',(_)=>true),
+                    onPressed: () => Navigator.of(context)
+                        .pushNamedAndRemoveUntil('/login/', (_) => true),
                     style: OutlinedButton.styleFrom(
                       side: const BorderSide(color: Colors.lightGreen),
                       shape: RoundedRectangleBorder(
@@ -106,7 +108,8 @@ class GuestAccessWidget extends StatelessWidget {
         try {
           await FirebaseAuth.instance.signInAnonymously();
           if (!context.mounted) return;
-          Navigator.of(context).pushNamedAndRemoveUntil('main_gurest', (_)=>false);
+          Navigator.of(context)
+              .pushNamedAndRemoveUntil('main_gurest', (_) => false);
         } catch (e) {
           showSnackBar(context, 'Error during guest login: ${e.toString()}');
         }
@@ -135,10 +138,16 @@ class _MainPageState extends State<MainPage> {
   int _selectedIndex = 2;
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
   late final List<Widget> _pages;
+  UserModel? userModel; // Variabile per memorizzare i dati dell'utente
 
   @override
   void initState() {
     super.initState();
+    if (!widget.isGuest) {
+      _fetchUserData(); // Recupera i dati dell'utente solo se non è un guest
+    }
+
+    // Inizializza le pagine
     if (widget.isGuest) {
       _pages = [
         CameraScanner(),
@@ -158,6 +167,23 @@ class _MainPageState extends State<MainPage> {
     }
   }
 
+  // Metodo per recuperare i dati dell'utente da Firestore
+  Future<void> _fetchUserData() async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user != null) {
+      final userDoc = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(user.uid)
+          .get();
+
+      if (userDoc.exists) {
+        setState(() {
+          userModel = UserModel.fromMap(userDoc.data() as Map<String, dynamic>);
+        });
+      }
+    }
+  }
+
   void _onItemTapped(int index) {
     setState(() {
       _selectedIndex = index;
@@ -171,7 +197,10 @@ class _MainPageState extends State<MainPage> {
         key: _scaffoldKey,
         backgroundColor: const Color.fromARGB(255, 235, 235, 235),
         body: _pages[_selectedIndex],
-        endDrawer: ProfileDrawer(user: widget.isGuest? null : FirebaseAuth.instance.currentUser),
+        endDrawer: ProfileDrawer(
+          user: widget.isGuest ? null : FirebaseAuth.instance.currentUser,
+          userModel: userModel, // Passa i dati dell'utente al ProfileDrawer
+        ),
         bottomNavigationBar: BottomNavigationBar(
           items: const [
             BottomNavigationBarItem(

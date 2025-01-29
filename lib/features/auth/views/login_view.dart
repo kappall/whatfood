@@ -1,8 +1,8 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:routemaster/routemaster.dart';
+import 'package:whatfood/core/utils.dart';
 import 'package:whatfood/router.dart';
-
 
 class LoginView extends StatefulWidget {
   const LoginView({super.key});
@@ -97,7 +97,7 @@ class _LoginViewState extends State<LoginView> {
                 try {
                   final userCredential = await FirebaseAuth.instance
                       .signInWithEmailAndPassword(
-                      email: email, password: password);
+                          email: email, password: password);
                   debugPrint(userCredential.toString());
                 } on FirebaseAuthException catch (e) {
                   String errorMessage;
@@ -114,27 +114,11 @@ class _LoginViewState extends State<LoginView> {
                     default:
                       errorMessage = 'Login failed: ${e.message}';
                   }
-
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text(
-                        errorMessage,
-                        style: const TextStyle(color: Colors.white),
-                      ),
-                      backgroundColor: Colors.red,
-                    ),
-                  );
+                  if (!context.mounted) return;
+                  showSnackBar(context, errorMessage);
                 } catch (e) {
-                  // Gestione generica di altri errori
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text(
-                        'An unexpected error occurred: $e',
-                        style: const TextStyle(color: Colors.white),
-                      ),
-                      backgroundColor: Colors.red,
-                    ),
-                  );
+                  if (!context.mounted) return;
+                  showSnackBar(context, 'An unexpected error occurred: $e');
                 }
               },
               style: FilledButton.styleFrom(
@@ -154,7 +138,7 @@ class _LoginViewState extends State<LoginView> {
               onPressed: () {
                 Navigator.of(context).pushNamedAndRemoveUntil(
                   '/register/',
-                      (route) => false,
+                  (route) => false,
                 );
               },
               child: const Text(
