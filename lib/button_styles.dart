@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 
 class ButtonStyles {
-  // Stile per ElevatedButton
   static ButtonStyle elevatedButtonStyle({
     Color backgroundColor = Colors.green,
     Color foregroundColor = Colors.white,

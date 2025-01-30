@@ -35,7 +35,7 @@ class _LoginViewState extends State<LoginView> {
       backgroundColor: const Color(0xFFF5F5F5),
       appBar: AppBar(
         title: const Text('Login'),
-        backgroundColor: Colors.lightGreen,
+        backgroundColor: Colors.green,
         centerTitle: true,
       ),
       body: Padding(
@@ -98,7 +98,10 @@ class _LoginViewState extends State<LoginView> {
                   final userCredential = await FirebaseAuth.instance
                       .signInWithEmailAndPassword(
                           email: email, password: password);
-                  debugPrint(userCredential.toString());
+                  Navigator.of(context).pushNamedAndRemoveUntil(
+                    '/main_page/',
+                    (route) => false,
+                  );
                 } on FirebaseAuthException catch (e) {
                   String errorMessage;
                   switch (e.code) {

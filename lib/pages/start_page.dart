@@ -216,8 +216,8 @@ class _MainPageState extends State<MainPage> {
               label: 'Home',
             ),
             BottomNavigationBarItem(
-              icon: Icon(Icons.shopping_cart_outlined),
-              label: 'Items',
+              icon: Icon(Icons.receipt_long),
+              label: 'Report',
             ),
             BottomNavigationBarItem(
               icon: Icon(Icons.star_outline),
@@ -226,7 +226,7 @@ class _MainPageState extends State<MainPage> {
           ],
           currentIndex: _selectedIndex,
           backgroundColor: Colors.white,
-          selectedItemColor: Colors.black,
+          selectedItemColor: Colors.red,
           unselectedItemColor: Colors.grey,
           onTap: _onItemTapped,
           type: BottomNavigationBarType.fixed,

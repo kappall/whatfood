@@ -11,6 +11,9 @@ import 'package:image_picker/image_picker.dart';
 import 'dart:convert' as convert;
 
 import 'package:whatfood/features/scanner/painters/barcode_detector_painter.dart';
+import 'package:whatfood/features/scanner/product_modal.dart';
+import 'package:whatfood/features/scanner/widgets/detection_toggle.dart';
+import 'package:whatfood/features/scanner/widgets/zoom_control.dart';
 
 enum DetectorViewMode { liveFeed, gallery }
 
@@ -170,7 +173,7 @@ class CameraScannerState extends State<CameraScanner> {
     try {
       final url = Uri.https(
         'world.openfoodfacts.org',
-        '/api/v2/product/$_scannedCode.json',
+        '/api/v2/product/$_scannedCode?fields=product_name,nutriscore_data,nutriments,nutrition_grades',
       );
       _scannedCode = '';
 
@@ -187,7 +190,7 @@ class CameraScannerState extends State<CameraScanner> {
           isScrollControlled: true,
           useSafeArea: true,
           backgroundColor: Colors.transparent,
-          builder: (context) => _buildProductModal(productData),
+          builder: (context) => ProductModal(productData: productData),
         );
       } else {
         await _showErrorDialog();
@@ -211,80 +214,9 @@ class CameraScannerState extends State<CameraScanner> {
     debugPrint("imageStream restarting;");
     await _controller?.stopImageStream();
     debugPrint("imageStream stopped\n");
-    await Future.delayed(
-        Duration(milliseconds: 1500)); // Pausa prima di riavviare
+    await Future.delayed(Duration(milliseconds: 1500));
     await _controller?.startImageStream(_processCameraImage);
     debugPrint("imageStream started\n\n\n");
-  }
-
-  Widget _buildProductModal(Map<String, dynamic> productData) {
-    return Container(
-      width: MediaQuery.of(context).size.width,
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      child: DraggableScrollableSheet(
-        expand: false,
-        builder: (context, scrollController) => SingleChildScrollView(
-          controller: scrollController,
-          child: Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Container(
-                  height: 5,
-                  width: 50,
-                  margin: const EdgeInsets.only(bottom: 16),
-                  decoration: BoxDecoration(
-                    color: Colors.grey[300],
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                ),
-                Text(
-                  productData['product_name'] ??
-                      'Nome prodotto non disponibile',
-                  style: const TextStyle(
-                    fontSize: 22,
-                    fontWeight: FontWeight.bold,
-                  ),
-                  textAlign: TextAlign.center,
-                ),
-                const SizedBox(height: 8),
-                if (productData['image_url']?.isNotEmpty ?? false)
-                  Image.network(productData['image_url']!),
-                const SizedBox(height: 16),
-                Text(
-                  productData['ingredients_text'] ??
-                      'Descrizione non disponibile',
-                  style: const TextStyle(
-                    fontSize: 16,
-                    color: Colors.black54,
-                  ),
-                  textAlign: TextAlign.center,
-                ),
-                const SizedBox(height: 16),
-                Text(
-                  'Codice a barre: ${productData['code'] ?? 'Non disponibile'}',
-                  style: const TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.black54,
-                  ),
-                  textAlign: TextAlign.center,
-                ),
-                const SizedBox(height: 16),
-                ElevatedButton(
-                  onPressed: () => Navigator.pop(context),
-                  child: const Text('Chiudi'),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
   }
 
   Future<void> _showErrorDialog() {
@@ -362,6 +294,7 @@ class CameraScannerState extends State<CameraScanner> {
   bool _isGalleryMode = false;
 
   @override
+  @override
   Widget build(BuildContext context) {
     if (!_isInitialized || _controller?.value.isInitialized != true) {
       return const Center(child: CircularProgressIndicator());
@@ -379,30 +312,25 @@ class CameraScannerState extends State<CameraScanner> {
                   !_isGalleryMode ? (_customPaint ?? Container()) : Container(),
             ),
           ),
-          _detectionViewModeToggle(),
-          _zoomControl(),
+          DetectionToggle(
+            onPressed: _getImage,
+          ),
+          ZoomControl(
+            currentZoomLevel: _currentZoomLevel,
+            minAvailableZoom: _minAvailableZoom,
+            maxAvailableZoom: _maxAvailableZoom,
+            onZoomChanged: (value) async {
+              setState(() {
+                _currentZoomLevel = value;
+              });
+              await _controller?.setZoomLevel(value);
+            },
+          ),
         ],
       ),
     );
   }
 
-  Widget _detectionViewModeToggle() => Positioned(
-        bottom: 8,
-        left: 8,
-        child: SizedBox(
-          height: 50.0,
-          width: 50.0,
-          child: FloatingActionButton(
-            heroTag: Object(),
-            onPressed: () => _getImage(ImageSource.gallery),
-            backgroundColor: Colors.black54,
-            child: Icon(
-              Icons.photo_library_outlined,
-              size: 25,
-            ),
-          ),
-        ),
-      );
   Future _getImage(ImageSource source) async {
     setState(() {
       _isGalleryMode = true;
@@ -418,7 +346,7 @@ class CameraScannerState extends State<CameraScanner> {
     } finally {
       if (mounted) {
         setState(() {
-          _isGalleryMode = false; // Resetta il flag dopo aver finito
+          _isGalleryMode = false;
         });
       }
     }
@@ -428,53 +356,4 @@ class CameraScannerState extends State<CameraScanner> {
     final inputImage = InputImage.fromFilePath(path);
     await _processImage(inputImage);
   }
-
-  Widget _zoomControl() => Positioned(
-        bottom: 16,
-        left: 0,
-        right: 0,
-        child: Align(
-          alignment: Alignment.bottomCenter,
-          child: SizedBox(
-            width: 250,
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                Expanded(
-                  child: Slider(
-                    value: _currentZoomLevel,
-                    min: _minAvailableZoom,
-                    max: _maxAvailableZoom,
-                    activeColor: Colors.white,
-                    inactiveColor: Colors.white30,
-                    onChanged: (value) async {
-                      setState(() {
-                        _currentZoomLevel = value;
-                      });
-                      await _controller?.setZoomLevel(value);
-                    },
-                  ),
-                ),
-                Container(
-                  width: 50,
-                  decoration: BoxDecoration(
-                    color: Colors.black54,
-                    borderRadius: BorderRadius.circular(10.0),
-                  ),
-                  child: Padding(
-                    padding: const EdgeInsets.all(8.0),
-                    child: Center(
-                      child: Text(
-                        '${_currentZoomLevel.toStringAsFixed(1)}x',
-                        style: TextStyle(color: Colors.white),
-                      ),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-      );
 }

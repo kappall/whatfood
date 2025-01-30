@@ -54,17 +54,20 @@ class _HomePage extends State<HomePage> {
       children: [
         AppBar(
           title: const Text('Home'),
-          backgroundColor: Colors.lightGreen,
+          backgroundColor: Colors.green,
           titleTextStyle: const TextStyle(
             fontSize: 32,
             fontWeight: FontWeight.bold,
-            color: Colors.black,
+            color: Colors.white,
           ),
           centerTitle: false,
           actions: [
             IconButton(
               onPressed: () {},
-              icon: const Icon(Icons.search),
+              icon: const Icon(
+                Icons.search,
+                color: Colors.white,
+              ),
               iconSize: 32,
             ),
             Builder(builder: (context) {

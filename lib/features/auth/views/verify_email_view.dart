@@ -17,7 +17,7 @@ class _VerifyEmailViewState extends State<VerifyEmailView> {
       backgroundColor: const Color(0xFFF5F5F5),
       appBar: AppBar(
         title: const Text('Verify Email'),
-        backgroundColor: Colors.lightGreen,
+        backgroundColor: Colors.green,
         centerTitle: true,
       ),
       body: Padding(

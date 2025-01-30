@@ -138,7 +138,7 @@ class GuestProfilePage extends StatelessWidget {
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
-        backgroundColor: Colors.grey,
+        backgroundColor: Colors.green,
         title: const Text('Account'),
       ),
       body: Column(
