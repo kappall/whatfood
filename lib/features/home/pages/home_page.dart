@@ -16,18 +16,20 @@ class HomePage extends StatefulWidget {
   State<StatefulWidget> createState() => _HomePage(scaffoldKey);
 }
 
-class _HomePage extends State<HomePage> {
+class _HomePage extends State<HomePage> with SingleTickerProviderStateMixin {
   final GlobalKey<ScaffoldState> scaffoldKey;
   UserModel? userModel;
+  late TabController _tabController;
 
   _HomePage(this.scaffoldKey);
+
   @override
   void initState() {
     super.initState();
-    _fetchUserData(); // Recupera i dati dell'utente all'inizializzazione
+    _fetchUserData();
+    _tabController = TabController(length: 2, vsync: this);
   }
 
-  // Metodo per recuperare i dati dell'utente da Firestore
   Future<void> _fetchUserData() async {
     final user = FirebaseAuth.instance.currentUser;
     if (user != null) {
@@ -44,47 +46,85 @@ class _HomePage extends State<HomePage> {
     }
   }
 
-  void displayEndDrawer(BuildContext context) {
-    Scaffold.of(context).openEndDrawer();
-  }
-
   @override
   Widget build(BuildContext context) {
-    return Column(
-      children: [
-        AppBar(
-          title: const Text('Home'),
-          backgroundColor: Colors.green,
-          titleTextStyle: const TextStyle(
-            fontSize: 32,
-            fontWeight: FontWeight.bold,
-            color: Colors.white,
-          ),
-          centerTitle: false,
-          actions: [
-            IconButton(
-              onPressed: () {},
-              icon: const Icon(
-                Icons.search,
-                color: Colors.white,
-              ),
-              iconSize: 32,
-            ),
-            Builder(builder: (context) {
-              return IconButton(
-                icon: const CircleAvatar(
-                  backgroundImage: NetworkImage(Constants.avatarDefault),
-                  radius: 20,
+    return Scaffold(
+      appBar: PreferredSize(
+        preferredSize: const Size.fromHeight(50),
+        child: AppBar(
+          backgroundColor: Colors.white,
+          bottom: TabBar(
+            splashFactory: NoSplash.splashFactory,
+            controller: _tabController,
+            indicatorColor: Colors.transparent,
+            tabs: [
+              Tab(
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    IconButton(
+                      onPressed: () {},
+                      icon: Icon(Icons.filter_list, color: Colors.black),
+                    ),
+                    Align(
+                      alignment: Alignment.centerRight,
+                      child: Text(
+                        "For You",
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          color: _tabController.index == 0
+                              ? Colors.black
+                              : Colors.black26,
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
-                onPressed: () {
-                  scaffoldKey.currentState?.openEndDrawer();
-                },
-              );
-            }),
-          ],
+              ),
+              Tab(
+                child: Align(
+                  widthFactor: double.infinity,
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    "Inspiration",
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: _tabController.index == 1
+                          ? Colors.black
+                          : Colors.black26,
+                    ),
+                  ),
+                ),
+              ),
+            ],
+            isScrollable: false,
+            onTap: (index) {
+              setState(() {});
+            },
+          ),
         ),
-        Expanded(child: Text('text'))
-      ],
+      ),
+      body: TabBarView(
+        controller: _tabController,
+        children: [
+          _buildForYouPage(),
+          _buildInspirationPage(),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildForYouPage() {
+    return Center(
+      child: Text('Contenuto per "For You"'),
+    );
+  }
+
+  Widget _buildInspirationPage() {
+    return Center(
+      child: Text('Contenuto per "Inspiration"'),
     );
   }
 }
