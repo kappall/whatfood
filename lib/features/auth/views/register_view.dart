@@ -1,6 +1,7 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:routemaster/routemaster.dart';
 import 'package:whatfood/core/constants/costants.dart';
 import 'package:whatfood/core/utils.dart';
 import 'package:whatfood/features/auth/views/verify_email_view.dart';
@@ -160,8 +161,7 @@ class _RegisterViewState extends State<RegisterView> {
             ),
             const SizedBox(height: 15),
             TextButton(
-              onPressed: () => Navigator.of(context)
-                  .pushNamedAndRemoveUntil('/login/', (_) => false),
+              onPressed: () => Routemaster.of(context).push('/login/'),
               child: const Text(
                 'Already have an account? Login here',
                 style: TextStyle(fontSize: 16, color: Colors.lightGreen),

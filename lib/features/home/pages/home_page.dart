@@ -1,33 +1,40 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:whatfood/core/constants/costants.dart';
+import 'package:routemaster/routemaster.dart';
 import 'package:whatfood/models/user_model.dart';
+import 'package:whatfood/features/post/pages/add_post_page.dart';
 
 class HomePage extends StatefulWidget {
-  final GlobalKey<ScaffoldState> scaffoldKey;
-
   const HomePage({
     super.key,
-    required this.scaffoldKey,
   });
 
   @override
-  State<StatefulWidget> createState() => _HomePage(scaffoldKey);
+  State<StatefulWidget> createState() => _HomePage();
 }
 
 class _HomePage extends State<HomePage> with SingleTickerProviderStateMixin {
-  final GlobalKey<ScaffoldState> scaffoldKey;
   UserModel? userModel;
   late TabController _tabController;
 
-  _HomePage(this.scaffoldKey);
+  _HomePage();
 
   @override
   void initState() {
     super.initState();
     _fetchUserData();
     _tabController = TabController(length: 2, vsync: this);
+
+    _tabController.addListener(() {
+      setState(() {});
+    });
+  }
+
+  @override
+  void dispose() {
+    _tabController.dispose();
+    super.dispose();
   }
 
   Future<void> _fetchUserData() async {
@@ -112,6 +119,18 @@ class _HomePage extends State<HomePage> with SingleTickerProviderStateMixin {
           _buildForYouPage(),
           _buildInspirationPage(),
         ],
+      ),
+      floatingActionButton: FloatingActionButton(
+        shape: CircleBorder(),
+        onPressed: () {
+          Routemaster.of(context).push('/main_page/add_post');
+        },
+        backgroundColor: Colors.grey,
+        child: const Icon(
+          Icons.add,
+          color: Colors.white,
+          size: 40,
+        ),
       ),
     );
   }

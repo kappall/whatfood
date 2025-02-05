@@ -2,7 +2,7 @@ import 'dart:io';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_storage/firebase_storage.dart';
-import 'package:whatfood/models/post_models.dart';
+import 'package:whatfood/models/post_model.dart';
 
 class FirebaseService {
   final FirebaseStorage _storage = FirebaseStorage.instance;
@@ -19,24 +19,5 @@ class FirebaseService {
     } catch (e) {
       rethrow;
     }
-  }
-
-  Future<void> addPost(Post post) async {
-    try {
-      await _firestore.collection('posts').doc(post.id).set({
-        'name': post.name,
-        'description': post.description,
-        'imageUrls': post.imageUrls,
-        'timestamp': post.timestamp,
-      });
-    } catch (e) {
-      rethrow;
-    }
-  }
-
-  Stream<List<Post>> getPosts() {
-    return _firestore.collection('posts').snapshots().map((snapshot) {
-      return snapshot.docs.map((doc) => Post.fromMap(doc.data())).toList();
-    });
   }
 }

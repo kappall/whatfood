@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:routemaster/routemaster.dart';
 import 'package:whatfood/button_styles.dart';
 import 'package:whatfood/features/scanner/widgets/nutrition_table.dart';
 
@@ -79,7 +80,7 @@ class ProductModal extends StatelessWidget {
                 NutritionTable(data: productData["nutriments"]),
                 const SizedBox(height: 16),
                 ElevatedButton(
-                  onPressed: () => Navigator.pop(context),
+                  onPressed: () => Routemaster.of(context).pop(),
                   style: ButtonStyles.elevatedButtonStyle(),
                   child: const Text(
                     'Chiudi',

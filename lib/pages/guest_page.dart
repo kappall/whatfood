@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:routemaster/routemaster.dart';
 import 'package:whatfood/pages/start_page.dart';
 
 class GuestHomePage extends StatelessWidget {
-  const GuestHomePage(
-      {super.key, required GlobalKey<ScaffoldState> scaffoldKey});
+  const GuestHomePage({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -59,17 +59,12 @@ class GuestShopPage extends StatelessWidget {
                     textAlign: TextAlign.center,
                   ),
                 ),
-                const SizedBox(height: 20), // Spazio tra il testo e i pulsanti
+                const SizedBox(height: 20),
                 ElevatedButton(
                   onPressed: () {
-                    // Naviga alla pagina di accesso
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                          builder: (context) => const StartPage()),
-                    );
+                    Routemaster.of(context).push('/login/');
                   },
-                  child: const Text('Return to start page'),
+                  child: const Text('Exit'),
                 ),
               ],
             ),
@@ -113,13 +108,9 @@ class GuestRecipePage extends StatelessWidget {
                 ElevatedButton(
                   onPressed: () {
                     // Naviga alla pagina di accesso
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                          builder: (context) => const StartPage()),
-                    );
+                    Routemaster.of(context).push('/login/');
                   },
-                  child: const Text('Return to start page'),
+                  child: const Text('Exit'),
                 ),
               ],
             ),
@@ -157,18 +148,12 @@ class GuestProfilePage extends StatelessWidget {
                       textAlign: TextAlign.center,
                     ),
                   ),
-                  const SizedBox(
-                      height: 20), // Spazio tra il testo e i pulsanti
+                  const SizedBox(height: 20),
                   ElevatedButton(
                     onPressed: () {
-                      // Naviga alla pagina di accesso
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                            builder: (context) => const StartPage()),
-                      );
+                      Routemaster.of(context).push('/login/');
                     },
-                    child: const Text('Return to start page'),
+                    child: const Text('Exit'),
                   ),
                 ],
               ),
@@ -209,17 +194,12 @@ class GuestFavorites extends StatelessWidget {
                     textAlign: TextAlign.center,
                   ),
                 ),
-                const SizedBox(height: 20), // Spazio tra il testo e i pulsanti
+                const SizedBox(height: 20),
                 ElevatedButton(
                   onPressed: () {
-                    // Naviga alla pagina di accesso
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                          builder: (context) => const StartPage()),
-                    );
+                    Routemaster.of(context).push('/login/');
                   },
-                  child: const Text('Return to start page'),
+                  child: const Text('Exit'),
                 ),
               ],
             ),

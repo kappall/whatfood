@@ -98,10 +98,7 @@ class _LoginViewState extends State<LoginView> {
                   final userCredential = await FirebaseAuth.instance
                       .signInWithEmailAndPassword(
                           email: email, password: password);
-                  Navigator.of(context).pushNamedAndRemoveUntil(
-                    '/main_page/',
-                    (route) => false,
-                  );
+                  Routemaster.of(context).push('/main_page/');
                 } on FirebaseAuthException catch (e) {
                   String errorMessage;
                   switch (e.code) {
@@ -139,10 +136,7 @@ class _LoginViewState extends State<LoginView> {
             const SizedBox(height: 15),
             TextButton(
               onPressed: () {
-                Navigator.of(context).pushNamedAndRemoveUntil(
-                  '/register/',
-                  (route) => false,
-                );
+                Routemaster.of(context).push('/register/');
               },
               child: const Text(
                 'Not registered yet? Register here!',

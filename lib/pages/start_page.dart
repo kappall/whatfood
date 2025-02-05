@@ -2,11 +2,12 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:routemaster/routemaster.dart';
 import 'package:whatfood/core/common/google_signin_button.dart';
 import 'package:whatfood/core/common/loader.dart';
 import 'package:whatfood/core/utils.dart';
-import 'package:whatfood/features/home/drawers/profile_drawer.dart';
 import 'package:whatfood/features/home/pages/home_page.dart';
+import 'package:whatfood/features/profile/pages/profile_page.dart';
 import 'package:whatfood/features/scanner/camera_scanner.dart';
 import 'package:whatfood/features/auth/controller/auth_controller.dart';
 import 'package:whatfood/models/user_model.dart';
@@ -44,8 +45,7 @@ class StartPage extends ConsumerWidget {
                   ),
                   const Spacer(),
                   FilledButton(
-                    onPressed: () => Navigator.of(context)
-                        .pushNamedAndRemoveUntil('/register', (_) => true),
+                    onPressed: () => Routemaster.of(context).push('/register/'),
                     style: FilledButton.styleFrom(
                       backgroundColor: Colors.lightGreen,
                       shape: RoundedRectangleBorder(
@@ -66,8 +66,7 @@ class StartPage extends ConsumerWidget {
                   ),
                   const SizedBox(height: 15),
                   OutlinedButton(
-                    onPressed: () => Navigator.of(context)
-                        .pushNamedAndRemoveUntil('/login/', (_) => true),
+                    onPressed: () => Routemaster.of(context).push('/login/'),
                     style: OutlinedButton.styleFrom(
                       side: const BorderSide(color: Colors.lightGreen),
                       shape: RoundedRectangleBorder(
@@ -108,8 +107,7 @@ class GuestAccessWidget extends StatelessWidget {
         try {
           await FirebaseAuth.instance.signInAnonymously();
           if (!context.mounted) return;
-          Navigator.of(context)
-              .pushNamedAndRemoveUntil('main_gurest', (_) => false);
+          Routemaster.of(context).push('/main_guest/');
         } catch (e) {
           showSnackBar(context, 'Error during guest login: ${e.toString()}');
         }
@@ -135,8 +133,7 @@ class MainPage extends StatefulWidget {
 }
 
 class _MainPageState extends State<MainPage> {
-  int _selectedIndex = 2;
-  final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
+  late int _selectedIndex;
   late final List<Widget> _pages;
   UserModel? userModel; // Variabile per memorizzare i dati dell'utente
 
@@ -149,20 +146,20 @@ class _MainPageState extends State<MainPage> {
 
     // Inizializza le pagine
     if (widget.isGuest) {
+      _selectedIndex = 1;
       _pages = [
         CameraScanner(),
-        GuestRecipePage(scaffoldKey: _scaffoldKey),
-        GuestHomePage(scaffoldKey: _scaffoldKey),
-        GuestShopPage(scaffoldKey: _scaffoldKey),
-        GuestFavorites(scaffoldKey: _scaffoldKey),
+        GuestHomePage(),
       ];
     } else {
+      _selectedIndex = 2;
       _pages = [
         CameraScanner(),
-        RecipePage(scaffoldKey: _scaffoldKey),
-        HomePage(scaffoldKey: _scaffoldKey),
-        ShopPage(scaffoldKey: _scaffoldKey),
-        FavoritesPage(scaffoldKey: _scaffoldKey),
+        RecipePage(),
+        HomePage(),
+        ShopPage(),
+        ProfilePage(
+            user: FirebaseAuth.instance.currentUser, userModel: userModel),
       ];
     }
   }
@@ -194,13 +191,8 @@ class _MainPageState extends State<MainPage> {
   Widget build(BuildContext context) {
     return SafeArea(
       child: Scaffold(
-        key: _scaffoldKey,
         backgroundColor: const Color.fromARGB(255, 235, 235, 235),
         body: _pages[_selectedIndex],
-        endDrawer: ProfileDrawer(
-          user: widget.isGuest ? null : FirebaseAuth.instance.currentUser,
-          userModel: userModel, // Passa i dati dell'utente al ProfileDrawer
-        ),
         bottomNavigationBar: BottomNavigationBar(
           items: const [
             BottomNavigationBarItem(
@@ -220,8 +212,8 @@ class _MainPageState extends State<MainPage> {
               label: 'Report',
             ),
             BottomNavigationBarItem(
-              icon: Icon(Icons.star_outline),
-              label: 'Favorites',
+              icon: Icon(Icons.person_outlined),
+              label: 'Profile',
             ),
           ],
           currentIndex: _selectedIndex,

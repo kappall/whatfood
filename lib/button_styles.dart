@@ -4,10 +4,12 @@ class ButtonStyles {
   static ButtonStyle elevatedButtonStyle({
     Color backgroundColor = Colors.green,
     Color foregroundColor = Colors.white,
+    Color iconColor = Colors.white,
   }) {
     return ElevatedButton.styleFrom(
       backgroundColor: backgroundColor,
       foregroundColor: foregroundColor,
+      iconColor: iconColor,
       padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 12),
       textStyle: const TextStyle(
         fontSize: 18,

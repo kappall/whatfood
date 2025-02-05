@@ -1,36 +1,48 @@
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:routemaster/routemaster.dart';
 import 'package:whatfood/core/common/loader.dart';
 import 'package:whatfood/firebase_options.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+
 import 'package:whatfood/pages/start_page.dart';
+import 'package:whatfood/router.dart';
 
 import 'features/auth/views/login_view.dart';
-import 'features/auth/views/register_view.dart';
+
 import 'features/auth/views/verify_email_view.dart';
 
-void main() {
+Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
   runApp(ProviderScope(
-    child: MaterialApp(
-      title: 'Flutter Demo',
-      theme: ThemeData(
-        primarySwatch: Colors.blue,
-      ),
-      home: const HomePage(),
-      routes: {
-        '/login/': (context) => const LoginView(),
-        '/register/': (context) => const RegisterView(),
-        '/main_guest/': (context) => const MainPage(isGuest: true),
-        '/main_page/': (context) => MainPage(isGuest: false),
-      },
-    ),
+    child: const MyApp(),
   ));
 }
 
+class MyApp extends StatelessWidget {
+  const MyApp({Key? key}) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp.router(
+      title: 'Whatfood',
+      theme: ThemeData(
+        primarySwatch: Colors.blue,
+      ),
+      routerDelegate: RoutemasterDelegate(
+        routesBuilder: (context) => allRoutes,
+      ),
+      routeInformationParser: const RoutemasterParser(),
+    );
+  }
+}
+
 class HomePage extends StatelessWidget {
-  const HomePage({Key? key}) : super(key: key);
+  const HomePage({super.key});
 
   @override
   Widget build(BuildContext context) {
