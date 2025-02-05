@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:routemaster/routemaster.dart';
 import 'package:whatfood/core/common/google_signin_button.dart';
@@ -135,16 +136,14 @@ class MainPage extends StatefulWidget {
 class _MainPageState extends State<MainPage> {
   late int _selectedIndex;
   late final List<Widget> _pages;
-  UserModel? userModel; // Variabile per memorizzare i dati dell'utente
-
+  UserModel? userModel;
   @override
   void initState() {
     super.initState();
     if (!widget.isGuest) {
-      _fetchUserData(); // Recupera i dati dell'utente solo se non è un guest
+      _fetchUserData();
     }
 
-    // Inizializza le pagine
     if (widget.isGuest) {
       _selectedIndex = 1;
       _pages = [
@@ -164,7 +163,6 @@ class _MainPageState extends State<MainPage> {
     }
   }
 
-  // Metodo per recuperare i dati dell'utente da Firestore
   Future<void> _fetchUserData() async {
     final user = FirebaseAuth.instance.currentUser;
     if (user != null) {
@@ -189,39 +187,42 @@ class _MainPageState extends State<MainPage> {
 
   @override
   Widget build(BuildContext context) {
-    return SafeArea(
-      child: Scaffold(
-        backgroundColor: const Color.fromARGB(255, 235, 235, 235),
-        body: _pages[_selectedIndex],
-        bottomNavigationBar: BottomNavigationBar(
-          items: const [
-            BottomNavigationBarItem(
-              icon: Icon(Icons.document_scanner_outlined),
-              label: 'Scanner',
-            ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.book_outlined),
-              label: 'Recipes',
-            ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.home_outlined),
-              label: 'Home',
-            ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.receipt_long),
-              label: 'Report',
-            ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.person_outlined),
-              label: 'Profile',
-            ),
-          ],
-          currentIndex: _selectedIndex,
-          backgroundColor: Colors.white,
-          selectedItemColor: Colors.red,
-          unselectedItemColor: Colors.grey,
-          onTap: _onItemTapped,
-          type: BottomNavigationBarType.fixed,
+    return AnnotatedRegion<SystemUiOverlayStyle>(
+      value: SystemUiOverlayStyle.light,
+      child: SafeArea(
+        child: Scaffold(
+          backgroundColor: const Color(0xFFF5F5F5),
+          body: _pages[_selectedIndex],
+          bottomNavigationBar: BottomNavigationBar(
+            items: const [
+              BottomNavigationBarItem(
+                icon: Icon(Icons.document_scanner_outlined),
+                label: 'Scanner',
+              ),
+              BottomNavigationBarItem(
+                icon: Icon(Icons.book_outlined),
+                label: 'Recipes',
+              ),
+              BottomNavigationBarItem(
+                icon: Icon(Icons.home_outlined),
+                label: 'Home',
+              ),
+              BottomNavigationBarItem(
+                icon: Icon(Icons.receipt_long),
+                label: 'Report',
+              ),
+              BottomNavigationBarItem(
+                icon: Icon(Icons.person_outlined),
+                label: 'Profile',
+              ),
+            ],
+            currentIndex: _selectedIndex,
+            backgroundColor: Colors.white,
+            selectedItemColor: Colors.red,
+            unselectedItemColor: Colors.grey,
+            onTap: _onItemTapped,
+            type: BottomNavigationBarType.fixed,
+          ),
         ),
       ),
     );
