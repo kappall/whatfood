@@ -39,3 +39,9 @@ GoogleService-Info.plist
 # OS specific
 *.bak
 *.old
+
+macos/
+linux/
+web/
+windows/
+.metadata

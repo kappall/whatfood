@@ -54,14 +54,15 @@ dependencies:
   fpdart: ^1.1.1
   file_picker: ^8.1.7
   routemaster: ^1.0.1
+  rxdart: ^0.28.0
 
 
 flutter_native_splash:
-  color: "#AAD7C8"
-  image: assets/icon/icon_temp.png
+  color: "#000000"
+  image: assets/icon/Whatfood_logo.png
 dev_dependencies:
   flutter_native_splash: ^2.4.3
-  flutter_launcher_icons: ^0.14.2
+  flutter_launcher_icons: ^0.14.3
   flutter_test:
     sdk: flutter
 
@@ -70,18 +71,18 @@ dev_dependencies:
 flutter:
   uses-material-design: true
   assets:
-    - assets/icon/icon_temp.png
+    - assets/icon/Whatfood_logo.png
     - assets/profile.jpg
     - assets/images/google.png
 flutter_launcher_icons:
   ios: true
   remove_apha_ios: true
   android: "launcher_icon"
-  image_path: "assets/icon/icon_temp.png"
+  image_path: "assets/icon/Whatfood_logo.png"
   min_sdk_android: 26
 
   # per android
-  adaptive_icon_background: "#AAD7C8"
-  adaptive_icon_foreground: "assets/icon/icon_temp.png"
+  adaptive_icon_background: "#000000"
+  adaptive_icon_foreground: "assets/icon/Whatfood_logo.png"
   
 
