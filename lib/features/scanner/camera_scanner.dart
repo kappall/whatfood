@@ -73,7 +73,7 @@ class CameraScannerState extends State<CameraScanner> {
       }
       setState(() => _isInitialized = true);
     } catch (e) {
-      debugPrint('Error initializing camera: $e');
+      rethrow;
     }
   }
 
@@ -105,7 +105,6 @@ class CameraScannerState extends State<CameraScanner> {
         setState(() {});
       });
     } catch (e) {
-      debugPrint("Errore nell'avvio della fotocamera: $e");
       return;
     }
   }
@@ -131,7 +130,7 @@ class CameraScannerState extends State<CameraScanner> {
       await _controller?.dispose();
       _controller = null;
     } catch (e) {
-      debugPrint('Error stopping camera feed: $e');
+      rethrow;
     }
   }
 
@@ -211,21 +210,18 @@ class CameraScannerState extends State<CameraScanner> {
   }
 
   Future<void> _restartStream() async {
-    debugPrint("imageStream restarting;");
     await _controller?.stopImageStream();
-    debugPrint("imageStream stopped\n");
     await Future.delayed(Duration(milliseconds: 1500));
     await _controller?.startImageStream(_processCameraImage);
-    debugPrint("imageStream started\n\n\n");
   }
 
   Future<void> _showErrorDialog() {
     return showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Prodotto non trovato'),
+        title: const Text('Product not found'),
         content: Text(
-          'Il prodotto che stai cercando non è presente nel nostro database.',
+          'Product not found in the database.',
         ),
         actions: [
           TextButton(
@@ -342,7 +338,7 @@ class CameraScannerState extends State<CameraScanner> {
         _processFile(pickedFile.path);
       }
     } catch (e) {
-      debugPrint('Error picking image: $e');
+      rethrow;
     } finally {
       if (mounted) {
         setState(() {

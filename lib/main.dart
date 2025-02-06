@@ -1,73 +1,80 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:routemaster/routemaster.dart';
+import 'package:whatfood/core/common/error_text.dart';
 import 'package:whatfood/core/common/loader.dart';
+import 'package:whatfood/features/auth/controller/auth_controller.dart';
 import 'package:whatfood/firebase_options.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-
-import 'package:whatfood/pages/start_page.dart';
+import 'package:whatfood/models/user_model.dart';
 import 'package:whatfood/router.dart';
+import 'package:routemaster/routemaster.dart';
 
-import 'features/auth/views/login_view.dart';
-
-import 'features/auth/views/verify_email_view.dart';
-
-Future<void> main() async {
+void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
-  runApp(ProviderScope(
-    child: const MyApp(),
-  ));
+  runApp(
+    const ProviderScope(
+      child: MyApp(),
+    ),
+  );
 }
 
-class MyApp extends StatelessWidget {
-  const MyApp({Key? key}) : super(key: key);
+class MyApp extends ConsumerStatefulWidget {
+  const MyApp({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    return MaterialApp.router(
-      title: 'Whatfood',
-      theme: ThemeData(
-        primarySwatch: Colors.blue,
-      ),
-      routerDelegate: RoutemasterDelegate(
-        routesBuilder: (context) => allRoutes,
-      ),
-      routeInformationParser: const RoutemasterParser(),
-    );
+  ConsumerState<ConsumerStatefulWidget> createState() => _MyAppState();
+}
+
+class _MyAppState extends ConsumerState<MyApp> {
+  UserModel? userModel;
+
+  void getData(WidgetRef ref, User data) async {
+    userModel = await ref
+        .watch(authControllerProvider.notifier)
+        .getUserData(data.uid)
+        .map((userData) {
+      return userData;
+    }).first;
+
+    ref.read(userProvider.notifier).update((state) => userModel);
   }
-}
-
-class HomePage extends StatelessWidget {
-  const HomePage({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return FutureBuilder(
-      future: Firebase.initializeApp(
-        options: DefaultFirebaseOptions.currentPlatform,
-      ),
-      builder: (context, snapshot) {
-        switch (snapshot.connectionState) {
-          case ConnectionState.done:
-            final user = FirebaseAuth.instance.currentUser;
-            if (user != null) {
-              if (user.emailVerified) {
-                print('Email is verified');
-              } else {
-                return const VerifyEmailView();
+    return ref.watch(authStateChangeProvider).when(
+          data: (data) {
+            if (data != null) {
+              getData(ref, data);
+
+              final currentUser = ref.watch(userProvider);
+
+              if (currentUser != null) {
+                return MaterialApp.router(
+                  debugShowCheckedModeBanner: false,
+                  title: 'Whatfood',
+                  routerDelegate: RoutemasterDelegate(
+                    routesBuilder: (context) => loggedInRoute,
+                  ),
+                  routeInformationParser: const RoutemasterParser(),
+                );
               }
-            } else {
-              return const LoginView();
             }
-            return const MainPage(isGuest: false);
-          default:
-            return const Loader();
-        }
-      },
-    );
+
+            return MaterialApp.router(
+              debugShowCheckedModeBanner: false,
+              title: 'Whatfood',
+              routerDelegate: RoutemasterDelegate(
+                routesBuilder: (context) => loggedOutRoute,
+              ),
+              routeInformationParser: const RoutemasterParser(),
+            );
+          },
+          error: (error, stackTrace) => ErrorText(error: error.toString()),
+          loading: () => const Loader(),
+        );
   }
 }

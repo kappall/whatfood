@@ -2,8 +2,8 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:whatfood/core/utils.dart';
-import 'package:whatfood/models/user_model.dart';
 import 'package:whatfood/features/auth/repository/auth_repository.dart';
+import 'package:whatfood/models/user_model.dart';
 
 final userProvider = StateProvider<UserModel?>((ref) => null);
 
@@ -45,11 +45,24 @@ class AuthController extends StateNotifier<bool> {
     );
   }
 
-  Stream<UserModel> getUserData(String uid) {
-    return _authRepository.getUserData(uid);
+  void signInAsGuest(BuildContext context) async {
+    state = true;
+    final user = await _authRepository.signInAsGuest();
+    state = false;
+    user.fold(
+      (l) => showSnackBar(context, l.message),
+      (userModel) =>
+          _ref.read(userProvider.notifier).update((state) => userModel),
+    );
   }
 
-  void logOut() {
+  Stream<UserModel> getUserData(String uid) {
+    return _authRepository.getUserData(uid).map((userData) {
+      return userData;
+    });
+  }
+
+  void logout() async {
     _authRepository.logOut();
   }
 }

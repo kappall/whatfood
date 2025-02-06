@@ -136,13 +136,9 @@ class MainPage extends StatefulWidget {
 class _MainPageState extends State<MainPage> {
   late int _selectedIndex;
   late final List<Widget> _pages;
-  UserModel? userModel;
   @override
   void initState() {
     super.initState();
-    if (!widget.isGuest) {
-      _fetchUserData();
-    }
 
     if (widget.isGuest) {
       _selectedIndex = 1;
@@ -157,25 +153,8 @@ class _MainPageState extends State<MainPage> {
         RecipePage(),
         HomePage(),
         ShopPage(),
-        ProfilePage(
-            user: FirebaseAuth.instance.currentUser, userModel: userModel),
+        ProfilePage(uid: FirebaseAuth.instance.currentUser!.uid),
       ];
-    }
-  }
-
-  Future<void> _fetchUserData() async {
-    final user = FirebaseAuth.instance.currentUser;
-    if (user != null) {
-      final userDoc = await FirebaseFirestore.instance
-          .collection('users')
-          .doc(user.uid)
-          .get();
-
-      if (userDoc.exists) {
-        setState(() {
-          userModel = UserModel.fromMap(userDoc.data() as Map<String, dynamic>);
-        });
-      }
     }
   }
 

@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:fpdart/fpdart.dart';
 import 'package:google_sign_in/google_sign_in.dart';
@@ -35,11 +36,7 @@ class AuthRepository {
   CollectionReference get _users =>
       _firestore.collection(FirebaseConstants.usersCollection);
 
-  Stream<User?> get authStateChange {
-    return _auth.authStateChanges().doOnData((user) {
-      print("Auth state change: $user");
-    });
-  }
+  Stream<User?> get authStateChange => _auth.authStateChanges();
 
   FutureEither<UserModel> signInWithGoogle(bool isFromLogin) async {
     try {
@@ -106,8 +103,19 @@ class AuthRepository {
   }
 
   Stream<UserModel> getUserData(String uid) {
-    return _users.doc(uid).snapshots().map(
-        (event) => UserModel.fromMap(event.data() as Map<String, dynamic>));
+    return _users.doc(uid).snapshots().map((event) {
+      final data = event.data();
+
+      if (data == null) {
+        throw Exception("User document for uid: $uid not found in Firestore.");
+      }
+
+      try {
+        return UserModel.fromMap(data as Map<String, dynamic>);
+      } catch (e) {
+        throw Exception("Error parsing user data: $e");
+      }
+    });
   }
 
   void logOut() async {

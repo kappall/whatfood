@@ -1,6 +1,7 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:routemaster/routemaster.dart';
 import 'package:whatfood/core/utils.dart';
 
 class VerifyEmailView extends StatefulWidget {
@@ -80,9 +81,8 @@ class _VerifyEmailViewState extends State<VerifyEmailView> {
                     'isAuthenticated': true,
                   });
                   if (!context.mounted) return;
-                  Navigator.of(context).pushNamedAndRemoveUntil(
+                  Routemaster.of(context).push(
                     '/main_page/',
-                    (route) => false,
                   );
                 } else {
                   ScaffoldMessenger.of(context).showSnackBar(

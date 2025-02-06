@@ -44,11 +44,10 @@ class _RegisterViewState extends State<RegisterView> {
         backgroundColor: Colors.green,
         centerTitle: true,
       ),
-      body: Padding(
+      body: SingleChildScrollView(
         padding: const EdgeInsets.symmetric(horizontal: 20.0),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             const Align(
               alignment: Alignment.center,

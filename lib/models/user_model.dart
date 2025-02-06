@@ -1,3 +1,5 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+
 class UserModel {
   final String name;
   final String profilePic;
@@ -49,6 +51,12 @@ class UserModel {
     );
   }
 
+  factory UserModel.fromSnapshot(
+      DocumentSnapshot<Map<String, dynamic>> docuument) {
+    final data = docuument.data()!;
+    return UserModel.fromMap(data);
+  }
+
   @override
   String toString() {
     return 'UserModel(name: $name, profilePic: $profilePic, banner: $banner, uid: $uid, isAuthenticated: $isAuthenticated)';
@@ -68,9 +76,9 @@ class UserModel {
   @override
   int get hashCode {
     return name.hashCode ^
-    profilePic.hashCode ^
-    banner.hashCode ^
-    uid.hashCode ^
-    isAuthenticated.hashCode;
+        profilePic.hashCode ^
+        banner.hashCode ^
+        uid.hashCode ^
+        isAuthenticated.hashCode;
   }
 }
