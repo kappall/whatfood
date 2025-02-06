@@ -170,39 +170,42 @@ class _MainPageState extends State<MainPage> {
       value: SystemUiOverlayStyle.light,
       child: SafeArea(
         child: Scaffold(
-          backgroundColor: const Color(0xFFF5F5F5),
-          body: _pages[_selectedIndex],
-          bottomNavigationBar: BottomNavigationBar(
-            items: const [
-              BottomNavigationBarItem(
-                icon: Icon(Icons.document_scanner_outlined),
-                label: 'Scanner',
-              ),
-              BottomNavigationBarItem(
-                icon: Icon(Icons.book_outlined),
-                label: 'Recipes',
-              ),
-              BottomNavigationBarItem(
-                icon: Icon(Icons.home_outlined),
-                label: 'Home',
-              ),
-              BottomNavigationBarItem(
-                icon: Icon(Icons.receipt_long),
-                label: 'Report',
-              ),
-              BottomNavigationBarItem(
-                icon: Icon(Icons.person_outlined),
-                label: 'Profile',
-              ),
-            ],
-            currentIndex: _selectedIndex,
-            backgroundColor: Colors.white,
-            selectedItemColor: Colors.red,
-            unselectedItemColor: Colors.grey,
-            onTap: _onItemTapped,
-            type: BottomNavigationBarType.fixed,
-          ),
-        ),
+            body: _pages[_selectedIndex],
+            backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+            bottomNavigationBar: BottomNavigationBar(
+              items: const [
+                BottomNavigationBarItem(
+                  icon: Icon(Icons.document_scanner_outlined),
+                  label: 'Scanner',
+                ),
+                BottomNavigationBarItem(
+                  icon: Icon(Icons.book_outlined),
+                  label: 'Recipes',
+                ),
+                BottomNavigationBarItem(
+                  icon: Icon(Icons.home_outlined),
+                  label: 'Home',
+                ),
+                BottomNavigationBarItem(
+                  icon: Icon(Icons.receipt_long),
+                  label: 'Report',
+                ),
+                BottomNavigationBarItem(
+                  icon: Icon(Icons.person_outlined),
+                  label: 'Profile',
+                ),
+              ],
+              currentIndex: _selectedIndex,
+              backgroundColor:
+                  Theme.of(context).bottomNavigationBarTheme.backgroundColor,
+              selectedItemColor:
+                  Theme.of(context).bottomNavigationBarTheme.selectedItemColor,
+              unselectedItemColor: Theme.of(context)
+                  .bottomNavigationBarTheme
+                  .unselectedItemColor,
+              onTap: _onItemTapped,
+              type: BottomNavigationBarType.fixed,
+            )),
       ),
     );
   }
