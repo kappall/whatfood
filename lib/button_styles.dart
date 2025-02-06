@@ -5,24 +5,26 @@ class ButtonStyles {
     Color backgroundColor = Colors.green,
     Color foregroundColor = Colors.white,
     Color iconColor = Colors.white,
+    Size? size = const Size(double.infinity, 50),
+    EdgeInsets? padding =
+        const EdgeInsets.symmetric(horizontal: 32, vertical: 12),
   }) {
     return ElevatedButton.styleFrom(
       backgroundColor: backgroundColor,
       foregroundColor: foregroundColor,
       iconColor: iconColor,
-      padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 12),
+      padding: padding,
       textStyle: const TextStyle(
         fontSize: 18,
         fontWeight: FontWeight.bold,
       ),
-      minimumSize: const Size(double.infinity, 50),
+      minimumSize: size,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
       ),
     );
   }
 
-  // Stile per TextButton
   static ButtonStyle textButtonStyle({
     Color textColor = Colors.blue,
   }) {

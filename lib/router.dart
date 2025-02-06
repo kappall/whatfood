@@ -13,14 +13,13 @@ final loggedInRoute = RouteMap(routes: {
   '/': (_) => MaterialPage(child: const MainPage(isGuest: false)),
   '/login': (_) => const MaterialPage(child: LoginView()),
   '/register': (_) => const MaterialPage(child: RegisterView()),
-  '/main_page': (_) => const MaterialPage(child: MainPage(isGuest: false)),
-  '/main_page/add_post': (_) => const MaterialPage(child: AddPostPage()),
-  '/main_page/add_post/:type': (route) => MaterialPage(
+  '/add_post': (_) => const MaterialPage(child: AddPostPage()),
+  '/add_post/add_post_type/:type': (route) => MaterialPage(
         child: AddPostTypePage(
           type: route.pathParameters['type']!,
         ),
       ),
-  '/main_page/edit_profile/:uid': (route) => MaterialPage(
+  '/edit_profile/:uid': (route) => MaterialPage(
           child: EditProfilePage(
         uid: route.pathParameters['uid']!,
       )),
@@ -36,6 +35,7 @@ final loggedOutRoute = RouteMap(routes: {
   },
   '/login': (_) => const MaterialPage(child: LoginView()),
   '/register': (_) => const MaterialPage(child: RegisterView()),
+  '/register/verify_email': (_) => const MaterialPage(child: VerifyEmailView()),
   '/main_guest': (_) => const MaterialPage(child: MainPage(isGuest: true)),
   '/main_page': (_) => const MaterialPage(child: MainPage(isGuest: false)),
 });

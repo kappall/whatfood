@@ -16,7 +16,7 @@ class ProfilePage extends ConsumerWidget {
   });
 
   void navigateToEditUser(BuildContext context) {
-    Routemaster.of(context).push('/main_page/edit_profile/$uid');
+    Routemaster.of(context).push('/edit_profile/$uid');
   }
 
   Future<bool> showLogOutDialog(BuildContext context) {

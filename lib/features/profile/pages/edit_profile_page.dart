@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:dotted_border/dotted_border.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:whatfood/core/common/error_text.dart';
@@ -93,23 +94,31 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage> {
                         children: [
                           GestureDetector(
                             onTap: selectBannerImage,
-                            child: Container(
-                              width: double.infinity,
-                              height: 150,
-                              decoration: BoxDecoration(
-                                borderRadius: BorderRadius.circular(10),
+                            child: DottedBorder(
+                              borderType: BorderType.RRect,
+                              radius: const Radius.circular(10),
+                              dashPattern: const [10, 4],
+                              strokeCap: StrokeCap.round,
+                              color: Theme.of(context).primaryColor,
+                              child: Container(
+                                width: double.infinity,
+                                height: 150,
+                                decoration: BoxDecoration(
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                                child: bannerFile != null
+                                    ? Image.file(bannerFile!)
+                                    : user.banner.isEmpty ||
+                                            user.banner ==
+                                                Constants.bannerDefault
+                                        ? const Center(
+                                            child: Icon(
+                                              Icons.camera_alt_outlined,
+                                              size: 40,
+                                            ),
+                                          )
+                                        : Image.network(user.banner),
                               ),
-                              child: bannerFile != null
-                                  ? Image.file(bannerFile!)
-                                  : user.banner.isEmpty ||
-                                          user.banner == Constants.bannerDefault
-                                      ? const Center(
-                                          child: Icon(
-                                            Icons.camera_alt_outlined,
-                                            size: 40,
-                                          ),
-                                        )
-                                      : Image.network(user.banner),
                             ),
                           ),
                           Positioned(

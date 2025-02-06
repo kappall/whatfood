@@ -1,0 +1,336 @@
+import 'dart:io';
+
+import 'package:dotted_border/dotted_border.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:path/path.dart';
+import 'package:whatfood/core/constants/costants.dart';
+import 'package:whatfood/core/utils.dart';
+import 'package:whatfood/features/post/controller/post_controller.dart';
+
+class AddPostTypePage extends ConsumerStatefulWidget {
+  final String type;
+  const AddPostTypePage({required this.type, super.key});
+
+  @override
+  ConsumerState<ConsumerStatefulWidget> createState() =>
+      _AddPostTypePageState();
+}
+
+class _AddPostTypePageState extends ConsumerState<AddPostTypePage> {
+  final titleController = TextEditingController();
+  final descriptionController = TextEditingController();
+  final linkController = TextEditingController();
+  final List<File> bannerFiles = [];
+  final List<String> tags = [];
+  final FocusNode _tagFocusNode = FocusNode();
+
+  @override
+  void dispose() {
+    titleController.dispose();
+    descriptionController.dispose();
+    linkController.dispose();
+    super.dispose();
+  }
+
+  void selectBannerImage() async {
+    if (bannerFiles.length == 4) return;
+
+    final res = await pickImage();
+
+    if (res != null) {
+      setState(() {
+        bannerFiles.add(File(res.files.first.path!));
+      });
+    }
+  }
+
+  void removeImage(File file) {
+    setState(() {
+      bannerFiles.remove(file);
+    });
+  }
+
+  void selectTag(String tag) async {
+    if (tags.length == 8) return;
+    setState(() {
+      tags.add(tag);
+    });
+  }
+
+  void removeTag(String tag) {
+    setState(() {
+      tags.remove(tag);
+    });
+  }
+
+  void _showAddTagBottomSheet(BuildContext context) {
+    if (tags.length == 8) return;
+    final TextEditingController tagController = TextEditingController();
+    showModalBottomSheet(
+      isScrollControlled: true,
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (BuildContext context) {
+        return Padding(
+          padding: EdgeInsets.only(
+            bottom: MediaQuery.of(context).viewInsets.bottom,
+            left: 16,
+            right: 16,
+            top: 16,
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                controller: tagController,
+                autofocus: true,
+                focusNode: _tagFocusNode,
+                decoration: const InputDecoration(
+                  labelText: "Enter tag",
+                ),
+              ),
+              const SizedBox(height: 16),
+              ElevatedButton(
+                onPressed: () {
+                  final newTag = tagController.text.trim();
+                  if (newTag.isNotEmpty) {
+                    setState(() {
+                      tags.add(newTag);
+                    });
+                    Navigator.of(context).pop();
+                    FocusScope.of(context).unfocus();
+                  }
+                },
+                child: const Text("Add Tag"),
+              ),
+              const SizedBox(height: 16),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  void sharePost(BuildContext context) {
+    if (titleController.text.isEmpty) {
+      showSnackBar(context, "Title missing");
+    }
+
+    if (widget.type == 'image' && bannerFiles.isNotEmpty) {
+      ref.read(postControllerProvider.notifier).shareimagePost(
+          context: context,
+          title: titleController.text.trim(),
+          tags: tags,
+          files: bannerFiles);
+    } else if (widget.type == 'text') {
+      ref.read(postControllerProvider.notifier).shareTextPost(
+          context: context,
+          title: titleController.text.trim(),
+          tags: tags,
+          description: descriptionController.text.trim());
+    } else if (widget.type == 'link' && linkController.text.isNotEmpty) {
+      ref.read(postControllerProvider.notifier).shareLinkPost(
+          context: context,
+          title: titleController.text.trim(),
+          tags: tags,
+          link: linkController.text.trim());
+    } else {
+      showSnackBar(context, "You must all fill the fields");
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final isTypeImage = widget.type == "image";
+    final isTypeText = widget.type == "text";
+    final isTypeLink = widget.type == "link";
+    return GestureDetector(
+      onTap: () {
+        FocusScope.of(context).unfocus();
+      },
+      child: Scaffold(
+        appBar: AppBar(
+          title: Text('Post ${widget.type}'),
+          backgroundColor: Theme.of(context).appBarTheme.backgroundColor,
+          iconTheme: Theme.of(context).iconTheme,
+          titleTextStyle: Theme.of(context).textTheme.headlineMedium,
+          actions: [
+            TextButton(
+              onPressed: () => sharePost(context),
+              child: const Text(
+                'Share',
+              ),
+            )
+          ],
+        ),
+        body: Padding(
+          padding: const EdgeInsets.all(10),
+          child: SingleChildScrollView(
+            child: Column(
+              children: [
+                TextField(
+                  controller: titleController,
+                  enableSuggestions: false,
+                  autocorrect: false,
+                  keyboardType: TextInputType.text,
+                  decoration: InputDecoration(
+                    hintText: "Enter Title here",
+                    hintStyle: const TextStyle(color: Colors.grey),
+                    filled: true,
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    contentPadding: const EdgeInsets.all(20),
+                  ),
+                  maxLength: 30,
+                ),
+                const SizedBox(height: 10),
+                if (isTypeImage)
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: [
+                      ...bannerFiles.map(
+                        (file) => Stack(
+                          children: [
+                            Container(
+                              width: 150,
+                              height: 150,
+                              decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                              child: ClipRRect(
+                                borderRadius: BorderRadius.circular(10),
+                                child: Image.file(
+                                  file,
+                                  fit: BoxFit.cover,
+                                ),
+                              ),
+                            ),
+                            Positioned(
+                              top: 5,
+                              right: 5,
+                              child: GestureDetector(
+                                onTap: () => removeImage(file),
+                                child: Container(
+                                  decoration: BoxDecoration(
+                                    shape: BoxShape.circle,
+                                    color: Colors.white,
+                                  ),
+                                  child: const Icon(
+                                    Icons.close,
+                                    color: Colors.black,
+                                    size: 20,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      if (bannerFiles.length < 4)
+                        GestureDetector(
+                          onTap: selectBannerImage,
+                          child: Container(
+                            width: 150,
+                            height: 150,
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            child: DottedBorder(
+                              borderType: BorderType.RRect,
+                              radius: const Radius.circular(10),
+                              dashPattern: const [10, 4],
+                              strokeCap: StrokeCap.round,
+                              color: Theme.of(context).primaryColor,
+                              child: const Center(
+                                child: Icon(
+                                  Icons.camera_alt_outlined,
+                                  size: 40,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                    ],
+                  ),
+                if (isTypeText)
+                  TextField(
+                    controller: descriptionController,
+                    enableSuggestions: false,
+                    autocorrect: false,
+                    keyboardType: TextInputType.text,
+                    decoration: InputDecoration(
+                      hintText: "Enter Description here",
+                      hintStyle: const TextStyle(color: Colors.grey),
+                      filled: true,
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      contentPadding: const EdgeInsets.all(20),
+                    ),
+                    maxLines: 8,
+                    maxLength: 300,
+                  ),
+                if (isTypeLink)
+                  TextField(
+                    controller: linkController,
+                    enableSuggestions: false,
+                    autocorrect: false,
+                    keyboardType: TextInputType.text,
+                    decoration: InputDecoration(
+                      hintText: "Enter link here",
+                      hintStyle: const TextStyle(color: Colors.grey),
+                      filled: true,
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      contentPadding: const EdgeInsets.all(20),
+                    ),
+                    maxLength: 2000,
+                  ),
+                const SizedBox(
+                  height: 20,
+                ),
+                Align(
+                  alignment: Alignment.topLeft,
+                  child: const Text(
+                    'Tags:',
+                    style: TextStyle(fontSize: 24),
+                  ),
+                ),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: [
+                    ...tags.map(
+                      (tag) => Chip(
+                        label: Text(tag),
+                        deleteIcon: const Icon(Icons.close),
+                        onDeleted: () {
+                          setState(() {
+                            tags.remove(tag);
+                          });
+                        },
+                      ),
+                    ),
+                    if (tags.length < 8)
+                      ActionChip(
+                        label: const Icon(Icons.add),
+                        onPressed: () {
+                          _showAddTagBottomSheet(context);
+                        },
+                      ),
+                  ],
+                )
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}

@@ -126,8 +126,7 @@ class _RegisterViewState extends State<RegisterView> {
                     profilePic: Constants.avatarDefault,
                     banner: Constants.bannerDefault,
                     uid: user!.uid,
-                    isAuthenticated:
-                        false, // Imposta isAuthenticated su false inizialmente
+                    isAuthenticated: false,
                   );
 
                   await FirebaseFirestore.instance
@@ -137,11 +136,7 @@ class _RegisterViewState extends State<RegisterView> {
 
                   if (!context.mounted) return;
 
-                  Navigator.of(context).pushReplacement(
-                    MaterialPageRoute(
-                      builder: (context) => const VerifyEmailView(),
-                    ),
-                  );
+                  Routemaster.of(context).push('/register/verify_email');
                 } on FirebaseAuthException catch (e) {
                   showSnackBar(context, e.message ?? 'Registration failed');
                 }
@@ -152,6 +147,7 @@ class _RegisterViewState extends State<RegisterView> {
                   borderRadius: BorderRadius.circular(10),
                 ),
                 padding: const EdgeInsets.symmetric(vertical: 15),
+                minimumSize: Size(double.infinity, 40),
               ),
               child: const Text(
                 'Register',

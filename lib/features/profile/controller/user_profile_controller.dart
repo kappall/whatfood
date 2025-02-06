@@ -61,7 +61,7 @@ class UserProfileController extends StateNotifier<bool> {
     }
     if (bannerFile != null) {
       final ris = await _storageRepository.storeFile(
-        path: 'users/profile',
+        path: 'users/banner',
         id: user.uid,
         file: bannerFile,
       );

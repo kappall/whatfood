@@ -2,15 +2,46 @@
 // ignore_for_file: type=lint
 import 'package:firebase_core/firebase_core.dart' show FirebaseOptions;
 import 'package:flutter/foundation.dart'
-    show defaultTargetPlatform, TargetPlatform;
+    show defaultTargetPlatform, kIsWeb, TargetPlatform;
 
+/// Default [FirebaseOptions] for use with your Firebase apps.
+///
+/// Example:
+/// ```dart
+/// import 'firebase_options.dart';
+/// // ...
+/// await Firebase.initializeApp(
+///   options: DefaultFirebaseOptions.currentPlatform,
+/// );
+/// ```
 class DefaultFirebaseOptions {
   static FirebaseOptions get currentPlatform {
+    if (kIsWeb) {
+      throw UnsupportedError(
+        'DefaultFirebaseOptions have not been configured for web - '
+        'you can reconfigure this by running the FlutterFire CLI again.',
+      );
+    }
     switch (defaultTargetPlatform) {
       case TargetPlatform.android:
         return android;
       case TargetPlatform.iOS:
         return ios;
+      case TargetPlatform.macOS:
+        throw UnsupportedError(
+          'DefaultFirebaseOptions have not been configured for macos - '
+          'you can reconfigure this by running the FlutterFire CLI again.',
+        );
+      case TargetPlatform.windows:
+        throw UnsupportedError(
+          'DefaultFirebaseOptions have not been configured for windows - '
+          'you can reconfigure this by running the FlutterFire CLI again.',
+        );
+      case TargetPlatform.linux:
+        throw UnsupportedError(
+          'DefaultFirebaseOptions have not been configured for linux - '
+          'you can reconfigure this by running the FlutterFire CLI again.',
+        );
       default:
         throw UnsupportedError(
           'DefaultFirebaseOptions are not supported for this platform.',
@@ -19,19 +50,20 @@ class DefaultFirebaseOptions {
   }
 
   static const FirebaseOptions android = FirebaseOptions(
-    apiKey: 'AIzaSyBv4LJW5GP6_QdltTay1q7A2iLrOtQ4a14',
-    appId: '1:739142201079:android:0604f87628cf9dcf9dadf2',
-    messagingSenderId: '739142201079',
-    projectId: 'whatfood-80971',
-    storageBucket: 'whatfood-80971.firebasestorage.app',
+    apiKey: 'AIzaSyBynUlTN1xGmtV9rmw3zUpcN-WtCKbJeU8',
+    appId: '1:328872688976:android:c58ed5e67df6f6c6cf4055',
+    messagingSenderId: '328872688976',
+    projectId: 'app-what-food',
+    storageBucket: 'app-what-food.firebasestorage.app',
   );
 
   static const FirebaseOptions ios = FirebaseOptions(
-    apiKey: 'AIzaSyCcgsNuyuKzrOeiyww_6Tk9t7GfF6Nrdw4',
-    appId: '1:739142201079:ios:5663199951a62e959dadf2',
-    messagingSenderId: '739142201079',
-    projectId: 'whatfood-80971',
-    storageBucket: 'whatfood-80971.firebasestorage.app',
+    apiKey: 'AIzaSyAy6d4hoNozNq4yr7Nv0MJ4Tl3cCY2jIic',
+    appId: '1:328872688976:ios:1d7b8e16061103fccf4055',
+    messagingSenderId: '328872688976',
+    projectId: 'app-what-food',
+    storageBucket: 'app-what-food.firebasestorage.app',
     iosBundleId: 'it.whatfood.whatfood',
   );
+
 }

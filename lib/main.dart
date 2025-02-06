@@ -9,6 +9,7 @@ import 'package:whatfood/firebase_options.dart';
 import 'package:whatfood/models/user_model.dart';
 import 'package:whatfood/router.dart';
 import 'package:routemaster/routemaster.dart';
+import 'package:whatfood/theme/theme.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -56,6 +57,7 @@ class _MyAppState extends ConsumerState<MyApp> {
                 return MaterialApp.router(
                   debugShowCheckedModeBanner: false,
                   title: 'Whatfood',
+                  theme: ref.watch(themeProvider),
                   routerDelegate: RoutemasterDelegate(
                     routesBuilder: (context) => loggedInRoute,
                   ),

@@ -98,7 +98,7 @@ class _LoginViewState extends State<LoginView> {
                   final userCredential = await FirebaseAuth.instance
                       .signInWithEmailAndPassword(
                           email: email, password: password);
-                  Routemaster.of(context).push('/main_page/');
+                  Routemaster.of(context).push('/main_page');
                 } on FirebaseAuthException catch (e) {
                   String errorMessage;
                   switch (e.code) {

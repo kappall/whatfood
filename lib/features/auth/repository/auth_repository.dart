@@ -105,16 +105,7 @@ class AuthRepository {
   Stream<UserModel> getUserData(String uid) {
     return _users.doc(uid).snapshots().map((event) {
       final data = event.data();
-
-      if (data == null) {
-        throw Exception("User document for uid: $uid not found in Firestore.");
-      }
-
-      try {
-        return UserModel.fromMap(data as Map<String, dynamic>);
-      } catch (e) {
-        throw Exception("Error parsing user data: $e");
-      }
+      return UserModel.fromMap(data as Map<String, dynamic>);
     });
   }
 
