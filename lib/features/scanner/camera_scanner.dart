@@ -82,7 +82,7 @@ class CameraScannerState extends State<CameraScanner> {
 
     _controller = CameraController(
       camera,
-      ResolutionPreset.max,
+      ResolutionPreset.medium,
       enableAudio: false,
       imageFormatGroup: Platform.isAndroid
           ? ImageFormatGroup.nv21
@@ -136,7 +136,7 @@ class CameraScannerState extends State<CameraScanner> {
 
   Future<void> _processImage(InputImage image) async {
     if (_debounceTimer?.isActive ?? false) return;
-    _debounceTimer = Timer(const Duration(seconds: 1), () {});
+    _debounceTimer = Timer(const Duration(seconds: 2), () {});
 
     final barcodes = await _barcodeScanner.processImage(image);
 
