@@ -171,9 +171,12 @@ class CameraScannerState extends State<CameraScanner> {
 
     try {
       final url = Uri.https(
-        'world.openfoodfacts.org',
-        '/api/v2/product/$_scannedCode?fields=product_name,nutriscore_data,nutriments,nutrition_grades',
-      );
+          'world.openfoodfacts.org', '/api/v2/product/$_scannedCode', {
+        'fields': 'product_name,brands,ingredients_text,image_url,'
+            'nutriscore_data,nutriments,nutrition_grades,'
+            'nutriscore_grade,ingredients_text_en', // Aggiungi il campo inglese
+        'lc': 'en', // Forza la lingua inglese
+      });
       _scannedCode = '';
 
       final response = await http.get(url);
