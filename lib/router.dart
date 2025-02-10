@@ -60,10 +60,8 @@ final loggedOutRoute = RouteMap(routes: {
     final user = FirebaseAuth.instance.currentUser;
     if (user == null) {
       return const MaterialPage(child: LoginView());
-    } else if (!user.emailVerified) {
-      return const MaterialPage(child: VerifyEmailView());
     } else {
-      return const MaterialPage(child: LoginView());
+      return const MaterialPage(child: VerifyEmailView());
     }
   },
   '/verify-email': (_) => const MaterialPage(child: VerifyEmailView()),

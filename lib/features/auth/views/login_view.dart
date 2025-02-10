@@ -104,6 +104,7 @@ class _LoginViewState extends ConsumerState<LoginView> {
                       .read(authControllerProvider.notifier)
                       .signInWithEmailAndPassword(
                           context: context, email: email, password: password);
+                  debugPrint("hi");
                 },
                 style: FilledButton.styleFrom(
                   backgroundColor: Colors.lightGreen,

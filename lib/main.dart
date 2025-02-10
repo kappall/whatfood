@@ -34,10 +34,10 @@ class MyApp extends ConsumerStatefulWidget {
 class _MyAppState extends ConsumerState<MyApp> {
   UserModel? userModel;
 
-  void getData(WidgetRef ref, User data) async {
+  void getData(WidgetRef ref, User user) async {
     userModel = await ref
         .watch(authControllerProvider.notifier)
-        .getUserData(data.uid)
+        .getUserData(user.uid)
         .first;
     ref.read(userProvider.notifier).update((state) => userModel);
   }
@@ -45,21 +45,15 @@ class _MyAppState extends ConsumerState<MyApp> {
   @override
   Widget build(BuildContext context) {
     return ref.watch(authStateChangeProvider).when(
-          data: (data) => MaterialApp.router(
+          data: (user) => MaterialApp.router(
             debugShowCheckedModeBanner: false,
-            title: 'WhatfoodR',
+            title: 'Whatfood',
             theme: ref.watch(themeProvider),
-            routerDelegate: RoutemasterDelegate(
-              routesBuilder: (context) {
-                if (data != null) {
-                  getData(ref, data);
-                  if (userModel != null) {
-                    return loggedInRoute;
-                  }
-                }
-                return loggedOutRoute;
-              },
-            ),
+            routerDelegate: RoutemasterDelegate(routesBuilder: (context) {
+              if (user == null) return loggedOutRoute;
+              getData(ref, user);
+              return loggedInRoute;
+            }),
             routeInformationParser: const RoutemasterParser(),
           ),
           error: (error, stackTrace) => ErrorText(error: error.toString()),
