@@ -174,8 +174,8 @@ class CameraScannerState extends State<CameraScanner> {
           'world.openfoodfacts.org', '/api/v2/product/$_scannedCode', {
         'fields': 'product_name,brands,ingredients_text,image_url,'
             'nutriscore_data,nutriments,nutrition_grades,'
-            'nutriscore_grade,ingredients_text_en', // Aggiungi il campo inglese
-        'lc': 'en', // Forza la lingua inglese
+            'nutriscore_grade,ingredients_text_en',
+        'lc': 'en',
       });
       _scannedCode = '';
 

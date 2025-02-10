@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:whatfood/core/common/error_text.dart';
 import 'package:whatfood/core/common/loader.dart';
 import 'package:whatfood/features/auth/controller/auth_controller.dart';
+import 'package:whatfood/features/auth/views/verify_email_view.dart';
 import 'package:whatfood/firebase_options.dart';
 import 'package:whatfood/models/user_model.dart';
 import 'package:whatfood/router.dart';
@@ -37,44 +38,30 @@ class _MyAppState extends ConsumerState<MyApp> {
     userModel = await ref
         .watch(authControllerProvider.notifier)
         .getUserData(data.uid)
-        .map((userData) {
-      return userData;
-    }).first;
-
+        .first;
     ref.read(userProvider.notifier).update((state) => userModel);
   }
 
   @override
   Widget build(BuildContext context) {
     return ref.watch(authStateChangeProvider).when(
-          data: (data) {
-            if (data != null) {
-              getData(ref, data);
-
-              final currentUser = ref.watch(userProvider);
-
-              if (currentUser != null) {
-                return MaterialApp.router(
-                  debugShowCheckedModeBanner: false,
-                  title: 'Whatfood',
-                  theme: ref.watch(themeProvider),
-                  routerDelegate: RoutemasterDelegate(
-                    routesBuilder: (context) => loggedInRoute,
-                  ),
-                  routeInformationParser: const RoutemasterParser(),
-                );
-              }
-            }
-
-            return MaterialApp.router(
-              debugShowCheckedModeBanner: false,
-              title: 'Whatfood',
-              routerDelegate: RoutemasterDelegate(
-                routesBuilder: (context) => loggedOutRoute,
-              ),
-              routeInformationParser: const RoutemasterParser(),
-            );
-          },
+          data: (data) => MaterialApp.router(
+            debugShowCheckedModeBanner: false,
+            title: 'WhatfoodR',
+            theme: ref.watch(themeProvider),
+            routerDelegate: RoutemasterDelegate(
+              routesBuilder: (context) {
+                if (data != null) {
+                  getData(ref, data);
+                  if (userModel != null) {
+                    return loggedInRoute;
+                  }
+                }
+                return loggedOutRoute;
+              },
+            ),
+            routeInformationParser: const RoutemasterParser(),
+          ),
           error: (error, stackTrace) => ErrorText(error: error.toString()),
           loading: () => const Loader(),
         );

@@ -43,7 +43,8 @@ Widget _buildIngredientsList(String? cleanText) {
 
   final ingredients = cleanText
       .split(RegExp(r',\s*(?![^()]*\))'))
-      .where((ingredient) => ingredient.trim().isNotEmpty)
+      .where((ingredient) =>
+          ingredient.trim().isNotEmpty && !ingredient.trim().contains("%"))
       .toList();
 
   return Wrap(

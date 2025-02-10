@@ -1,6 +1,7 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:routemaster/routemaster.dart';
 import 'package:whatfood/core/utils.dart';
 import 'package:whatfood/features/auth/repository/auth_repository.dart';
 import 'package:whatfood/models/user_model.dart';
@@ -56,6 +57,26 @@ class AuthController extends StateNotifier<bool> {
     );
   }
 
+  void signInWithEmailAndPassword({
+    required BuildContext context,
+    required String email,
+    required String password,
+  }) async {
+    state = true;
+    final user = await _authRepository.signInWithEmailAndPassword(
+      email: email,
+      password: password,
+    );
+    state = false;
+
+    user.fold(
+      (l) => showSnackBar(context, l.message),
+      (userModel) {
+        _ref.read(userProvider.notifier).update((state) => userModel);
+      },
+    );
+  }
+
   Stream<UserModel> getUserData(String uid) {
     return _authRepository.getUserData(uid).map((userData) {
       return userData;
@@ -64,5 +85,27 @@ class AuthController extends StateNotifier<bool> {
 
   void logout() async {
     _authRepository.logOut();
+  }
+
+  Future<void> registerWithEmailAndPassword({
+    required BuildContext context,
+    required String email,
+    required String password,
+    required String name,
+  }) async {
+    state = true;
+    final user = await _authRepository.registerWithEmailAndPassword(
+      email: email,
+      password: password,
+      name: name,
+    );
+    state = false;
+
+    user.fold(
+      (l) => showSnackBar(context, l.message),
+      (userModel) {
+        Routemaster.of(context).replace('/verify-email');
+      },
+    );
   }
 }

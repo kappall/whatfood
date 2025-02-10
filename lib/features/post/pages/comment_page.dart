@@ -23,11 +23,13 @@ class CommentsPage extends ConsumerStatefulWidget {
 
 class _CommentsPageState extends ConsumerState<CommentsPage> {
   final commentController = TextEditingController();
+  final ScrollController _scrollController = ScrollController();
 
   @override
   void dispose() {
     super.dispose();
     commentController.dispose();
+    _scrollController.dispose();
   }
 
   void addComment(Post post) {
@@ -35,9 +37,7 @@ class _CommentsPageState extends ConsumerState<CommentsPage> {
         context: context,
         content: commentController.text.trim(),
         postId: post.id);
-    setState(() {
-      commentController.text = '';
-    });
+    commentController.clear();
   }
 
   @override
@@ -45,53 +45,41 @@ class _CommentsPageState extends ConsumerState<CommentsPage> {
     return Scaffold(
       appBar: AppBar(),
       body: ref.watch(postByIdProvider(widget.postId)).when(
-            data: (data) {
+            data: (post) {
               return Column(
                 children: [
                   PostCard(
-                    post: data,
+                    post: post,
                     isCommenting: true,
                   ),
-                  Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 8),
-                    child: TextField(
-                      controller: commentController,
-                      textCapitalization: TextCapitalization.sentences,
-                      onSubmitted: (val) => addComment(data),
-                      enableSuggestions: true,
-                      autocorrect: true,
-                      keyboardType: TextInputType.text,
-                      decoration: InputDecoration(
-                        hintText: "Share your thoughts",
-                        hintStyle: const TextStyle(color: Colors.grey),
-                        filled: true,
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(20),
-                        ),
-                        contentPadding: const EdgeInsets.all(20),
-                      ),
-                      maxLength: 30,
-                    ),
-                  ),
-                  ref.watch(getpostCommentsProvider(widget.postId)).when(
-                        data: (data) {
-                          return Expanded(
-                            child: ListView.builder(
-                              itemCount: data.length,
+                  Expanded(
+                    child: ref
+                        .watch(getpostCommentsProvider(widget.postId))
+                        .when(
+                          data: (comments) {
+                            WidgetsBinding.instance.addPostFrameCallback((_) {
+                              if (_scrollController.hasClients) {
+                                _scrollController.jumpTo(
+                                    _scrollController.position.maxScrollExtent);
+                              }
+                            });
+
+                            return ListView.builder(
+                              controller: _scrollController,
+                              itemCount: comments.length,
                               itemBuilder: (BuildContext context, int index) {
-                                final comment = data[index];
+                                final comment = comments[index];
                                 return CommentCard(comment: comment);
                               },
-                            ),
-                          );
-                        },
-                        error: (error, stackTrace) {
-                          return ErrorText(
+                            );
+                          },
+                          error: (error, stackTrace) => ErrorText(
                             error: error.toString(),
-                          );
-                        },
-                        loading: () => const Loader(),
-                      ),
+                          ),
+                          loading: () => const Loader(),
+                        ),
+                  ),
+                  _buildCommentInput(post),
                 ],
               );
             },
@@ -100,6 +88,54 @@ class _CommentsPageState extends ConsumerState<CommentsPage> {
             ),
             loading: () => const Loader(),
           ),
+    );
+  }
+
+  Widget _buildCommentInput(Post post) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      decoration: BoxDecoration(
+        color: Theme.of(context).scaffoldBackgroundColor,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.1),
+            blurRadius: 4,
+            offset: const Offset(0, -2),
+          ),
+        ],
+      ),
+      child: SafeArea(
+        top: false,
+        child: Row(
+          children: [
+            Expanded(
+              child: TextField(
+                controller: commentController,
+                textCapitalization: TextCapitalization.sentences,
+                onSubmitted: (val) => addComment(post),
+                decoration: InputDecoration(
+                  hintText: "Scrivi un commento...",
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(24),
+                    borderSide: BorderSide.none,
+                  ),
+                  filled: true,
+                  contentPadding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 12,
+                  ),
+                ),
+                maxLines: 2,
+                minLines: 1,
+              ),
+            ),
+            IconButton(
+              icon: const Icon(Icons.send),
+              onPressed: () => addComment(post),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }
