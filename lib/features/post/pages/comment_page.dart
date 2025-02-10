@@ -1,5 +1,4 @@
 import 'dart:async';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:whatfood/core/common/error_text.dart';
@@ -24,88 +23,90 @@ class CommentsPage extends ConsumerStatefulWidget {
 class _CommentsPageState extends ConsumerState<CommentsPage> {
   final commentController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
+  final FocusNode _commentFocusNode = FocusNode();
 
   @override
   void dispose() {
-    super.dispose();
     commentController.dispose();
     _scrollController.dispose();
+    super.dispose();
   }
 
   void addComment(Post post) {
     ref.read(postControllerProvider.notifier).addComment(
-        context: context,
-        content: commentController.text.trim(),
-        postId: post.id);
+          context: context,
+          content: commentController.text.trim(),
+          postId: post.id,
+        );
     commentController.clear();
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(),
-      body: ref.watch(postByIdProvider(widget.postId)).when(
-            data: (post) {
-              return Column(
-                children: [
-                  PostCard(
-                    post: post,
-                    isCommenting: true,
-                  ),
-                  Expanded(
-                    child: ref
-                        .watch(getpostCommentsProvider(widget.postId))
-                        .when(
-                          data: (comments) {
-                            WidgetsBinding.instance.addPostFrameCallback((_) {
-                              if (_scrollController.hasClients) {
-                                _scrollController.jumpTo(
-                                    _scrollController.position.maxScrollExtent);
-                              }
-                            });
-
-                            return ListView.builder(
-                              controller: _scrollController,
-                              itemCount: comments.length,
-                              itemBuilder: (BuildContext context, int index) {
-                                final comment = comments[index];
-                                return CommentCard(comment: comment);
-                              },
-                            );
-                          },
-                          error: (error, stackTrace) => ErrorText(
-                            error: error.toString(),
+    return ref.watch(postByIdProvider(widget.postId)).when(
+          data: (post) {
+            return GestureDetector(
+              onTap: () {
+                FocusScope.of(context).unfocus();
+              },
+              child: Scaffold(
+                appBar: AppBar(),
+                body: SingleChildScrollView(
+                  child: Column(
+                    children: [
+                      PostCard(
+                        post: post,
+                        isCommenting: true,
+                      ),
+                      ref.watch(getpostCommentsProvider(widget.postId)).when(
+                            data: (comments) {
+                              return ListView.builder(
+                                shrinkWrap: true,
+                                physics: const NeverScrollableScrollPhysics(),
+                                itemCount: comments.length,
+                                itemBuilder: (context, index) {
+                                  final comment = comments[index];
+                                  return CommentCard(comment: comment);
+                                },
+                              );
+                            },
+                            error: (error, stackTrace) =>
+                                ErrorText(error: error.toString()),
+                            loading: () => const Loader(),
                           ),
-                          loading: () => const Loader(),
-                        ),
+                    ],
                   ),
-                  _buildCommentInput(post),
-                ],
-              );
-            },
-            error: (error, stackTrace) => ErrorText(
-              error: error.toString(),
-            ),
-            loading: () => const Loader(),
+                ),
+                bottomNavigationBar: _buildCommentInput(post),
+              ),
+            );
+          },
+          error: (error, stackTrace) => Scaffold(
+            body: Center(child: ErrorText(error: error.toString())),
           ),
-    );
+          loading: () => Scaffold(body: const Center(child: Loader())),
+        );
   }
 
   Widget _buildCommentInput(Post post) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      decoration: BoxDecoration(
-        color: Theme.of(context).scaffoldBackgroundColor,
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.1),
-            blurRadius: 4,
-            offset: const Offset(0, -2),
-          ),
-        ],
-      ),
-      child: SafeArea(
-        top: false,
+    return SafeArea(
+      child: Container(
+        padding: EdgeInsets.only(
+          left: 16,
+          right: 16,
+          top: 8,
+          bottom: MediaQuery.of(context).viewInsets.bottom + 8,
+        ),
+        decoration: BoxDecoration(
+          color: Theme.of(context).scaffoldBackgroundColor,
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black,
+              blurRadius: 4,
+              offset: const Offset(0, -2),
+            ),
+          ],
+        ),
         child: Row(
           children: [
             Expanded(
@@ -113,6 +114,7 @@ class _CommentsPageState extends ConsumerState<CommentsPage> {
                 controller: commentController,
                 textCapitalization: TextCapitalization.sentences,
                 onSubmitted: (val) => addComment(post),
+                focusNode: _commentFocusNode,
                 decoration: InputDecoration(
                   hintText: "Scrivi un commento...",
                   border: OutlineInputBorder(
@@ -131,7 +133,10 @@ class _CommentsPageState extends ConsumerState<CommentsPage> {
             ),
             IconButton(
               icon: const Icon(Icons.send),
-              onPressed: () => addComment(post),
+              onPressed: () {
+                addComment(post);
+                FocusScope.of(context).unfocus();
+              },
             ),
           ],
         ),

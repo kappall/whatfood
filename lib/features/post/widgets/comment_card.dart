@@ -16,32 +16,45 @@ class CommentCard extends ConsumerWidget {
     return Container(
       padding: EdgeInsets.symmetric(horizontal: 10, vertical: 4),
       child: Column(
+        mainAxisAlignment: MainAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              OutlinedButton(
-                style: OutlinedButton.styleFrom(
-                    shape: CircleBorder(), padding: EdgeInsets.only(right: 0)),
-                onPressed: () => navigateToUser(context),
-                child: CircleAvatar(
-                  backgroundImage: NetworkImage(comment.profilePic),
-                  radius: 24,
-                ),
-              ),
-              Column(
+              Row(
                 children: [
+                  OutlinedButton(
+                    style: OutlinedButton.styleFrom(
+                        shape: CircleBorder(),
+                        padding: EdgeInsets.only(right: 0)),
+                    onPressed: () => navigateToUser(context),
+                    child: CircleAvatar(
+                      backgroundImage: NetworkImage(comment.profilePic),
+                      radius: 24,
+                    ),
+                  ),
                   Text(
                     comment.username,
-                    style: TextStyle(fontWeight: FontWeight.bold),
-                  ),
-                  Text(comment.text),
-                  Divider(
-                    height: 1,
+                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 22),
                   ),
                 ],
               ),
+              Row(
+                children: [
+                  Text(
+                      '${DateTime.now().difference(comment.createdAt).inDays}d ago')
+                ],
+              ),
             ],
-          )
+          ),
+          Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: Text(comment.text),
+          ),
+          Divider(
+            height: 1,
+          ),
         ],
       ),
     );
