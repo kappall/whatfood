@@ -5,6 +5,8 @@ class Comment {
   final String postId;
   final String username;
   final String profilePic;
+  final String uid;
+
   Comment({
     required this.id,
     required this.text,
@@ -12,6 +14,7 @@ class Comment {
     required this.postId,
     required this.username,
     required this.profilePic,
+    required this.uid,
   });
 
   Comment copyWith({
@@ -21,6 +24,7 @@ class Comment {
     String? postId,
     String? username,
     String? profilePic,
+    String? uid,
   }) {
     return Comment(
       id: id ?? this.id,
@@ -29,6 +33,7 @@ class Comment {
       postId: postId ?? this.postId,
       username: username ?? this.username,
       profilePic: profilePic ?? this.profilePic,
+      uid: uid ?? this.uid,
     );
   }
 
@@ -40,6 +45,7 @@ class Comment {
       'postId': postId,
       'username': username,
       'profilePic': profilePic,
+      'uid': uid,
     };
   }
 
@@ -51,12 +57,13 @@ class Comment {
       postId: map['postId'] ?? '',
       username: map['username'] ?? '',
       profilePic: map['profilePic'] ?? '',
+      uid: map['uid'] ?? '',
     );
   }
 
   @override
   String toString() {
-    return 'Comment(id: $id, text: $text, createdAt: $createdAt, postId: $postId, username: $username, profilePic: $profilePic)';
+    return 'Comment(id: $id, text: $text, createdAt: $createdAt, postId: $postId, username: $username, profilePic: $profilePic, uid: $uid)';
   }
 
   @override
@@ -69,7 +76,8 @@ class Comment {
         other.createdAt == createdAt &&
         other.postId == postId &&
         other.username == username &&
-        other.profilePic == profilePic;
+        other.profilePic == profilePic &&
+        other.uid == uid;
   }
 
   @override
@@ -79,6 +87,7 @@ class Comment {
         createdAt.hashCode ^
         postId.hashCode ^
         username.hashCode ^
-        profilePic.hashCode;
+        profilePic.hashCode ^
+        uid.hashCode;
   }
 }

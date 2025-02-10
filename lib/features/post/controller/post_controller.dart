@@ -8,8 +8,9 @@ import 'package:uuid/uuid.dart';
 import 'package:whatfood/core/providers/storage_repository_provider.dart';
 import 'package:whatfood/core/utils.dart';
 import 'package:whatfood/features/auth/controller/auth_controller.dart';
-import 'package:whatfood/features/post/provider/post_provider.dart';
+import 'package:whatfood/features/post/repository/post_repository.dart';
 import 'package:whatfood/features/profile/controller/user_profile_controller.dart';
+import 'package:whatfood/models/comment_model.dart';
 import 'package:whatfood/models/post_model.dart';
 
 final postControllerProvider =
@@ -19,8 +20,24 @@ final postControllerProvider =
   return PostController(
     postRepository: postRepository,
     ref: ref,
-    StorageRepository: storageRepository,
+    storageRepository: storageRepository,
   );
+});
+
+final postsProvider = StreamProvider((ref) {
+  final postController = ref.watch(postControllerProvider.notifier);
+
+  return postController.fetchPosts();
+});
+
+final postByIdProvider = StreamProvider.family((ref, String id) {
+  final posController = ref.watch(postControllerProvider.notifier);
+  return posController.getPostById(id);
+});
+
+final getpostCommentsProvider = StreamProvider.family((ref, String id) {
+  final posController = ref.watch(postControllerProvider.notifier);
+  return posController.fetchCommentsOfPost(id);
 });
 
 class PostController extends StateNotifier<bool> {
@@ -30,15 +47,15 @@ class PostController extends StateNotifier<bool> {
 
   PostController({
     required PostRepository postRepository,
-    required StorageRepository StorageRepository,
+    required StorageRepository storageRepository,
     required Ref ref,
   })  : _postRepository = postRepository,
-        _storageRepository = StorageRepository,
+        _storageRepository = storageRepository,
         _ref = ref,
         super(false);
 
-  Stream<List<Post>> fetchUserPosts(String uid) {
-    return _postRepository.fetchUserPosts(uid);
+  Stream<List<Post>> fetchPosts() {
+    return _postRepository.fetchPosts();
   }
 
   void shareTextPost({
@@ -64,58 +81,13 @@ class PostController extends StateNotifier<bool> {
       title: title,
       description: description,
       uid: user.uid,
+      userImage: user.profilePic,
       username: user.name,
       createdAt: DateTime.now(),
       likes: [],
       tags: tags,
       commentCount: 0,
       type: 'text',
-    );
-
-    final res = await _postRepository.addPost(post);
-    state = false;
-    res.fold(
-      (l) => ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(l.message)),
-      ),
-      (r) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Posted successfully!')),
-        );
-        Routemaster.of(context).push('/');
-      },
-    );
-  }
-
-  void shareLinkPost({
-    required BuildContext context,
-    required String title,
-    required List<String> tags,
-    required String link,
-  }) async {
-    state = true;
-    final user = _ref.read(userProvider);
-    if (user == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('User not logged in')),
-      );
-      state = false;
-      return;
-    }
-
-    String postId = const Uuid().v1();
-
-    final Post post = Post(
-      id: postId,
-      title: title,
-      link: link,
-      uid: user.uid,
-      username: user.name,
-      createdAt: DateTime.now(),
-      likes: [],
-      tags: tags,
-      commentCount: 0,
-      type: 'link',
     );
 
     final res = await _postRepository.addPost(post);
@@ -208,6 +180,7 @@ class PostController extends StateNotifier<bool> {
         id: postId,
         title: title,
         uid: user.uid,
+        userImage: user.profilePic,
         username: user.name,
         createdAt: DateTime.now(),
         likes: [],
@@ -232,16 +205,48 @@ class PostController extends StateNotifier<bool> {
       );
     } catch (e) {
       state = false;
+      if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(e.toString())),
       );
     }
   }
 
-  void deletePost(Post post, BuildContext context) async {
-    final res = await _postRepository.deletePost(post);
+  void deletePost(String id, BuildContext context) async {
+    final res = await _postRepository.deletePost(id);
     _ref.read(userProfileControllerProvider.notifier);
     res.fold((l) => null,
         (r) => showSnackBar(context, 'Post Deleted successfully!'));
+  }
+
+  void likeOrUnlike(Post post) async {
+    final uid = _ref.read(userProvider)!.uid;
+    _postRepository.likeOrUnlike(post, uid);
+  }
+
+  Stream<Post> getPostById(String id) {
+    return _postRepository.getPostById(id);
+  }
+
+  void addComment({
+    required BuildContext context,
+    required String content,
+    required String postId,
+  }) async {
+    final user = _ref.read(userProvider)!;
+    String cId = const Uuid().v1();
+    Comment comment = Comment(
+        id: cId,
+        text: content,
+        createdAt: DateTime.now(),
+        postId: postId,
+        username: user.name,
+        profilePic: user.profilePic,
+        uid: user.uid);
+    _postRepository.addComment(comment);
+  }
+
+  Stream<List<Comment>> fetchCommentsOfPost(String postId) {
+    return _postRepository.getCommentsOfPost(postId);
   }
 }
