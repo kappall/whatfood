@@ -1,172 +1,248 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:routemaster/routemaster.dart';
-import 'package:whatfood/core/constants/costants.dart';
+import 'package:whatfood/button_styles.dart';
+import 'package:whatfood/core/common/image_carousel.dart';
 import 'package:whatfood/features/auth/controller/auth_controller.dart';
 import 'package:whatfood/features/post/controller/post_controller.dart';
 import 'package:whatfood/models/post_model.dart';
-/*
+
 class PostCard extends ConsumerWidget {
   final Post post;
+  final bool isCommenting;
   const PostCard({
     super.key,
+    this.isCommenting = false,
     required this.post,
   });
 
   void deletePost(WidgetRef ref, BuildContext context) async {
-    ref.read(postControllerProvider.notifier).deletePost(post, context);
+    ref.read(postControllerProvider.notifier).deletePost(post.id, context);
   }
 
-  void upvotePost(WidgetRef ref) async {
-    ref.read(postControllerProvider.notifier).upvote(post);
-  }
-
-  void navigateToUser(BuildContext context) {
-    Routemaster.of(context).push('/u/${post.uid}');
+  void likeOrUnlikePost(WidgetRef ref) async {
+    ref.read(postControllerProvider.notifier).likeOrUnlike(post);
   }
 
   void navigateToComments(BuildContext context) {
-    Routemaster.of(context).push('/post/${post.id}/comments');
+    Routemaster.of(context).push('post/${post.id}/comments');
+  }
+
+  void navigateToUser(BuildContext context) {
+    Routemaster.of(context).push('user_page/${post.uid}');
+  }
+
+  Widget popUpMenu(BuildContext context, WidgetRef ref, bool isOwner) {
+    return PopupMenuButton<String>(
+      icon: Icon(Icons.more_horiz),
+      onSelected: (String result) {
+        print("Selezionato: $result");
+      },
+      itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
+        if (isOwner)
+          PopupMenuItem<String>(
+              child: TextButton.icon(
+            style: ButtonStyles.textButtonStyle(textColor: Colors.red),
+            onPressed: () {
+              deletePost(ref, context);
+            },
+            icon: Icon(
+              Icons.delete,
+              color: Colors.red,
+            ),
+            label: Text("Delete"),
+          )),
+        if (isOwner)
+          PopupMenuItem<String>(
+              child: TextButton.icon(
+            style: ButtonStyles.textButtonStyle(textColor: Colors.blueAccent),
+            onPressed: () {
+              print("Pulsante premuto1");
+            },
+            icon: Icon(
+              Icons.edit,
+              color: Colors.blueAccent,
+            ),
+            label: Text("Edit"),
+          )),
+        PopupMenuItem<String>(
+          value: 'Opzione 2',
+          child: Text('Opzione 2'),
+        ),
+        PopupMenuItem<String>(
+          value: 'Opzione 3',
+          child: Text('Opzione 3'),
+        ),
+      ],
+    );
   }
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final isTypeImage = post.type == 'image';
-    final isTypeText = post.type == 'text';
-    final isTypeLink = post.type == 'link';
-    final user = ref.watch(authControllerProvider);
-    final isGuest = user.isAuthenticated;
-
+    final isTypeImage = post.type == "image";
+    final isTypeText = post.type == "text";
+    final theme = Theme.of(context).bottomNavigationBarTheme;
+    final user = ref.watch(userProvider)!;
     return Column(
       children: [
         Container(
-          padding: const EdgeInsets.symmetric(vertical: 10),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
+          decoration: BoxDecoration(),
+          padding: EdgeInsets.symmetric(vertical: 10),
+          child: Column(
             children: [
-              Expanded(
+              Container(
+                padding: EdgeInsets.symmetric(vertical: 4, horizontal: 16)
+                    .copyWith(right: 0),
                 child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        vertical: 4,
-                        horizontal: 16,
-                      ).copyWith(right: 0),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Row(
-                                children: [
-                                  Padding(
-                                    padding: const EdgeInsets.only(left: 8),
-                                    child: Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      children: [
-                                        GestureDetector(
-                                          onTap: () => navigateToUser(context),
-                                          child: Text(
-                                            'u/${post.username}',
-                                            style:
-                                                const TextStyle(fontSize: 12),
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                ],
-                              ),
-                              if (post.uid == user.uid)
-                                IconButton(
-                                  onPressed: () => deletePost(ref, context),
-                                  icon: Icon(
-                                    Icons.delete,
-                                    color: Colors.redAccent,
-                                  ),
-                                ),
-                            ],
-                          ),
-                          Padding(
-                            padding: const EdgeInsets.only(top: 10.0),
-                            child: Text(
-                              post.title,
-                              style: const TextStyle(
-                                fontSize: 19,
-                                fontWeight: FontWeight.bold,
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Row(
+                          children: [
+                            OutlinedButton(
+                              style: OutlinedButton.styleFrom(
+                                  shape: CircleBorder(),
+                                  padding: EdgeInsets.only(right: 0)),
+                              onPressed: () => navigateToUser(context),
+                              child: CircleAvatar(
+                                backgroundImage: NetworkImage(post.userImage),
+                                radius: 24,
                               ),
                             ),
-                          ),
-                          if (isTypeImage)
-                            SizedBox(
-                              height: MediaQuery.of(context).size.height * 0.35,
-                              width: double.infinity,
-                              child: Image.network(
-                                post.link!,
-                                fit: BoxFit.cover,
-                              ),
-                            ),
-                          if (isTypeText)
-                            Container(
-                              alignment: Alignment.bottomLeft,
-                              padding:
-                                  const EdgeInsets.symmetric(horizontal: 15.0),
+                            Padding(
+                              padding: EdgeInsets.only(left: 8),
                               child: Text(
-                                post.description!,
-                                style: const TextStyle(
-                                  color: Colors.grey,
-                                ),
+                                post.username,
+                                style: TextStyle(
+                                    fontSize: 22,
+                                    color:
+                                        Theme.of(context).secondaryHeaderColor),
                               ),
                             ),
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Row(
-                                children: [
-                                  IconButton(
-                                    onPressed:
-                                        isGuest ? () {} : () => upvotePost(ref),
-                                    icon: Icon(
-                                      Constants.up,
-                                      size: 30,
-                                      color: post.upvotes.contains(user.uid)
-                                          ? Colors.green
-                                          : null,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                              Row(
-                                children: [
-                                  IconButton(
-                                    onPressed: () =>
-                                        navigateToComments(context),
-                                    icon: const Icon(
-                                      Icons.comment,
-                                    ),
-                                  ),
-                                  Text(
-                                    '${post.commentCount == 0 ? 'Comment' : post.commentCount}',
-                                    style: const TextStyle(fontSize: 17),
-                                  ),
-                                ],
-                              ),
-                            ],
-                          ),
-                        ],
+                          ],
+                        ),
+                        popUpMenu(context, ref, post.uid == user.uid)
+                      ],
+                    ),
+                    Padding(
+                      padding: EdgeInsets.only(top: 10),
+                      child: Text(
+                        post.title,
+                        style: TextStyle(
+                          fontSize: 20,
+                        ),
                       ),
                     ),
                   ],
                 ),
               ),
+              if (isTypeImage)
+                SizedBox(
+                  height: MediaQuery.of(context).size.height * 0.4,
+                  width: double.infinity,
+                  child: Container(
+                    decoration: BoxDecoration(
+                        color: Theme.of(context).appBarTheme.backgroundColor),
+                    child: ImageCarousel(
+                      imageUrls: post.imageUrls!,
+                    ),
+                  ),
+                ),
+              if (isTypeText)
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Divider(
+                      height: 2,
+                    ),
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(12),
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 20, vertical: 12),
+                        child: Container(
+                          decoration: BoxDecoration(
+                            color:
+                                Theme.of(context).appBarTheme.backgroundColor!,
+                            borderRadius: BorderRadius.circular(12),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Theme.of(context).brightness ==
+                                        Brightness.dark
+                                    ? Colors.black45
+                                    : Colors.black12,
+                                offset: Offset(0, 2),
+                                blurRadius: 10,
+                              ),
+                            ],
+                          ),
+                          child: Padding(
+                            padding: const EdgeInsets.all(16.0),
+                            child: Text(
+                              post.description!,
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w400,
+                                height: 1.5,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    )
+                  ],
+                ),
+              Padding(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Row(
+                      children: [
+                        IconButton(
+                          icon: Icon(
+                            Icons.thumb_up,
+                            color: post.likes.contains(user.uid)
+                                ? theme.selectedItemColor
+                                : null,
+                            size: 30,
+                          ),
+                          onPressed: () => likeOrUnlikePost(ref),
+                        ),
+                        Text(
+                          "${post.likes.isEmpty ? 'Like' : post.likes.length}",
+                          style: TextStyle(fontSize: 18),
+                        ),
+                      ],
+                    ),
+                    Row(
+                      children: [
+                        IconButton(
+                          icon: Icon(Icons.comment),
+                          onPressed: () => !isCommenting
+                              ? navigateToComments(context)
+                              : null,
+                        ),
+                        Text(
+                          "${post.commentCount == 0 ? 'Comment' : post.commentCount}",
+                          style: TextStyle(fontSize: 18),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+              Divider(
+                color: Theme.of(context).primaryColor,
+                height: 5,
+              )
             ],
           ),
         ),
-        const SizedBox(height: 10),
       ],
     );
   }
 }
-*/

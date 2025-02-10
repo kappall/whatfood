@@ -17,63 +17,88 @@ class AddPostPage extends ConsumerWidget {
       appBar: AppBar(
         title: Text("Add Post"),
       ),
-      body: Column(
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              GestureDetector(
+      body: Center(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            // Column for Image Post
+            Padding(
+              padding: const EdgeInsets.only(bottom: 24.0),
+              child: GestureDetector(
                 onTap: () => navigateToType(context, 'image'),
-                child: SizedBox(
-                  height: cardSize,
-                  width: cardSize,
-                  child: Card(
-                    shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(10)),
-                    elevation: 16,
-                    child: Icon(
-                      Icons.image_outlined,
-                      size: iconSize,
+                child: Column(
+                  children: [
+                    Text(
+                      'Add an Image Post',
+                      style: TextStyle(
+                        fontSize: 32,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
-                  ),
+                    const SizedBox(height: 12), // Space between text and card
+                    SizedBox(
+                      height: cardSize,
+                      width: cardSize,
+                      child: Card(
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        elevation: 8,
+                        child: Center(
+                          child: Icon(
+                            Icons.image_outlined,
+                            size: iconSize,
+                            color: Colors.blue,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ),
-              GestureDetector(
+            ),
+            Divider(
+              height: 150,
+            ),
+            // Column for Text Post
+            Padding(
+              padding: const EdgeInsets.only(bottom: 24.0),
+              child: GestureDetector(
                 onTap: () => navigateToType(context, 'text'),
-                child: SizedBox(
-                  height: cardSize,
-                  width: cardSize,
-                  child: Card(
-                    shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(10)),
-                    elevation: 16,
-                    child: Icon(
-                      Icons.font_download_outlined,
-                      size: iconSize,
+                child: Column(
+                  children: [
+                    Text(
+                      'Add a Text Post',
+                      style: TextStyle(
+                        fontSize: 32,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
-                  ),
+                    const SizedBox(height: 12), // Space between text and card
+                    SizedBox(
+                      height: cardSize,
+                      width: cardSize,
+                      child: Card(
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        elevation: 8,
+                        child: Center(
+                          child: Icon(
+                            Icons.font_download_outlined,
+                            size: iconSize,
+                            color: Colors.blue,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ),
-              GestureDetector(
-                onTap: () => navigateToType(context, 'link'),
-                child: SizedBox(
-                  height: cardSize,
-                  width: cardSize,
-                  child: Card(
-                    shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(10)),
-                    elevation: 16,
-                    child: Icon(
-                      Icons.link_outlined,
-                      size: iconSize,
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ],
+            ),
+          ],
+        ),
       ),
     );
   }

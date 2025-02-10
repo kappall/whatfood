@@ -153,7 +153,10 @@ class _MainPageState extends State<MainPage> {
         RecipePage(),
         HomePage(),
         ShopPage(),
-        ProfilePage(uid: FirebaseAuth.instance.currentUser!.uid),
+        ProfilePage(
+          uid: FirebaseAuth.instance.currentUser!.uid,
+          public: false,
+        ),
       ];
     }
   }

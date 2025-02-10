@@ -3,8 +3,7 @@ import 'dart:io';
 import 'package:dotted_border/dotted_border.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:path/path.dart';
-import 'package:whatfood/core/constants/costants.dart';
+import 'package:whatfood/core/common/loader.dart';
 import 'package:whatfood/core/utils.dart';
 import 'package:whatfood/features/post/controller/post_controller.dart';
 
@@ -20,7 +19,6 @@ class AddPostTypePage extends ConsumerStatefulWidget {
 class _AddPostTypePageState extends ConsumerState<AddPostTypePage> {
   final titleController = TextEditingController();
   final descriptionController = TextEditingController();
-  final linkController = TextEditingController();
   final List<File> bannerFiles = [];
   final List<String> tags = [];
   final FocusNode _tagFocusNode = FocusNode();
@@ -29,7 +27,6 @@ class _AddPostTypePageState extends ConsumerState<AddPostTypePage> {
   void dispose() {
     titleController.dispose();
     descriptionController.dispose();
-    linkController.dispose();
     super.dispose();
   }
 
@@ -86,11 +83,13 @@ class _AddPostTypePageState extends ConsumerState<AddPostTypePage> {
             children: [
               TextField(
                 controller: tagController,
+                enableSuggestions: true,
                 autofocus: true,
                 focusNode: _tagFocusNode,
                 decoration: const InputDecoration(
                   labelText: "Enter tag",
                 ),
+                maxLength: 16,
               ),
               const SizedBox(height: 16),
               ElevatedButton(
@@ -117,7 +116,9 @@ class _AddPostTypePageState extends ConsumerState<AddPostTypePage> {
   void sharePost(BuildContext context) {
     if (titleController.text.isEmpty) {
       showSnackBar(context, "Title missing");
+      return;
     }
+    if (ref.read(postControllerProvider)) return;
 
     if (widget.type == 'image' && bannerFiles.isNotEmpty) {
       ref.read(postControllerProvider.notifier).shareimagePost(
@@ -131,14 +132,9 @@ class _AddPostTypePageState extends ConsumerState<AddPostTypePage> {
           title: titleController.text.trim(),
           tags: tags,
           description: descriptionController.text.trim());
-    } else if (widget.type == 'link' && linkController.text.isNotEmpty) {
-      ref.read(postControllerProvider.notifier).shareLinkPost(
-          context: context,
-          title: titleController.text.trim(),
-          tags: tags,
-          link: linkController.text.trim());
     } else {
       showSnackBar(context, "You must all fill the fields");
+      return;
     }
   }
 
@@ -146,7 +142,8 @@ class _AddPostTypePageState extends ConsumerState<AddPostTypePage> {
   Widget build(BuildContext context) {
     final isTypeImage = widget.type == "image";
     final isTypeText = widget.type == "text";
-    final isTypeLink = widget.type == "link";
+    final isLoading = ref.watch(postControllerProvider);
+
     return GestureDetector(
       onTap: () {
         FocusScope.of(context).unfocus();
@@ -159,11 +156,15 @@ class _AddPostTypePageState extends ConsumerState<AddPostTypePage> {
           titleTextStyle: Theme.of(context).textTheme.headlineMedium,
           actions: [
             TextButton(
-              onPressed: () => sharePost(context),
-              child: const Text(
-                'Share',
-              ),
-            )
+              onPressed: isLoading ? null : () => sharePost(context),
+              child: isLoading
+                  ? const SizedBox(
+                      height: 20,
+                      width: 20,
+                      child: Loader(),
+                    )
+                  : const Text('Share'),
+            ),
           ],
         ),
         body: Padding(
@@ -173,8 +174,9 @@ class _AddPostTypePageState extends ConsumerState<AddPostTypePage> {
               children: [
                 TextField(
                   controller: titleController,
-                  enableSuggestions: false,
-                  autocorrect: false,
+                  textCapitalization: TextCapitalization.sentences,
+                  enableSuggestions: true,
+                  autocorrect: true,
                   keyboardType: TextInputType.text,
                   decoration: InputDecoration(
                     hintText: "Enter Title here",
@@ -260,8 +262,9 @@ class _AddPostTypePageState extends ConsumerState<AddPostTypePage> {
                 if (isTypeText)
                   TextField(
                     controller: descriptionController,
-                    enableSuggestions: false,
-                    autocorrect: false,
+                    textCapitalization: TextCapitalization.sentences,
+                    enableSuggestions: true,
+                    autocorrect: true,
                     keyboardType: TextInputType.text,
                     decoration: InputDecoration(
                       hintText: "Enter Description here",
@@ -274,23 +277,6 @@ class _AddPostTypePageState extends ConsumerState<AddPostTypePage> {
                     ),
                     maxLines: 8,
                     maxLength: 300,
-                  ),
-                if (isTypeLink)
-                  TextField(
-                    controller: linkController,
-                    enableSuggestions: false,
-                    autocorrect: false,
-                    keyboardType: TextInputType.text,
-                    decoration: InputDecoration(
-                      hintText: "Enter link here",
-                      hintStyle: const TextStyle(color: Colors.grey),
-                      filled: true,
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                      contentPadding: const EdgeInsets.all(20),
-                    ),
-                    maxLength: 2000,
                   ),
                 const SizedBox(
                   height: 20,

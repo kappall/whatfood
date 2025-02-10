@@ -35,6 +35,7 @@ final lightTheme = ThemeData(
     unselectedItemColor: Colors.grey,
   ),
   primaryColor: Colors.black87,
+  secondaryHeaderColor: Colors.green,
 );
 
 final darkTheme = ThemeData(
@@ -59,4 +60,5 @@ final darkTheme = ThemeData(
     unselectedItemColor: Colors.white60,
   ),
   primaryColor: Colors.white,
+  secondaryHeaderColor: Colors.green,
 );

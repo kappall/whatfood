@@ -3,6 +3,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:routemaster/routemaster.dart';
+import 'package:whatfood/features/home/pages/for_you.dart';
 import 'package:whatfood/models/user_model.dart';
 import 'package:whatfood/features/post/pages/add_post_page.dart';
 import 'package:whatfood/theme/theme.dart';
@@ -149,14 +150,10 @@ class _HomePageState extends ConsumerState<HomePage>
   }
 
   Widget _buildForYouPage() {
-    return Center(
-      child: Text('Contenuto per "For You"'),
-    );
+    return ForYou();
   }
 
   Widget _buildInspirationPage() {
-    return Center(
-      child: Text('Contenuto per "Inspiration"'),
-    );
+    return ForYou();
   }
 }
