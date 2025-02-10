@@ -1,45 +1,37 @@
 {
   "project_info": {
-    "project_number": "739142201079",
-    "project_id": "whatfood-80971",
-    "storage_bucket": "whatfood-80971.firebasestorage.app"
+    "project_number": "328872688976",
+    "project_id": "app-what-food",
+    "storage_bucket": "app-what-food.firebasestorage.app"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:739142201079:android:a0d26afaa3cda2b59dadf2",
+        "mobilesdk_app_id": "1:328872688976:android:c58ed5e67df6f6c6cf4055",
         "android_client_info": {
           "package_name": "it.whatfood.whatfood"
         }
       },
       "oauth_client": [
         {
-          "client_id": "739142201079-sbj49qt20mkf02civ178mcj24e69igoc.apps.googleusercontent.com",
-          "client_type": 1,
-          "android_info": {
-            "package_name": "it.whatfood.whatfood",
-            "certificate_hash": "e4b4b18baa8aa1541ba4e2acd64bffb99d54d915"
-          }
-        },
-        {
-          "client_id": "739142201079-m470gnqkieuimk5gcopruukiriiqsnuq.apps.googleusercontent.com",
+          "client_id": "328872688976-ilkm9743mjteig5ascsq3slpch8tqks3.apps.googleusercontent.com",
           "client_type": 3
         }
       ],
       "api_key": [
         {
-          "current_key": "AIzaSyBv4LJW5GP6_QdltTay1q7A2iLrOtQ4a14"
+          "current_key": "AIzaSyBynUlTN1xGmtV9rmw3zUpcN-WtCKbJeU8"
         }
       ],
       "services": {
         "appinvite_service": {
           "other_platform_oauth_client": [
             {
-              "client_id": "739142201079-m470gnqkieuimk5gcopruukiriiqsnuq.apps.googleusercontent.com",
+              "client_id": "328872688976-ilkm9743mjteig5ascsq3slpch8tqks3.apps.googleusercontent.com",
               "client_type": 3
             },
             {
-              "client_id": "739142201079-cjdmb2pnkrqp44rbkrrlr7t6vq1mq3mr.apps.googleusercontent.com",
+              "client_id": "328872688976-qkabnkhs4104v25pv0j63dess34ij47q.apps.googleusercontent.com",
               "client_type": 2,
               "ios_info": {
                 "bundle_id": "it.whatfood.whatfood"
