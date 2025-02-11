@@ -51,6 +51,9 @@ class _MyAppState extends ConsumerState<MyApp> {
             theme: ref.watch(themeProvider),
             routerDelegate: RoutemasterDelegate(routesBuilder: (context) {
               if (user == null) return loggedOutRoute;
+              if (!user.emailVerified) {
+                return loggedOutRoute;
+              }
               getData(ref, user);
               return loggedInRoute;
             }),

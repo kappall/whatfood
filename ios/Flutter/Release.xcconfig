@@ -1,2 +1,4 @@
-include?="$(PROJECT_DIR)/Pods/Target Support Files/Pods-Runner/Pods-Runner.profile.xcconfig"
+#include "$(PROJECT_DIR)/Pods/Target Support Files/Pods-Runner/Pods-Runner.release.xcconfig"
+#include "$(PROJECT_DIR)/Pods/Target Support Files/Pods-Runner/Pods-Runner.profile.xcconfig"
+
 #include "Generated.xcconfig"

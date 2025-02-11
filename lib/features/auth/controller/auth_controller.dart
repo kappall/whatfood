@@ -67,7 +67,6 @@ class AuthController extends StateNotifier<bool> {
       email: email,
       password: password,
     );
-    state = false;
 
     user.fold(
       (l) => showSnackBar(context, l.message),
@@ -75,6 +74,7 @@ class AuthController extends StateNotifier<bool> {
         _ref.read(userProvider.notifier).update((state) => userModel);
       },
     );
+    state = false;
   }
 
   Stream<UserModel> getUserData(String uid) {
@@ -85,6 +85,20 @@ class AuthController extends StateNotifier<bool> {
 
   void logout() async {
     _authRepository.logOut();
+  }
+
+  Future<void> checkEmailVerification(BuildContext context) async {
+    while (true) {
+      await Future.delayed(
+          Duration(seconds: 2)); // Attendi 2 secondi tra un controllo e l'altro
+      await FirebaseAuth.instance.currentUser?.reload();
+      final user = FirebaseAuth.instance.currentUser;
+      debugPrint("controller");
+      if (user != null && user.emailVerified) {
+        state = false; // Impostiamo lo stato a false SOLO ora
+        break;
+      }
+    }
   }
 
   Future<void> registerWithEmailAndPassword({
@@ -99,12 +113,12 @@ class AuthController extends StateNotifier<bool> {
       password: password,
       name: name,
     );
-    state = false;
 
     user.fold(
       (l) => showSnackBar(context, l.message),
       (userModel) {
-        Routemaster.of(context).replace('/verify-email');
+        Routemaster.of(context).push('/verify-email');
+        checkEmailVerification(context);
       },
     );
   }

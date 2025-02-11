@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:fpdart/fpdart.dart';
 import 'package:google_sign_in/google_sign_in.dart';
@@ -89,7 +90,7 @@ class AuthRepository {
 
       return right(userModel);
     } on FirebaseException catch (e) {
-      return left(Failure(e.message ?? 'Login failed'));
+      throw e.message!;
     } catch (e) {
       return left(Failure(e.toString()));
     }
@@ -120,6 +121,7 @@ class AuthRepository {
           .doc(userCredential.user!.uid)
           .set(userModel.toMap());
 
+      debugPrint("repository");
       return right(userModel);
     } on FirebaseException catch (e) {
       return left(Failure(e.message ?? 'Registration failed'));

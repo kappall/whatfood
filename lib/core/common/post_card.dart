@@ -29,15 +29,17 @@ class PostCard extends ConsumerWidget {
   }
 
   void navigateToUser(BuildContext context) {
-    Routemaster.of(context).push('user_page/${post.uid}');
+    try {
+      Routemaster.of(context).push('user_page/${post.uid}');
+    } catch (e) {
+      debugPrint(e.toString());
+    }
   }
 
   Widget popUpMenu(BuildContext context, WidgetRef ref, bool isOwner) {
     return PopupMenuButton<String>(
       icon: Icon(Icons.more_horiz),
-      onSelected: (String result) {
-        print("Selezionato: $result");
-      },
+      onSelected: (String result) {},
       itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
         if (isOwner)
           PopupMenuItem<String>(

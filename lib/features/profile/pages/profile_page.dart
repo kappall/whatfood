@@ -7,7 +7,6 @@ import 'package:whatfood/core/common/error_text.dart';
 import 'package:whatfood/core/common/loader.dart';
 import 'package:whatfood/core/common/post_card.dart';
 import 'package:whatfood/features/auth/controller/auth_controller.dart';
-import 'package:whatfood/features/post/controller/post_controller.dart';
 import 'package:whatfood/features/profile/controller/user_profile_controller.dart';
 
 class ProfilePage extends ConsumerWidget {
