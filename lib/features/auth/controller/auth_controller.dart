@@ -101,20 +101,6 @@ class AuthController extends StateNotifier<bool> {
     _authRepository.logOut();
   }
 
-  Future<void> checkEmailVerification(BuildContext context) async {
-    while (true) {
-      await Future.delayed(Duration(seconds: 2));
-      await FirebaseAuth.instance.currentUser?.reload();
-      final user = FirebaseAuth.instance.currentUser;
-      if (user != null && user.emailVerified) {
-        state = false;
-        _ref.read(isNewLoginProvider.notifier).state = true;
-        Routemaster.of(context).replace('/preferences');
-        break;
-      }
-    }
-  }
-
   Future<void> registerWithEmailAndPassword({
     required BuildContext context,
     required String email,
@@ -132,7 +118,6 @@ class AuthController extends StateNotifier<bool> {
       (l) => showSnackBar(context, l.message),
       (userModel) {
         Routemaster.of(context).push('/verify-email');
-        checkEmailVerification(context);
       },
     );
   }

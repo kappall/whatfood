@@ -65,7 +65,10 @@ class PostController extends StateNotifier<bool> {
     required String description,
   }) async {
     state = true;
-    final user = _ref.read(userProvider);
+    final user = _ref.watch(userProvider);
+
+    debugPrint('Current user for text post: ${user?.uid}');
+
     if (user == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('User not logged in')),
@@ -105,25 +108,67 @@ class PostController extends StateNotifier<bool> {
     );
   }
 
-  Future<File> compressImage(File file) async {
-    img.Image? image = img.decodeImage(await file.readAsBytes());
+  Future<File> compressImage(File file,
+      {int maxSizeInBytes = 1024 * 1024}) async {
+    final originalSize = await file.length();
+    debugPrint('Original size: ${originalSize / 1024} KB');
 
-    if (image == null) {
-      throw Exception('Unable to decode image');
+    if (originalSize <= maxSizeInBytes) {
+      debugPrint('Image already under size limit, skipping compression');
+      return file;
     }
 
-    img.Image compressedImage = img.copyResize(image, width: 800);
+    img.Image? image = img.decodeImage(await file.readAsBytes());
+    if (image == null) throw Exception('Unable to decode image');
 
-    final compressedFile =
-        File('${file.parent.path}/compressed_${file.uri.pathSegments.last}');
-    await compressedFile
-        .writeAsBytes(img.encodeJpg(compressedImage, quality: 85));
+    // Calcola il fattore di ridimensionamento basato sulla dimensione originale
+    double scaleFactor = 1.0;
+    if (originalSize > 2 * maxSizeInBytes) {
+      // Se più di 2MB
+      scaleFactor = 0.5;
+    } else if (originalSize > 1.5 * maxSizeInBytes) {
+      // Se più di 1.5MB
+      scaleFactor = 0.7;
+    } else {
+      // Se tra 1MB e 1.5MB
+      scaleFactor = 0.8;
+    }
+
+    final newWidth = (image.width * scaleFactor).round();
+    img.Image resizedImage = img.copyResize(image, width: newWidth);
+
+    // Prova diverse qualità di compressione se necessario
+    final qualities = [85, 70, 60, 50];
+    File? compressedFile;
+
+    for (int quality in qualities) {
+      final tempFile =
+          File('${file.parent.path}/compressed_${file.uri.pathSegments.last}');
+      await tempFile
+          .writeAsBytes(img.encodeJpg(resizedImage, quality: quality));
+
+      final newSize = await tempFile.length();
+      debugPrint('Compressed size with quality $quality: ${newSize / 1024} KB');
+
+      if (newSize <= maxSizeInBytes) {
+        compressedFile = tempFile;
+        debugPrint(
+            'Successfully compressed image to ${newSize / 1024} KB with quality $quality');
+        break;
+      }
+    }
+
+    if (compressedFile == null) {
+      throw Exception(
+          'Unable to compress image to under 1MB while maintaining acceptable quality');
+    }
 
     return compressedFile;
   }
 
   Future<bool> isFileSizeValid(File file, int maxSizeInBytes) async {
     final fileSize = await file.length();
+    debugPrint('Checking file size: ${fileSize / 1024} KB');
     return fileSize <= maxSizeInBytes;
   }
 
@@ -134,7 +179,10 @@ class PostController extends StateNotifier<bool> {
     required List<File> files,
   }) async {
     state = true;
-    final user = _ref.read(userProvider);
+    final user = _ref.watch(userProvider);
+
+    debugPrint('Current user: ${user?.uid}');
+
     if (user == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('User not logged in')),
@@ -148,24 +196,22 @@ class PostController extends StateNotifier<bool> {
 
     try {
       for (var file in files) {
-        bool isValidSize = await isFileSizeValid(file, 1024 * 1024); // 1MB
-        if (!isValidSize) {
+        File processedFile;
+        try {
+          processedFile = await compressImage(file);
+        } catch (e) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-                content: Text(
-                    'File size exceeds 1MB, please upload smaller images.')),
+            SnackBar(content: Text('Error compressing image: ${e.toString()}')),
           );
           state = false;
           return;
         }
 
-        File compressedFile = await compressImage(file);
-
         final imageId = const Uuid().v1();
         final result = await _storageRepository.storeFile(
           path: 'posts',
           id: imageId,
-          file: compressedFile,
+          file: processedFile,
         );
 
         final imageUrl = result.fold(
@@ -205,9 +251,8 @@ class PostController extends StateNotifier<bool> {
       );
     } catch (e) {
       state = false;
-      if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(e.toString())),
+        SnackBar(content: Text('Error: ${e.toString()}')),
       );
     }
   }

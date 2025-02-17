@@ -19,7 +19,7 @@ class AddPostTypePage extends ConsumerStatefulWidget {
 class _AddPostTypePageState extends ConsumerState<AddPostTypePage> {
   final titleController = TextEditingController();
   final descriptionController = TextEditingController();
-  final List<File> bannerFiles = [];
+  final List<File> images = [];
   final List<String> tags = [];
   final FocusNode _tagFocusNode = FocusNode();
 
@@ -30,21 +30,21 @@ class _AddPostTypePageState extends ConsumerState<AddPostTypePage> {
     super.dispose();
   }
 
-  void selectBannerImage() async {
-    if (bannerFiles.length == 4) return;
+  void selectImage() async {
+    if (images.length == 4) return;
 
-    final res = await pickImage();
+    final res = await pickImage(context);
 
     if (res != null) {
       setState(() {
-        bannerFiles.add(File(res.files.first.path!));
+        images.add(res);
       });
     }
   }
 
   void removeImage(File file) {
     setState(() {
-      bannerFiles.remove(file);
+      images.remove(file);
     });
   }
 
@@ -120,12 +120,12 @@ class _AddPostTypePageState extends ConsumerState<AddPostTypePage> {
     }
     if (ref.read(postControllerProvider)) return;
 
-    if (widget.type == 'image' && bannerFiles.isNotEmpty) {
+    if (widget.type == 'image' && images.isNotEmpty) {
       ref.read(postControllerProvider.notifier).shareimagePost(
           context: context,
           title: titleController.text.trim(),
           tags: tags,
-          files: bannerFiles);
+          files: images);
     } else if (widget.type == 'text') {
       ref.read(postControllerProvider.notifier).shareTextPost(
           context: context,
@@ -195,7 +195,7 @@ class _AddPostTypePageState extends ConsumerState<AddPostTypePage> {
                     spacing: 8,
                     runSpacing: 8,
                     children: [
-                      ...bannerFiles.map(
+                      ...images.map(
                         (file) => Stack(
                           children: [
                             Container(
@@ -233,9 +233,9 @@ class _AddPostTypePageState extends ConsumerState<AddPostTypePage> {
                           ],
                         ),
                       ),
-                      if (bannerFiles.length < 4)
+                      if (images.length < 4)
                         GestureDetector(
-                          onTap: selectBannerImage,
+                          onTap: selectImage,
                           child: Container(
                             width: 150,
                             height: 150,

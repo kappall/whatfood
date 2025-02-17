@@ -70,7 +70,6 @@ class _HomePageState extends ConsumerState<HomePage>
   @override
   Widget build(BuildContext context) {
     final themeNotifier = ref.read(themeProvider.notifier);
-
     return Scaffold(
       appBar: PreferredSize(
         preferredSize: const Size.fromHeight(50),
