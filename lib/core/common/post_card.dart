@@ -200,9 +200,9 @@ class PostCard extends ConsumerWidget {
                 padding:
                     const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
                 child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         IconButton(
                           icon: Icon(

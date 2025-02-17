@@ -135,17 +135,17 @@ class _HomePageState extends ConsumerState<HomePage>
         ],
       ),
       floatingActionButton: FloatingActionButton(
-        shape: CircleBorder(),
-        onPressed: () {
-          Routemaster.of(context).push('/add_post');
-        },
-        backgroundColor: Colors.grey,
-        child: const Icon(
-          Icons.add,
-          color: Colors.white,
-          size: 40,
+          shape: CircleBorder(),
+          onPressed: () {
+            Routemaster.of(context).push('/add_post');
+          },
+          backgroundColor: Colors.grey,
+          child: const Icon(
+            Icons.add,
+            color: Colors.white,
+            size: 40,
+          ),
         ),
-      ),
     );
   }
 

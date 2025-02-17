@@ -69,17 +69,24 @@ class CameraScannerState extends State<CameraScanner> {
         }
       }
       if (_cameraIndex != -1) {
-        _startLiveFeed();
+        await _startLiveFeed();
       }
       setState(() => _isInitialized = true);
     } catch (e) {
-      rethrow;
+      debugPrint('Error initializing camera: ${e.toString()}');
     }
   }
 
-  Future _startLiveFeed() async {
-    final camera = _cameras[_cameraIndex];
+  Future<void> _startLiveFeed() async {
+    if (_controller != null) {
+      try {
+        await _stopLiveFeed();
+      } catch (e) {
+        debugPrint('Error stopping previous camera feed: ${e.toString()}');
+      }
+    }
 
+    final camera = _cameras[_cameraIndex];
     _controller = CameraController(
       camera,
       ResolutionPreset.medium,
@@ -90,22 +97,41 @@ class CameraScannerState extends State<CameraScanner> {
     );
 
     try {
-      _controller?.initialize().then((_) {
-        if (!mounted) return;
+      await _controller?.initialize();
+      if (!mounted) return;
 
-        _controller?.getMinZoomLevel().then((value) {
-          _currentZoomLevel = value;
-          _minAvailableZoom = value;
-        });
-
-        _controller?.getMaxZoomLevel().then((value) {
-          _maxAvailableZoom = min(value, 3.0);
-        });
-        _controller?.startImageStream(_processCameraImage);
-        setState(() {});
+      await _controller?.getMinZoomLevel().then((value) {
+        _currentZoomLevel = value;
+        _minAvailableZoom = value;
       });
+
+      await _controller?.getMaxZoomLevel().then((value) {
+        _maxAvailableZoom = min(value, 3.0);
+      });
+
+      if (_controller != null && mounted) {
+        await _controller!.startImageStream(_processCameraImage);
+        setState(() {});
+      }
     } catch (e) {
-      return;
+      debugPrint('Error starting camera feed: ${e.toString()}');
+      // Clean up on error
+      await _stopLiveFeed();
+    }
+  }
+
+  Future<void> _stopLiveFeed() async {
+    if (_controller == null) return;
+
+    try {
+      if (_controller!.value.isStreamingImages) {
+        await _controller!.stopImageStream();
+      }
+      await _controller!.dispose();
+    } catch (e) {
+      debugPrint('Error stopping camera feed: ${e.toString()}');
+    } finally {
+      _controller = null;
     }
   }
 
@@ -121,16 +147,6 @@ class CameraScannerState extends State<CameraScanner> {
       }
     } finally {
       _isBusy = false;
-    }
-  }
-
-  Future<void> _stopLiveFeed() async {
-    try {
-      await _controller?.stopImageStream();
-      await _controller?.dispose();
-      _controller = null;
-    } catch (e) {
-      rethrow;
     }
   }
 
@@ -174,10 +190,11 @@ class CameraScannerState extends State<CameraScanner> {
           'world.openfoodfacts.org', '/api/v2/product/$_scannedCode', {
         'fields': 'product_name,brands,ingredients_text,image_url,'
             'nutriscore_data,nutriments,nutrition_grades,'
-            'nutriscore_grade,ingredients_text_en',
+            'nutriscore_grade,ingredients_text_en,quantity',
         'lc': 'en',
       });
       _scannedCode = '';
+
 
       final response = await http.get(url);
       if (!mounted) return;
@@ -185,14 +202,14 @@ class CameraScannerState extends State<CameraScanner> {
       if (response.statusCode == 200) {
         final jsonResponse =
             convert.jsonDecode(response.body) as Map<String, dynamic>;
-        final productData = jsonResponse['product'] ?? {};
-
+        final productData = jsonResponse['product'];
+        final int quantity = int.parse(productData['quantity']?.toString().trim().split(' ')[0]??'100');
         await showModalBottomSheet(
           context: context,
           isScrollControlled: true,
           useSafeArea: true,
           backgroundColor: Colors.transparent,
-          builder: (context) => ProductModal(productData: productData),
+          builder: (context) => ProductModal(productData: productData,quantity: quantity,),
         );
       } else {
         await _showErrorDialog();

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:fpdart/fpdart.dart';
 import 'package:routemaster/routemaster.dart';
 import 'package:whatfood/button_styles.dart';
 import 'package:whatfood/core/utils.dart';
@@ -71,22 +72,26 @@ Widget _buildIngredientsList(String? cleanText) {
 
 class ProductModal extends StatelessWidget {
   final Map<String, dynamic> productData;
+  final int quantity;
 
-  const ProductModal({super.key, required this.productData});
+  const ProductModal({super.key, required this.productData, required this.quantity});
 
-  Future<int?> showAddProductDialog(BuildContext context) {
-    return showDialog<int>(
+  Future<double?> showAddProductDialog(BuildContext context) {
+    return showDialog<double>(
       context: context,
-      builder: (context) => const AddProductDialog(),
+      builder: (context) => AddProductDialog(
+        productName:
+            productData['product_name'] ?? 'Product Name not available',
+        nutritionalValues: productData['nutriments'],
+        totalGrams: quantity,
+      ),
     );
   }
 
   Future<void> _handleAddProduct(BuildContext context) async {
-    final int? quantity = await showAddProductDialog(context);
+    final double? quantity = await showAddProductDialog(context);
     if (quantity != null) {
-      debugPrint("Adding product with quantity: $quantity");
       if (!context.mounted) return;
-      showSnackBar(context, 'Product added with quantity: $quantity');
       Routemaster.of(context).pop();
     }
   }
@@ -138,7 +143,7 @@ class ProductModal extends StatelessWidget {
                   ),
                 const SizedBox(height: 16),
                 Text(
-                  productData['product_name'] ?? 'Product Name not available',
+                  '${productData['product_name'] ?? 'Product Name not available'} ${productData['product_name'] != null && productData['product_name']!.isNotEmpty ? '${quantity}g' : ''}',
                   style: const TextStyle(
                     fontSize: 22,
                     fontWeight: FontWeight.bold,

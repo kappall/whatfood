@@ -38,7 +38,7 @@ class NutritionTable extends StatelessWidget {
         Padding(
           padding: const EdgeInsets.all(8.0),
           child: Text(
-            _formatKey(key),
+            _formatKey(key).trim(),
             textAlign: TextAlign.left,
             style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
           ),
@@ -62,7 +62,7 @@ class NutritionTable extends StatelessWidget {
       "sugars": "Sugars",
       "proteins": "Proteins",
       "fat": "Fats",
-      "saturated-fat": "   Saturated",
+      "saturated-fat": "Saturated Fat",
       "fiber": "Fibers",
       "salt": "Salt",
     };

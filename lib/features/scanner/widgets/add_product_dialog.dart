@@ -1,15 +1,56 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:whatfood/features/report/controller/report_controller.dart';
+import 'package:whatfood/features/scanner/widgets/nutrition_table.dart';
 
-class AddProductDialog extends StatefulWidget {
-  const AddProductDialog({super.key});
+class AddProductDialog extends ConsumerStatefulWidget {
+  final String productName;
+  final Map<String, dynamic> nutritionalValues;
+  final int totalGrams;
+
+  const AddProductDialog({
+    super.key,
+    required this.productName,
+    required this.nutritionalValues,
+    required this.totalGrams,
+  });
 
   @override
-  _AddProductDialogState createState() => _AddProductDialogState();
+  ConsumerState<AddProductDialog> createState() => _AddProductDialogState();
 }
 
-class _AddProductDialogState extends State<AddProductDialog> {
+class _AddProductDialogState extends ConsumerState<AddProductDialog> {
   final TextEditingController quantityController = TextEditingController();
+
+  void addProduct(BuildContext context) {
+    final quantity = double.tryParse(quantityController.text.trim()) ?? 0;
+    if (quantity <= 0) return;
+
+    final totalGramsDouble = widget.totalGrams.toDouble();
+    final ratio = quantity / totalGramsDouble;
+
+    // Filter and adjust only the essential nutritional values
+    final filteredNutritionalValues = Map<String, dynamic>.fromEntries(
+      NutritionTable.essentialKeys
+          .where((key) => widget.nutritionalValues.containsKey(key))
+          .map((key) {
+        final value = widget.nutritionalValues[key];
+        return MapEntry(key, (value * ratio).roundToDouble());
+      }),
+    );
+
+    final now = DateTime.now();
+    final date = DateTime(now.year, now.month, now.day);
+
+    ref.read(reportControllerProvider.notifier).addFoodReport(
+          context: context,
+          nutritionalValues: filteredNutritionalValues,
+          description: '${widget.productName} ${quantity}g',
+          category: 'Scanned Product',
+          date: date,
+        );
+  }
 
   @override
   void dispose() {
@@ -25,7 +66,8 @@ class _AddProductDialogState extends State<AddProductDialog> {
         style: TextStyle(fontWeight: FontWeight.bold),
       ),
       content: TextField(
-        keyboardType: TextInputType.number,
+        keyboardType:
+            TextInputType.numberWithOptions(decimal: true, signed: false),
         controller: quantityController,
         decoration: InputDecoration(
           filled: true,
@@ -38,33 +80,22 @@ class _AddProductDialogState extends State<AddProductDialog> {
               const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
           contentPadding: const EdgeInsets.all(20),
         ),
-        inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+        inputFormatters: [FilteringTextInputFormatter.singleLineFormatter],
       ),
       actions: [
         TextButton(
-          onPressed: () {
-            Navigator.of(context).pop(null);
-          },
+          onPressed: () => Navigator.of(context).pop(),
           child: const Text(
             'Cancel',
             style: TextStyle(color: Colors.grey),
           ),
         ),
         ElevatedButton(
-          onPressed: () {
-            final quantity = int.tryParse(quantityController.text.trim());
-            if (quantity != null && quantity > 0) {
-              Navigator.of(context).pop(quantity);
-            } else {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Please enter a valid quantity')),
-              );
-            }
-          },
+          onPressed: () => addProduct(context),
           style: ElevatedButton.styleFrom(
             backgroundColor: Colors.green,
             shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(8),
+              borderRadius: BorderRadius.circular(20),
             ),
           ),
           child: const Text(

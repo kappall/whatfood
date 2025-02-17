@@ -9,6 +9,7 @@ import 'package:whatfood/core/common/loader.dart';
 import 'package:whatfood/core/utils.dart';
 import 'package:whatfood/features/home/pages/home_page.dart';
 import 'package:whatfood/features/profile/pages/profile_page.dart';
+import 'package:whatfood/features/report/pages/report_page.dart';
 import 'package:whatfood/features/scanner/camera_scanner.dart';
 import 'package:whatfood/features/auth/controller/auth_controller.dart';
 import 'package:whatfood/models/user_model.dart';
@@ -152,7 +153,7 @@ class _MainPageState extends State<MainPage> {
         CameraScanner(),
         RecipePage(),
         HomePage(),
-        ShopPage(),
+        ReportPage(),
         ProfilePage(
           uid: FirebaseAuth.instance.currentUser!.uid,
           public: false,

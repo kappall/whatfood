@@ -62,19 +62,23 @@ class AuthController extends StateNotifier<bool> {
     required String email,
     required String password,
   }) async {
-    state = true;
-    final user = await _authRepository.signInWithEmailAndPassword(
-      email: email,
-      password: password,
-    );
+    try {
+      state = true;
+      final user = await _authRepository.signInWithEmailAndPassword(
+        email: email,
+        password: password,
+      );
 
-    user.fold(
-      (l) => showSnackBar(context, l.message),
-      (userModel) {
-        _ref.read(userProvider.notifier).update((state) => userModel);
-      },
-    );
-    state = false;
+      user.fold(
+        (l) => showSnackBar(context, l.message),
+        (userModel) {
+          _ref.read(userProvider.notifier).update((state) => userModel);
+        },
+      );
+      state = false;
+    } catch(e) {
+      showSnackBar(context, e.toString());
+    }
   }
 
   Stream<UserModel> getUserData(String uid) {
