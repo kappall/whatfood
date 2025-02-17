@@ -23,6 +23,10 @@ class ProfilePage extends ConsumerWidget {
     Routemaster.of(context).push('/edit_profile/$uid');
   }
 
+  void navigateToPreferences(BuildContext context) {
+    Routemaster.of(context).push('/preferences');
+  }
+
   Future<bool> showLogOutDialog(BuildContext context) {
     return showDialog<bool>(
       context: context,
@@ -91,18 +95,32 @@ class ProfilePage extends ConsumerWidget {
                       Positioned(
                         bottom: 5,
                         left: 10,
-                        child: OutlinedButton(
-                          onPressed: () => navigateToEditUser(context),
-                          style: OutlinedButton.styleFrom(
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(20),
+                        child: Row(
+                          children: [
+                            FilledButton(
+                              onPressed: () => navigateToEditUser(context),
+                              style: FilledButton.styleFrom(
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(20),
+                                ),
+                                padding:
+                                    const EdgeInsets.symmetric(horizontal: 25),
+                              ),
+                              child: const Text('Edit Profile'),
                             ),
-                            padding: const EdgeInsets.symmetric(horizontal: 25),
-                          ),
-                          child: const Text(
-                            'Edit Profile',
-                            style: TextStyle(color: Colors.white),
-                          ),
+                            const SizedBox(width: 10),
+                            FilledButton(
+                              onPressed: () => navigateToPreferences(context),
+                              style: FilledButton.styleFrom(
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(20),
+                                ),
+                                padding:
+                                    const EdgeInsets.symmetric(horizontal: 25),
+                              ),
+                              child: const Text('Food Preferences'),
+                            ),
+                          ],
                         ),
                       )
                   ],

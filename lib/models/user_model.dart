@@ -5,12 +5,14 @@ class UserModel {
   final String profilePic;
   final String banner;
   final String uid;
+  final Set<String> preferences;
 
   UserModel({
     required this.name,
     required this.profilePic,
     required this.banner,
     required this.uid,
+    required this.preferences,
   });
 
   UserModel copyWith({
@@ -19,13 +21,14 @@ class UserModel {
     String? banner,
     String? uid,
     bool? isAuthenticated,
+    Set<String>? preferences,
   }) {
     return UserModel(
-      name: name ?? this.name,
-      profilePic: profilePic ?? this.profilePic,
-      banner: banner ?? this.banner,
-      uid: uid ?? this.uid,
-    );
+        name: name ?? this.name,
+        profilePic: profilePic ?? this.profilePic,
+        banner: banner ?? this.banner,
+        uid: uid ?? this.uid,
+        preferences: preferences ?? this.preferences);
   }
 
   Map<String, dynamic> toMap() {
@@ -34,6 +37,7 @@ class UserModel {
       'profilePic': profilePic,
       'banner': banner,
       'uid': uid,
+      'preferences': preferences,
     };
   }
 
@@ -43,6 +47,10 @@ class UserModel {
       profilePic: map['profilePic'] as String,
       banner: map['banner'] as String,
       uid: map['uid'] as String,
+      preferences: (map['preferences'] as List<dynamic>?)
+              ?.map((e) => e.toString())
+              .toSet() ??
+          {},
     );
   }
 
@@ -54,7 +62,7 @@ class UserModel {
 
   @override
   String toString() {
-    return 'UserModel(name: $name, profilePic: $profilePic, banner: $banner, uid: $uid)';
+    return 'UserModel(name: $name, profilePic: $profilePic, banner: $banner, uid: $uid, preferences: $preferences)';
   }
 
   @override
@@ -64,11 +72,16 @@ class UserModel {
     return other.name == name &&
         other.profilePic == profilePic &&
         other.banner == banner &&
-        other.uid == uid;
+        other.uid == uid &&
+        other.preferences == preferences;
   }
 
   @override
   int get hashCode {
-    return name.hashCode ^ profilePic.hashCode ^ banner.hashCode ^ uid.hashCode;
+    return name.hashCode ^
+        profilePic.hashCode ^
+        banner.hashCode ^
+        uid.hashCode ^
+        preferences.hashCode;
   }
 }

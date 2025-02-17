@@ -8,6 +8,8 @@ import 'package:whatfood/models/user_model.dart';
 
 final userProvider = StateProvider<UserModel?>((ref) => null);
 
+final isNewLoginProvider = StateProvider<bool>((ref) => false);
+
 final authControllerProvider = StateNotifierProvider<AuthController, bool>(
   (ref) => AuthController(
     authRepository: ref.watch(authRepositoryProvider),
@@ -31,7 +33,7 @@ class AuthController extends StateNotifier<bool> {
   AuthController({required AuthRepository authRepository, required Ref ref})
       : _authRepository = authRepository,
         _ref = ref,
-        super(false); // loading
+        super(false);
 
   Stream<User?> get authStateChange => _authRepository.authStateChange;
 
@@ -41,8 +43,11 @@ class AuthController extends StateNotifier<bool> {
     state = false;
     user.fold(
       (l) => showSnackBar(context, l.message),
-      (userModel) =>
-          _ref.read(userProvider.notifier).update((state) => userModel),
+      (userModel) {
+        _ref.read(userProvider.notifier).update((state) => userModel);
+        _ref.read(isNewLoginProvider.notifier).state = true;
+        Routemaster.of(context).replace('/preferences');
+      },
     );
   }
 
@@ -52,8 +57,10 @@ class AuthController extends StateNotifier<bool> {
     state = false;
     user.fold(
       (l) => showSnackBar(context, l.message),
-      (userModel) =>
-          _ref.read(userProvider.notifier).update((state) => userModel),
+      (userModel) {
+        _ref.read(userProvider.notifier).update((state) => userModel);
+        Routemaster.of(context).replace('/');
+      },
     );
   }
 
@@ -73,10 +80,12 @@ class AuthController extends StateNotifier<bool> {
         (l) => showSnackBar(context, l.message),
         (userModel) {
           _ref.read(userProvider.notifier).update((state) => userModel);
+          _ref.read(isNewLoginProvider.notifier).state = true;
+          Routemaster.of(context).replace('/preferences');
         },
       );
       state = false;
-    } catch(e) {
+    } catch (e) {
       showSnackBar(context, e.toString());
     }
   }
@@ -88,18 +97,19 @@ class AuthController extends StateNotifier<bool> {
   }
 
   void logout() async {
+    _ref.read(isNewLoginProvider.notifier).state = false;
     _authRepository.logOut();
   }
 
   Future<void> checkEmailVerification(BuildContext context) async {
     while (true) {
-      await Future.delayed(
-          Duration(seconds: 2)); // Attendi 2 secondi tra un controllo e l'altro
+      await Future.delayed(Duration(seconds: 2));
       await FirebaseAuth.instance.currentUser?.reload();
       final user = FirebaseAuth.instance.currentUser;
-      debugPrint("controller");
       if (user != null && user.emailVerified) {
-        state = false; // Impostiamo lo stato a false SOLO ora
+        state = false;
+        _ref.read(isNewLoginProvider.notifier).state = true;
+        Routemaster.of(context).replace('/preferences');
         break;
       }
     }

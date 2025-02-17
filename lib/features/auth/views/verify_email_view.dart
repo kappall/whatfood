@@ -2,7 +2,6 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:routemaster/routemaster.dart';
-import 'package:whatfood/core/common/loader.dart';
 import 'package:whatfood/core/utils.dart';
 import 'package:whatfood/features/auth/controller/auth_controller.dart';
 
@@ -27,7 +26,7 @@ class _VerifyEmailViewState extends ConsumerState<VerifyEmailView> {
         Routemaster.of(context).replace('/');
       }
     } else {
-      showSnackBar(context, 'Email non ancora verificata');
+      showSnackBar(context, 'Email not verified yet');
     }
   }
 

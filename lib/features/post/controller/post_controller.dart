@@ -100,7 +100,7 @@ class PostController extends StateNotifier<bool> {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Posted successfully!')),
         );
-        Routemaster.of(context).push('/');
+        Routemaster.of(context).push('main');
       },
     );
   }
@@ -200,7 +200,7 @@ class PostController extends StateNotifier<bool> {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('Posted successfully!')),
           );
-          Routemaster.of(context).push('/');
+          Routemaster.of(context).push('main');
         },
       );
     } catch (e) {

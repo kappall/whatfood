@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:whatfood/core/common/loader.dart';
 
 //TODO: temp, evry class should have a file when implmented
 class RecipePage extends StatelessWidget {
@@ -7,15 +6,17 @@ class RecipePage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return
-      Center(child:
-        Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children:[
-          Text('Work in progress...',style: TextStyle(fontSize: 32),textAlign: TextAlign.center,),
-          ],
-        )
-      );
+    return Center(
+        child: Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        Text(
+          'Work in progress...',
+          style: TextStyle(fontSize: 32),
+          textAlign: TextAlign.center,
+        ),
+      ],
+    ));
   }
 }
 

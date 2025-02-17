@@ -61,11 +61,12 @@ class AuthRepository {
 
       if (userCredential.additionalUserInfo!.isNewUser) {
         userModel = UserModel(
-          name: userCredential.user!.displayName ?? 'No Name',
-          profilePic: userCredential.user!.photoURL ?? Constants.avatarDefault,
-          banner: Constants.bannerDefault,
-          uid: userCredential.user!.uid,
-        );
+            name: userCredential.user!.displayName ?? 'No Name',
+            profilePic:
+                userCredential.user!.photoURL ?? Constants.avatarDefault,
+            banner: Constants.bannerDefault,
+            uid: userCredential.user!.uid,
+            preferences: {});
         await _users.doc(userCredential.user!.uid).set(userModel.toMap());
       } else {
         userModel = await getUserData(userCredential.user!.uid).first;
@@ -110,11 +111,11 @@ class AuthRepository {
       await userCredential.user!.sendEmailVerification();
 
       final userModel = UserModel(
-        name: name,
-        profilePic: userCredential.user!.photoURL ?? Constants.avatarDefault,
-        banner: Constants.bannerDefault,
-        uid: userCredential.user!.uid,
-      );
+          name: name,
+          profilePic: userCredential.user!.photoURL ?? Constants.avatarDefault,
+          banner: Constants.bannerDefault,
+          uid: userCredential.user!.uid,
+          preferences: {});
 
       await _firestore
           .collection('users')
@@ -135,11 +136,11 @@ class AuthRepository {
       var userCredential = await _auth.signInAnonymously();
 
       UserModel userModel = UserModel(
-        name: 'Guest',
-        profilePic: Constants.avatarDefault,
-        banner: Constants.bannerDefault,
-        uid: userCredential.user!.uid,
-      );
+          name: 'Guest',
+          profilePic: Constants.avatarDefault,
+          banner: Constants.bannerDefault,
+          uid: userCredential.user!.uid,
+          preferences: {});
 
       await _users.doc(userCredential.user!.uid).set(userModel.toMap());
 
