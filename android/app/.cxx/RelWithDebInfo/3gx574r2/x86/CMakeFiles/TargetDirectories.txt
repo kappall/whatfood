@@ -1,0 +1,2 @@
+/Users/karamellabadie/Developer/projects/flutter/whatfood/android/app/.cxx/RelWithDebInfo/3gx574r2/x86/CMakeFiles/edit_cache.dir
+/Users/karamellabadie/Developer/projects/flutter/whatfood/android/app/.cxx/RelWithDebInfo/3gx574r2/x86/CMakeFiles/rebuild_cache.dir
