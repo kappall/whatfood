@@ -12,6 +12,7 @@ import 'package:whatfood/features/post/pages/comment_page.dart';
 import 'package:whatfood/features/preferences/views/preferences_view.dart';
 import 'package:whatfood/features/profile/pages/edit_profile_page.dart';
 import 'package:whatfood/features/profile/pages/profile_page.dart';
+import 'package:whatfood/features/recipes/page/add_recipe_page.dart';
 import 'package:whatfood/pages/start_page.dart';
 
 class HomeRouteWidget extends ConsumerWidget {
@@ -41,6 +42,7 @@ final loggedInRoute = RouteMap(
       '/login': (_) => const MaterialPage(child: LoginView()),
       '/register': (_) => const MaterialPage(child: RegisterView()),
       '/add_post': (_) => const MaterialPage(child: AddPostPage()),
+      '/add-recipe': (_) => const MaterialPage(child: AddRecipePage()),
       '/add_post/add_post_type/:type': (route) => MaterialPage(
             child: AddPostTypePage(
               type: route.pathParameters['type']!,

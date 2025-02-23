@@ -1,4 +1,3 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -9,11 +8,10 @@ import 'package:whatfood/core/common/loader.dart';
 import 'package:whatfood/core/utils.dart';
 import 'package:whatfood/features/home/pages/home_page.dart';
 import 'package:whatfood/features/profile/pages/profile_page.dart';
+import 'package:whatfood/features/recipes/page/recipes_page.dart';
 import 'package:whatfood/features/report/pages/report_page.dart';
 import 'package:whatfood/features/scanner/camera_scanner.dart';
 import 'package:whatfood/features/auth/controller/auth_controller.dart';
-import 'package:whatfood/models/user_model.dart';
-import 'user_page.dart';
 import 'guest_page.dart';
 
 class StartPage extends ConsumerWidget {
@@ -151,7 +149,7 @@ class _MainPageState extends State<MainPage> {
       _selectedIndex = 2;
       _pages = [
         CameraScanner(),
-        RecipePage(),
+        RecipesPage(),
         HomePage(),
         ReportPage(),
         ProfilePage(

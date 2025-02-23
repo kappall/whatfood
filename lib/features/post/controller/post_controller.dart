@@ -103,7 +103,7 @@ class PostController extends StateNotifier<bool> {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Posted successfully!')),
         );
-        Routemaster.of(context).push('main');
+        Routemaster.of(context).pop();
       },
     );
   }
@@ -121,23 +121,18 @@ class PostController extends StateNotifier<bool> {
     img.Image? image = img.decodeImage(await file.readAsBytes());
     if (image == null) throw Exception('Unable to decode image');
 
-    // Calcola il fattore di ridimensionamento basato sulla dimensione originale
     double scaleFactor = 1.0;
     if (originalSize > 2 * maxSizeInBytes) {
-      // Se più di 2MB
       scaleFactor = 0.5;
     } else if (originalSize > 1.5 * maxSizeInBytes) {
-      // Se più di 1.5MB
       scaleFactor = 0.7;
     } else {
-      // Se tra 1MB e 1.5MB
       scaleFactor = 0.8;
     }
 
     final newWidth = (image.width * scaleFactor).round();
     img.Image resizedImage = img.copyResize(image, width: newWidth);
 
-    // Prova diverse qualità di compressione se necessario
     final qualities = [85, 70, 60, 50];
     File? compressedFile;
 
@@ -246,7 +241,7 @@ class PostController extends StateNotifier<bool> {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('Posted successfully!')),
           );
-          Routemaster.of(context).push('main');
+          Routemaster.of(context).pop();
         },
       );
     } catch (e) {
