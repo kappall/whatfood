@@ -1,5 +1,3 @@
-import 'dart:io';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:routemaster/routemaster.dart';
@@ -7,7 +5,6 @@ import 'package:whatfood/core/common/error_text.dart';
 import 'package:whatfood/core/common/loader.dart';
 import 'package:whatfood/core/common/recipe_card.dart';
 import 'package:whatfood/features/recipes/controller/recipe_controller.dart';
-import 'package:whatfood/models/recipe_model.dart';
 import 'package:whatfood/theme/theme.dart';
 
 class RecipesPage extends ConsumerStatefulWidget {
@@ -33,12 +30,16 @@ class RecipesPageState extends ConsumerState<RecipesPage> {
       ),
       body: ref.watch(recpiesProvider).when(
             data: (data) {
-              return ListView.builder(
-                  itemCount: data.length,
-                  itemBuilder: (BuildContext content, int index) {
-                    final recipe = data[index];
-                    return RecipeCard(recipe: recipe);
-                  });
+              return GridView.builder(
+                gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: 2,
+                ),
+                itemCount: data.length,
+                itemBuilder: (BuildContext context, int index) {
+                  final recipe = data[index];
+                  return RecipeCard(recipe: recipe);
+                },
+              );
             },
             error: (error, stackTrace) {
               debugPrint(stackTrace.toString());

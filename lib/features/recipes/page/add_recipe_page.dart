@@ -2,10 +2,9 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:uuid/uuid.dart';
+import 'package:whatfood/core/common/loader.dart';
 import 'package:whatfood/core/utils.dart';
 import 'package:whatfood/features/recipes/controller/recipe_controller.dart';
-import 'package:whatfood/models/recipe_model.dart';
 
 class AddRecipePage extends ConsumerStatefulWidget {
   const AddRecipePage({super.key});
@@ -56,19 +55,22 @@ class _AddRecipePageState extends ConsumerState<AddRecipePage> {
     _instructions[index] = value;
   }
 
-  void shareRecipe(BuildContext context) {
-    if (_titleController.text.isEmpty) {
-      showSnackBar(context, "Title missing");
-      return;
+  bool shareRecipe(BuildContext context) {
+    if (_ingredients.isEmpty || _ingredients[0].isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('At least one ingredient is required.')),
+      );
+      return false;
     }
-    if (ref.read(recipeControllerProvider)) return;
 
-    if (_ingredients[0] != '' &&
-        _instructions[0] != '' &&
-        _descriptionController.text.isNotEmpty &&
-        _cookTimeController.text.isNotEmpty &&
-        _servingsController.text.isNotEmpty &&
-        _image != null) {
+    if (_instructions.isEmpty || _instructions[0].isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('At least one instruction is required.')),
+      );
+      return false;
+    }
+
+    if (_image != null) {
       ref.read(recipeControllerProvider.notifier).shareRecipe(
           context: context,
           title: _titleController.text.trim(),
@@ -79,25 +81,34 @@ class _AddRecipePageState extends ConsumerState<AddRecipePage> {
           cookTimeMinutes: _cookTimeController.text.trim(),
           image: _image!);
     } else {
-      showSnackBar(context, "You must all fill the fields");
-      return;
+      showSnackBar(context, "You must select an image");
+      return false;
     }
+    return true;
   }
 
   @override
   Widget build(BuildContext context) {
+    final isLoading = ref.watch(recipeControllerProvider);
     return Scaffold(
       appBar: AppBar(
         title: const Text('Add New Recipe'),
         actions: [
           IconButton(
             onPressed: () {
-              if (_formKey.currentState!.validate()) {
-                shareRecipe(context);
-                Navigator.pop(context);
+              if (!isLoading && _formKey.currentState!.validate()) {
+                if (shareRecipe(context)) {
+                  Navigator.pop(context);
+                }
               }
             },
-            icon: const Icon(Icons.check),
+            icon: isLoading
+                ? const SizedBox(
+                    height: 20,
+                    width: 20,
+                    child: Loader(),
+                  )
+                : const Icon(Icons.check),
           ),
         ],
       ),
