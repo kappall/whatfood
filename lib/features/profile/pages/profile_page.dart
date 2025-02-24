@@ -27,16 +27,17 @@ class ProfilePage extends ConsumerWidget {
     Routemaster.of(context).push('/preferences');
   }
 
-  Future<bool> showLogOutDialog(BuildContext context) {
+  Future<bool> showOutDialog(
+      BuildContext context, String title, String prompt) {
     return showDialog<bool>(
       context: context,
       builder: (context) {
         return AlertDialog(
-          title: const Text(
-            'Sign out',
+          title: Text(
+            title,
             style: TextStyle(fontWeight: FontWeight.bold),
           ),
-          content: const Text('Are you sure you want to sign out?'),
+          content: Text(prompt),
           actions: [
             TextButton(
               onPressed: () {
@@ -58,7 +59,7 @@ class ProfilePage extends ConsumerWidget {
                 ),
               ),
               child: const Text(
-                'Log out',
+                'confirm',
                 style: TextStyle(color: Colors.white),
               ),
             ),
@@ -66,6 +67,14 @@ class ProfilePage extends ConsumerWidget {
         );
       },
     ).then((value) => value ?? false);
+  }
+
+  void logout(WidgetRef ref) {
+    ref.read(userProfileControllerProvider.notifier).logout();
+  }
+
+  void deleteUser(WidgetRef ref) {
+    ref.read(userProfileControllerProvider.notifier).deleteUser();
   }
 
   @override
@@ -142,17 +151,35 @@ class ProfilePage extends ConsumerWidget {
                             ),
                             ElevatedButton(
                               onPressed: () async {
-                                final shouldLogout =
-                                    await showLogOutDialog(context);
+                                final shouldLogout = await showOutDialog(
+                                    context,
+                                    'Sign Out',
+                                    'Are you sure you wnat to sign out?');
                                 if (shouldLogout) {
-                                  FirebaseAuth.instance.signOut();
+                                  logout(ref);
+                                }
+                              },
+                              style: ButtonStyles.elevatedButtonStyle(
+                                size: const Size(120, 40),
+                                backgroundColor: Colors.redAccent,
+                              ),
+                              child: const Text('Logout'),
+                            ),
+                            ElevatedButton(
+                              onPressed: () async {
+                                final shouldDelete = await showOutDialog(
+                                    context,
+                                    'Delete Account',
+                                    'This action is irreversible. Are you sure you wnat to delete your account?');
+                                if (shouldDelete) {
+                                  deleteUser(ref);
                                 }
                               },
                               style: ButtonStyles.elevatedButtonStyle(
                                 size: const Size(120, 40),
                                 backgroundColor: Colors.red,
                               ),
-                              child: const Text('Logout'),
+                              child: const Text('Delete Account'),
                             ),
                           ],
                         ),

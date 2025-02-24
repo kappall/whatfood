@@ -82,4 +82,13 @@ class UserProfileController extends StateNotifier<bool> {
   Stream<List<Post>> getUserPosts(String uid) {
     return _userProfileRepository.getUserPosts(uid);
   }
+
+  void logout() async {
+    _ref.read(isNewLoginProvider.notifier).state = false;
+    _userProfileRepository.logOut();
+  }
+
+  Future<void> deleteUser() async {
+    final res = await _userProfileRepository.deleteAcoount();
+  }
 }

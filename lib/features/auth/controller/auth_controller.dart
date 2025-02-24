@@ -96,11 +96,6 @@ class AuthController extends StateNotifier<bool> {
     });
   }
 
-  void logout() async {
-    _ref.read(isNewLoginProvider.notifier).state = false;
-    _authRepository.logOut();
-  }
-
   Future<void> registerWithEmailAndPassword({
     required BuildContext context,
     required String email,
