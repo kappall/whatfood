@@ -2,11 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:routemaster/routemaster.dart';
 
-class AddPostPage extends ConsumerWidget {
-  const AddPostPage({super.key});
+class AddPostView extends ConsumerWidget {
+  const AddPostView({super.key});
 
   void navigateToType(BuildContext context, String type) {
-    Routemaster.of(context).push('/add_post/add_post_type/$type');
+    Routemaster.of(context).push('/home/add_post/add_post_type/$type');
   }
 
   @override
@@ -15,6 +15,10 @@ class AddPostPage extends ConsumerWidget {
     double iconSize = 60;
     return Scaffold(
       appBar: AppBar(
+        leading: IconButton(
+          icon: Icon(Icons.arrow_back),
+          onPressed: () => Routemaster.of(context).pop(),
+        ),
         title: Text("Add Post"),
       ),
       body: Center(
@@ -22,7 +26,6 @@ class AddPostPage extends ConsumerWidget {
           crossAxisAlignment: CrossAxisAlignment.center,
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            // Column for Image Post
             Padding(
               padding: const EdgeInsets.only(bottom: 24.0),
               child: GestureDetector(

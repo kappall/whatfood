@@ -68,13 +68,17 @@ class PostCard extends ConsumerWidget {
             label: Text("Edit"),
           )),
         PopupMenuItem<String>(
-          value: 'Opzione 2',
-          child: Text('Opzione 2'),
-        ),
-        PopupMenuItem<String>(
-          value: 'Opzione 3',
-          child: Text('Opzione 3'),
-        ),
+            child: TextButton.icon(
+          style: ButtonStyles.textButtonStyle(textColor: Colors.greenAccent),
+          onPressed: () {
+            print("Pulsante premuto1");
+          },
+          icon: Icon(
+            Icons.share,
+            color: Colors.greenAccent,
+          ),
+          label: Text("Share"),
+        )),
       ],
     );
   }
@@ -149,6 +153,7 @@ class PostCard extends ConsumerWidget {
                         color: Theme.of(context).appBarTheme.backgroundColor),
                     child: ImageCarousel(
                       imageUrls: post.imageUrls!,
+                      boxFit: BoxFit.contain,
                     ),
                   ),
                 ),
@@ -200,9 +205,9 @@ class PostCard extends ConsumerWidget {
                 padding:
                     const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
                 child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         IconButton(
                           icon: Icon(

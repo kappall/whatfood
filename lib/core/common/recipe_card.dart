@@ -5,12 +5,12 @@ import 'package:whatfood/button_styles.dart';
 import 'package:whatfood/core/utils.dart';
 import 'package:whatfood/features/auth/controller/auth_controller.dart';
 import 'package:whatfood/features/recipes/controller/recipe_controller.dart';
-import 'package:whatfood/features/recipes/widgets/recipe_modal.dart';
+import 'package:whatfood/features/recipes/widgets/show_recipe_modal.dart';
 import 'package:whatfood/models/recipe_model.dart';
 
 class RecipeCard extends ConsumerWidget {
   final Recipe recipe;
-  const RecipeCard({Key? key, required this.recipe}) : super(key: key);
+  const RecipeCard({super.key, required this.recipe});
 
   void deleteRecipe(WidgetRef ref, BuildContext context) async {
     ref
@@ -18,7 +18,7 @@ class RecipeCard extends ConsumerWidget {
         .deleteRecipe(recipe.id, context);
   }
 
-  void likeOrUnlikePost(WidgetRef ref) async {
+  void likeOrUnlikeRecipe(WidgetRef ref) async {
     ref.read(recipeControllerProvider.notifier).likeOrUnlike(recipe);
   }
 
@@ -134,7 +134,7 @@ class RecipeCard extends ConsumerWidget {
                                     : null,
                                 size: 24,
                               ),
-                              onPressed: () => likeOrUnlikePost(ref),
+                              onPressed: () => likeOrUnlikeRecipe(ref),
                             ),
                             Text(
                               "${recipe.likes.isEmpty ? 'Like' : recipe.likes.length}",

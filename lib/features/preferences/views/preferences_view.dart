@@ -3,7 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:routemaster/routemaster.dart';
 import 'package:whatfood/core/common/loader.dart';
 import 'package:whatfood/features/auth/controller/auth_controller.dart';
-import 'package:whatfood/features/preferences/widgets/IntollerancesList.dart';
+import 'package:whatfood/features/preferences/widgets/Intollerances_list.dart';
 import 'package:whatfood/features/preferences/controller/preferences_controller.dart';
 
 class PreferencesView extends ConsumerWidget {

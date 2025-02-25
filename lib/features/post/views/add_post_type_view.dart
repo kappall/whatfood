@@ -7,16 +7,16 @@ import 'package:whatfood/core/common/loader.dart';
 import 'package:whatfood/core/utils.dart';
 import 'package:whatfood/features/post/controller/post_controller.dart';
 
-class AddPostTypePage extends ConsumerStatefulWidget {
+class AddPostTypeView extends ConsumerStatefulWidget {
   final String type;
-  const AddPostTypePage({required this.type, super.key});
+  const AddPostTypeView({required this.type, super.key});
 
   @override
   ConsumerState<ConsumerStatefulWidget> createState() =>
-      _AddPostTypePageState();
+      _AddPostTypeViewState();
 }
 
-class _AddPostTypePageState extends ConsumerState<AddPostTypePage> {
+class _AddPostTypeViewState extends ConsumerState<AddPostTypeView> {
   final titleController = TextEditingController();
   final descriptionController = TextEditingController();
   final List<File> images = [];

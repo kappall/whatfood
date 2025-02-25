@@ -64,7 +64,7 @@ class UserProfileRepository {
     try {
       final user = _auth.currentUser!;
       String uid = user.uid;
-      _auth.signOut();
+      await _auth.signOut();
       await _auth.currentUser!.delete();
       final List<Post> userPosts = await _posts
           .where('uid', isEqualTo: uid)

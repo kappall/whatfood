@@ -1,26 +1,24 @@
-import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:whatfood/core/common/error_text.dart';
 import 'package:whatfood/core/common/loader.dart';
-import 'package:whatfood/core/common/post_card.dart';
-import 'package:whatfood/features/auth/controller/auth_controller.dart';
+import 'package:whatfood/core/common/post_card_for_grid.dart';
 import 'package:whatfood/features/post/controller/post_controller.dart';
 import 'package:whatfood/features/post/widgets/comment_card.dart';
 import 'package:whatfood/models/post_model.dart';
 
-class CommentsPage extends ConsumerStatefulWidget {
+class CommentsView extends ConsumerStatefulWidget {
   final String postId;
-  const CommentsPage({
+  const CommentsView({
     super.key,
     required this.postId,
   });
 
   @override
-  ConsumerState<ConsumerStatefulWidget> createState() => _CommentsPageState();
+  ConsumerState<ConsumerStatefulWidget> createState() => _CommentsViewState();
 }
 
-class _CommentsPageState extends ConsumerState<CommentsPage> {
+class _CommentsViewState extends ConsumerState<CommentsView> {
   final commentController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
   final FocusNode _commentFocusNode = FocusNode();

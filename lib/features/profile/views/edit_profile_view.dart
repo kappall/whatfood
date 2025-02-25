@@ -9,19 +9,19 @@ import 'package:whatfood/core/utils.dart';
 import 'package:whatfood/features/auth/controller/auth_controller.dart';
 import 'package:whatfood/features/profile/controller/user_profile_controller.dart';
 
-class EditProfilePage extends ConsumerStatefulWidget {
+class EditProfileView extends ConsumerStatefulWidget {
   final String uid;
-  const EditProfilePage({
+  const EditProfileView({
     super.key,
     required this.uid,
   });
 
   @override
   ConsumerState<ConsumerStatefulWidget> createState() =>
-      _EditProfilePageState();
+      _EditProfileViewState();
 }
 
-class _EditProfilePageState extends ConsumerState<EditProfilePage> {
+class _EditProfileViewState extends ConsumerState<EditProfileView> {
   File? bannerFile;
   File? profileFile;
   late TextEditingController nameController;

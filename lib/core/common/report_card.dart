@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../models/report_model.dart';
-import '../controller/report_controller.dart';
+import '../../models/report_model.dart';
+import '../../features/report/controller/report_controller.dart';
 
 class ReportCard extends ConsumerWidget {
   final ReportModel report;
@@ -29,29 +29,31 @@ class ReportCard extends ConsumerWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Padding(padding: EdgeInsets.only(top: 20),child:Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    SizedBox(
-                      width: MediaQuery.of(context).size.width * 0.6,
-                      child:
-                        Text(
-                        report.description,
-                        softWrap: true,
-                        overflow: TextOverflow.ellipsis,
-                        maxLines: 2,
-                        style: const TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
+                Padding(
+                  padding: EdgeInsets.only(top: 20),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      SizedBox(
+                        width: MediaQuery.of(context).size.width * 0.6,
+                        child: Text(
+                          report.description,
+                          softWrap: true,
+                          overflow: TextOverflow.ellipsis,
+                          maxLines: 2,
+                          style: const TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
                           ),
                         ),
-                    ),
-                    Text(
-                      '${report.date.day}/${report.date.month}/${report.date.year}',
-                      style: const TextStyle(color: Colors.grey),
-                    ),
-                  ],
-                ),),
+                      ),
+                      Text(
+                        '${report.date.day}/${report.date.month}/${report.date.year}',
+                        style: const TextStyle(color: Colors.grey),
+                      ),
+                    ],
+                  ),
+                ),
                 const SizedBox(height: 8),
                 Text(
                   'Category: ${report.category}',

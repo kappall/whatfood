@@ -6,10 +6,10 @@ import 'package:routemaster/routemaster.dart';
 import 'package:whatfood/core/common/google_signin_button.dart';
 import 'package:whatfood/core/common/loader.dart';
 import 'package:whatfood/core/utils.dart';
-import 'package:whatfood/features/home/pages/home_page.dart';
-import 'package:whatfood/features/profile/pages/profile_page.dart';
-import 'package:whatfood/features/recipes/page/recipes_page.dart';
-import 'package:whatfood/features/report/pages/report_page.dart';
+import 'package:whatfood/features/home/views/home_view.dart';
+import 'package:whatfood/features/profile/views/profile_view.dart';
+import 'package:whatfood/features/recipes/views/recipes_view.dart';
+import 'package:whatfood/features/report/views/report_page.dart';
 import 'package:whatfood/features/scanner/camera_scanner.dart';
 import 'package:whatfood/features/auth/controller/auth_controller.dart';
 import 'guest_page.dart';
@@ -149,10 +149,10 @@ class _MainPageState extends State<MainPage> {
       _selectedIndex = 2;
       _pages = [
         CameraScanner(),
-        RecipesPage(),
-        HomePage(),
-        ReportPage(),
-        ProfilePage(
+        RecipesView(),
+        HomeView(),
+        ReportView(),
+        ProfileView(
           uid: FirebaseAuth.instance.currentUser!.uid,
           public: false,
         ),

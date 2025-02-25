@@ -7,14 +7,14 @@ import 'package:whatfood/core/common/recipe_card.dart';
 import 'package:whatfood/features/recipes/controller/recipe_controller.dart';
 import 'package:whatfood/theme/theme.dart';
 
-class RecipesPage extends ConsumerStatefulWidget {
-  const RecipesPage({super.key});
+class RecipesView extends ConsumerStatefulWidget {
+  const RecipesView({super.key});
 
   @override
-  ConsumerState<RecipesPage> createState() => RecipesPageState();
+  ConsumerState<RecipesView> createState() => RecipesViewState();
 }
 
-class RecipesPageState extends ConsumerState<RecipesPage> {
+class RecipesViewState extends ConsumerState<RecipesView> {
   @override
   Widget build(BuildContext context) {
     final themeNotifier = ref.read(themeProvider.notifier);

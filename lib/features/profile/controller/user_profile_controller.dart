@@ -88,7 +88,13 @@ class UserProfileController extends StateNotifier<bool> {
     _userProfileRepository.logOut();
   }
 
-  Future<void> deleteUser() async {
+  Future<void> deleteUser(BuildContext context) async {
     final res = await _userProfileRepository.deleteAcoount();
+
+    res.fold((l) {
+      if (context.mounted) {
+        showSnackBar(context, l.toString());
+      }
+    }, (r) => null);
   }
 }

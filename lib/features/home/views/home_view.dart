@@ -3,34 +3,42 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:routemaster/routemaster.dart';
-import 'package:whatfood/features/home/pages/for_you.dart';
+import 'package:whatfood/features/home/views/for_you_view.dart';
 import 'package:whatfood/models/user_model.dart';
 import 'package:whatfood/theme/theme.dart';
 
-class HomePage extends ConsumerStatefulWidget {
-  const HomePage({super.key});
+class HomeView extends ConsumerStatefulWidget {
+  const HomeView({super.key});
 
   @override
-  ConsumerState<HomePage> createState() => _HomePageState();
+  ConsumerState<HomeView> createState() => _HomeViewState();
 }
 
-class _HomePageState extends ConsumerState<HomePage>
+class _HomeViewState extends ConsumerState<HomeView>
     with SingleTickerProviderStateMixin {
   UserModel? userModel;
   late TabController _tabController;
+  late PageController _pageController;
   bool _mounted = true;
 
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: 2, vsync: this);
+    _pageController = PageController();
     _tabController.addListener(_handleTabChange);
     _fetchUserData();
   }
 
   void _handleTabChange() {
     if (_mounted) {
-      setState(() {});
+      setState(() {
+        _pageController.animateToPage(
+          _tabController.index,
+          duration: const Duration(milliseconds: 300),
+          curve: Curves.easeInOut,
+        );
+      });
     }
   }
 
@@ -39,6 +47,7 @@ class _HomePageState extends ConsumerState<HomePage>
     _mounted = false;
     _tabController.removeListener(_handleTabChange);
     _tabController.dispose();
+    _pageController.dispose();
     super.dispose();
   }
 
@@ -137,17 +146,24 @@ class _HomePageState extends ConsumerState<HomePage>
           ),
         ),
       ),
-      body: TabBarView(
-        controller: _tabController,
+      body: PageView(
+        controller: _pageController,
+        scrollDirection: Axis.horizontal,
+        physics: const PageScrollPhysics(),
+        onPageChanged: (index) {
+          if (_mounted) {
+            _tabController.animateTo(index);
+          }
+        },
         children: const [
-          ForYouPage(),
+          ForYouView(),
           Center(child: Text('Inspiration Page')),
         ],
       ),
       floatingActionButton: FloatingActionButton(
         shape: CircleBorder(),
         onPressed: () {
-          Routemaster.of(context).push('/add_post');
+          Routemaster.of(context).push('/home/add_post');
         },
         backgroundColor: Colors.grey,
         child: const Icon(

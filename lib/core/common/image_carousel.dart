@@ -2,8 +2,10 @@ import 'package:flutter/material.dart';
 
 class ImageCarousel extends StatefulWidget {
   final List<String> imageUrls;
+  final BoxFit boxFit;
 
-  const ImageCarousel({super.key, required this.imageUrls});
+  const ImageCarousel(
+      {super.key, required this.imageUrls, required this.boxFit});
 
   @override
   _ImageCarouselState createState() => _ImageCarouselState();
@@ -36,7 +38,7 @@ class _ImageCarouselState extends State<ImageCarousel> {
             itemBuilder: (context, index) {
               return Image.network(
                 widget.imageUrls[index],
-                fit: BoxFit.contain,
+                fit: widget.boxFit,
                 width: double.infinity,
               );
             },
