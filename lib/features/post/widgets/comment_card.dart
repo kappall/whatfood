@@ -1,18 +1,29 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:routemaster/routemaster.dart';
+import 'package:whatfood/features/auth/controller/auth_controller.dart';
+import 'package:whatfood/features/post/controller/post_controller.dart';
 import 'package:whatfood/models/comment_model.dart';
 
 class CommentCard extends ConsumerWidget {
-  final Comment comment;
-  const CommentCard({required this.comment, super.key});
-
   void navigateToUser(BuildContext context) {
     Routemaster.of(context).push('user_page/${comment.uid}');
   }
 
+  final Comment comment;
+  final String postOwnerUid;
+
+  const CommentCard({
+    super.key,
+    required this.comment,
+    required this.postOwnerUid,
+  });
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final user = ref.watch(userProvider)!;
+    final canDelete = (user.uid == comment.uid || user.uid == postOwnerUid);
+
     return Container(
       padding: EdgeInsets.symmetric(horizontal: 10, vertical: 4),
       child: Column(
@@ -21,6 +32,7 @@ class CommentCard extends ConsumerWidget {
         children: [
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            crossAxisAlignment: CrossAxisAlignment.end,
             children: [
               Row(
                 children: [
@@ -40,10 +52,26 @@ class CommentCard extends ConsumerWidget {
                   ),
                 ],
               ),
-              Row(
+              Column(
                 children: [
                   Text(
-                      '${DateTime.now().difference(comment.createdAt).inDays}d ago')
+                      '${DateTime.now().difference(comment.createdAt).inDays}d ago'),
+                  Container(
+                    child: canDelete
+                        ? IconButton(
+                            icon: Icon(Icons.delete, color: Colors.red),
+                            onPressed: () {
+                              FocusScope.of(context).unfocus();
+                              ref
+                                  .read(postControllerProvider.notifier)
+                                  .deleteComment(
+                                      commentId: comment.id,
+                                      postId: comment.postId,
+                                      context: context);
+                            },
+                          )
+                        : null,
+                  ),
                 ],
               ),
             ],

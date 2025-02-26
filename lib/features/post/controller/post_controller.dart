@@ -171,7 +171,7 @@ class PostController extends StateNotifier<bool> {
     required BuildContext context,
     required String title,
     required List<String> tags,
-    required List<File> files,
+    required File image,
   }) async {
     state = true;
     final user = _ref.watch(userProvider);
@@ -187,35 +187,30 @@ class PostController extends StateNotifier<bool> {
     }
 
     String postId = const Uuid().v1();
-    List<String> imageUrls = [];
 
     try {
-      for (var file in files) {
-        File processedFile;
-        try {
-          processedFile = await compressImage(file);
-        } catch (e) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Error compressing image: ${e.toString()}')),
-          );
-          state = false;
-          return;
-        }
-
-        final imageId = const Uuid().v1();
-        final result = await _storageRepository.storeFile(
-          path: 'posts',
-          id: imageId,
-          file: processedFile,
+      File processedFile;
+      try {
+        processedFile = await compressImage(image);
+      } catch (e) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error compressing image: ${e.toString()}')),
         );
-
-        final imageUrl = result.fold(
-          (l) => throw Exception(l.message),
-          (r) => r,
-        );
-
-        imageUrls.add(imageUrl);
+        state = false;
+        return;
       }
+
+      final imageId = const Uuid().v1();
+      final result = await _storageRepository.storeFile(
+        path: 'posts',
+        id: imageId,
+        file: processedFile,
+      );
+
+      final imageUrl = result.fold(
+        (l) => throw Exception(l.message),
+        (r) => r,
+      );
 
       final Post post = Post(
         id: postId,
@@ -226,7 +221,7 @@ class PostController extends StateNotifier<bool> {
         createdAt: DateTime.now(),
         likes: [],
         tags: tags,
-        imageUrls: imageUrls,
+        imageUrl: imageUrl,
         commentCount: 0,
         type: 'image',
       );
@@ -284,6 +279,15 @@ class PostController extends StateNotifier<bool> {
         profilePic: user.profilePic,
         uid: user.uid);
     _postRepository.addComment(comment);
+  }
+
+  void deleteComment({
+    required String commentId,
+    required String postId,
+    required BuildContext context,
+  }) async {
+    await _postRepository.deleteComment(commentId, postId);
+    debugPrint("comment deleted");
   }
 
   Stream<List<Comment>> fetchCommentsOfPost(String postId) {

@@ -17,7 +17,8 @@ class AddPostView extends ConsumerWidget {
       appBar: AppBar(
         leading: IconButton(
           icon: Icon(Icons.arrow_back),
-          onPressed: () => Routemaster.of(context).pop(),
+          onPressed: () =>
+              Routemaster.of(context).popUntil((route) => route.path == '/'),
         ),
         title: Text("Add Post"),
       ),

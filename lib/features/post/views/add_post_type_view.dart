@@ -19,7 +19,7 @@ class AddPostTypeView extends ConsumerStatefulWidget {
 class _AddPostTypeViewState extends ConsumerState<AddPostTypeView> {
   final titleController = TextEditingController();
   final descriptionController = TextEditingController();
-  final List<File> images = [];
+  File? image;
   final List<String> tags = [];
   final FocusNode _tagFocusNode = FocusNode();
 
@@ -31,20 +31,18 @@ class _AddPostTypeViewState extends ConsumerState<AddPostTypeView> {
   }
 
   void selectImage() async {
-    if (images.length == 4) return;
-
     final res = await pickImage(context);
 
     if (res != null) {
       setState(() {
-        images.add(res);
+        image = res;
       });
     }
   }
 
   void removeImage(File file) {
     setState(() {
-      images.remove(file);
+      image = null;
     });
   }
 
@@ -120,12 +118,12 @@ class _AddPostTypeViewState extends ConsumerState<AddPostTypeView> {
     }
     if (ref.read(postControllerProvider)) return;
 
-    if (widget.type == 'image' && images.isNotEmpty) {
+    if (widget.type == 'image' && image != null) {
       ref.read(postControllerProvider.notifier).shareimagePost(
           context: context,
           title: titleController.text.trim(),
           tags: tags,
-          files: images);
+          image: image!);
     } else if (widget.type == 'text') {
       ref.read(postControllerProvider.notifier).shareTextPost(
           context: context,
@@ -195,8 +193,8 @@ class _AddPostTypeViewState extends ConsumerState<AddPostTypeView> {
                     spacing: 8,
                     runSpacing: 8,
                     children: [
-                      ...images.map(
-                        (file) => Stack(
+                      if (image != null)
+                        Stack(
                           children: [
                             Container(
                               width: 150,
@@ -207,7 +205,7 @@ class _AddPostTypeViewState extends ConsumerState<AddPostTypeView> {
                               child: ClipRRect(
                                 borderRadius: BorderRadius.circular(10),
                                 child: Image.file(
-                                  file,
+                                  image!,
                                   fit: BoxFit.cover,
                                 ),
                               ),
@@ -216,7 +214,7 @@ class _AddPostTypeViewState extends ConsumerState<AddPostTypeView> {
                               top: 5,
                               right: 5,
                               child: GestureDetector(
-                                onTap: () => removeImage(file),
+                                onTap: () => removeImage(image!),
                                 child: Container(
                                   decoration: BoxDecoration(
                                     shape: BoxShape.circle,
@@ -232,8 +230,7 @@ class _AddPostTypeViewState extends ConsumerState<AddPostTypeView> {
                             ),
                           ],
                         ),
-                      ),
-                      if (images.length < 4)
+                      if (image == null)
                         GestureDetector(
                           onTap: selectImage,
                           child: Container(

@@ -11,7 +11,7 @@ class Post {
   final String type;
   final DateTime createdAt;
   final int commentCount;
-  final List<String>? imageUrls;
+  final String? imageUrl;
   final List<String> tags;
 
   const Post({
@@ -25,7 +25,7 @@ class Post {
     required this.type,
     required this.createdAt,
     required this.commentCount,
-    this.imageUrls,
+    this.imageUrl,
     required this.tags,
   });
 
@@ -40,7 +40,7 @@ class Post {
     String? type,
     DateTime? createdAt,
     int? commentCount,
-    List<String>? imageUrls,
+    String? imageUrl,
     List<String>? tags,
   }) {
     return Post(
@@ -54,7 +54,7 @@ class Post {
       type: type ?? this.type,
       createdAt: createdAt ?? this.createdAt,
       commentCount: commentCount ?? this.commentCount,
-      imageUrls: imageUrls ?? this.imageUrls,
+      imageUrl: imageUrl ?? this.imageUrl,
       tags: tags ?? this.tags,
     );
   }
@@ -71,7 +71,7 @@ class Post {
       'type': type,
       'createdAt': createdAt.millisecondsSinceEpoch,
       'commentCount': commentCount,
-      'imageUrls': imageUrls,
+      'imageUrl': imageUrl,
       'tags': tags,
     };
   }
@@ -88,14 +88,14 @@ class Post {
       type: map['type'] as String,
       createdAt: DateTime.fromMillisecondsSinceEpoch(map['createdAt'] as int),
       commentCount: map['commentCount'] as int,
-      imageUrls: List<String>.from(map['imageUrls'] ?? []),
+      imageUrl: map['imageUrl'] as String,
       tags: List<String>.from(map['tags'] as List<dynamic>),
     );
   }
 
   @override
   String toString() {
-    return 'Post(id: $id, title: $title, description: $description, likes: $likes, username: $username, uid: $uid, userImage: $userImage, type: $type, createdAt: $createdAt, commentCount: $commentCount, imageUrls: $imageUrls, tags: $tags)';
+    return 'Post(id: $id, title: $title, description: $description, likes: $likes, username: $username, uid: $uid, userImage: $userImage, type: $type, createdAt: $createdAt, commentCount: $commentCount, imageUrl: $imageUrl, tags: $tags)';
   }
 
   @override
@@ -113,7 +113,7 @@ class Post {
         other.type == type &&
         other.createdAt == createdAt &&
         other.commentCount == commentCount &&
-        listEquals(other.imageUrls, imageUrls) &&
+        other.imageUrl == imageUrl &&
         listEquals(other.tags, tags);
   }
 
@@ -129,7 +129,7 @@ class Post {
         type.hashCode ^
         createdAt.hashCode ^
         commentCount.hashCode ^
-        imageUrls.hashCode ^
+        imageUrl.hashCode ^
         tags.hashCode;
   }
 }

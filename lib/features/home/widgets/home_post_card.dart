@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:routemaster/routemaster.dart';
 import 'package:whatfood/button_styles.dart';
-import 'package:whatfood/core/common/image_carousel.dart';
 import 'package:whatfood/features/auth/controller/auth_controller.dart';
 import 'package:whatfood/features/post/controller/post_controller.dart';
 import 'package:whatfood/models/post_model.dart';
@@ -11,10 +10,10 @@ class HomePostCard extends ConsumerWidget {
   final Post post;
   final bool isCommenting;
   const HomePostCard({
-    Key? key,
+    super.key,
     required this.post,
     this.isCommenting = false,
-  }) : super(key: key);
+  });
 
   void deletePost(WidgetRef ref, BuildContext context) {
     ref.read(postControllerProvider.notifier).deletePost(post.id, context);
@@ -25,7 +24,8 @@ class HomePostCard extends ConsumerWidget {
   }
 
   void navigateToComments(BuildContext context) {
-    Routemaster.of(context).push('post/${post.id}/comments');
+    debugPrint('Here');
+    Routemaster.of(context).push('home/${post.id}/comments');
   }
 
   void navigateToUser(BuildContext context) {
@@ -39,6 +39,7 @@ class HomePostCard extends ConsumerWidget {
   Widget popUpMenu(BuildContext context, WidgetRef ref, bool isOwner) {
     return PopupMenuButton<String>(
       icon: const Icon(Icons.more_horiz, color: Colors.white),
+      iconSize: 32,
       onSelected: (String result) {},
       itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
         if (isOwner)
@@ -85,15 +86,15 @@ class HomePostCard extends ConsumerWidget {
       children: [
         Positioned.fill(
           child: isTypeImage
-              ? ImageCarousel(
-                  imageUrls: post.imageUrls!,
-                  boxFit: BoxFit.contain,
+              ? Image.network(
+                  post.imageUrl!,
+                  fit: BoxFit.contain,
+                  width: double.infinity,
                 )
               : Container(
                   color: theme.appBarTheme.backgroundColor ?? Colors.black,
                 ),
         ),
-        // Overlay gradiente per migliorare la leggibilità
         Positioned.fill(
           child: Container(
             decoration: BoxDecoration(

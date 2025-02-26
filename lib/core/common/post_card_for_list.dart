@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:routemaster/routemaster.dart';
 import 'package:whatfood/button_styles.dart';
-import 'package:whatfood/core/common/image_carousel.dart';
 import 'package:whatfood/features/auth/controller/auth_controller.dart';
 import 'package:whatfood/features/post/controller/post_controller.dart';
 import 'package:whatfood/models/post_model.dart';
@@ -25,7 +24,7 @@ class PostCard extends ConsumerWidget {
   }
 
   void navigateToComments(BuildContext context) {
-    Routemaster.of(context).push('post/${post.id}/comments');
+    Routemaster.of(context).push('${post.id}/comments');
   }
 
   void navigateToUser(BuildContext context) {
@@ -38,7 +37,9 @@ class PostCard extends ConsumerWidget {
 
   Widget popUpMenu(BuildContext context, WidgetRef ref, bool isOwner) {
     return PopupMenuButton<String>(
-      icon: Icon(Icons.more_horiz),
+      icon: Icon(
+        Icons.more_horiz,
+      ),
       onSelected: (String result) {},
       itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
         if (isOwner)
@@ -69,13 +70,13 @@ class PostCard extends ConsumerWidget {
           )),
         PopupMenuItem<String>(
             child: TextButton.icon(
-          style: ButtonStyles.textButtonStyle(textColor: Colors.greenAccent),
+          style: ButtonStyles.textButtonStyle(textColor: Colors.green),
           onPressed: () {
             print("Pulsante premuto1");
           },
           icon: Icon(
             Icons.share,
-            color: Colors.greenAccent,
+            color: Colors.green,
           ),
           label: Text("Share"),
         )),
@@ -151,9 +152,10 @@ class PostCard extends ConsumerWidget {
                   child: Container(
                     decoration: BoxDecoration(
                         color: Theme.of(context).appBarTheme.backgroundColor),
-                    child: ImageCarousel(
-                      imageUrls: post.imageUrls!,
-                      boxFit: BoxFit.contain,
+                    child: Image.network(
+                      post.imageUrl!,
+                      fit: BoxFit.contain,
+                      width: double.infinity,
                     ),
                   ),
                 ),

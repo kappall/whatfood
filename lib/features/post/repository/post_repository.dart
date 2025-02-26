@@ -71,6 +71,20 @@ class PostRepository {
     }
   }
 
+  FutureVoid deleteComment(String commentId, String postId) async {
+    try {
+      await _comments.doc(commentId).delete();
+
+      return right(_posts.doc(postId).update({
+        'commentCount': FieldValue.increment(-1),
+      }));
+    } on FirebaseException catch (e) {
+      throw e.message!;
+    } catch (e) {
+      return left(Failure(e.toString()));
+    }
+  }
+
   Stream<List<Comment>> getCommentsOfPost(String postId) {
     return _comments
         .where('postId', isEqualTo: postId)

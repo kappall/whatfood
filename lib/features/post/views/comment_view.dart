@@ -1,25 +1,23 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:routemaster/routemaster.dart';
 import 'package:whatfood/core/common/error_text.dart';
 import 'package:whatfood/core/common/loader.dart';
-import 'package:whatfood/core/common/post_card_for_grid.dart';
+import 'package:whatfood/core/common/post_card_for_comment.dart';
 import 'package:whatfood/features/post/controller/post_controller.dart';
 import 'package:whatfood/features/post/widgets/comment_card.dart';
 import 'package:whatfood/models/post_model.dart';
 
 class CommentsView extends ConsumerStatefulWidget {
   final String postId;
-  const CommentsView({
-    super.key,
-    required this.postId,
-  });
+  const CommentsView({super.key, required this.postId});
 
   @override
   ConsumerState<ConsumerStatefulWidget> createState() => _CommentsViewState();
 }
 
 class _CommentsViewState extends ConsumerState<CommentsView> {
-  final commentController = TextEditingController();
+  final TextEditingController commentController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
   final FocusNode _commentFocusNode = FocusNode();
 
@@ -27,6 +25,7 @@ class _CommentsViewState extends ConsumerState<CommentsView> {
   void dispose() {
     commentController.dispose();
     _scrollController.dispose();
+    _commentFocusNode.dispose();
     super.dispose();
   }
 
@@ -48,11 +47,20 @@ class _CommentsViewState extends ConsumerState<CommentsView> {
                 FocusScope.of(context).unfocus();
               },
               child: Scaffold(
-                appBar: AppBar(),
+                appBar: AppBar(
+                  leading: IconButton(
+                    onPressed: () => Routemaster.of(context)
+                        .popUntil((route) => route.path == '/'),
+                    icon: Icon(Icons.arrow_back),
+                  ),
+                  title: Text('Comments'),
+                  centerTitle: true,
+                ),
                 body: SingleChildScrollView(
+                  controller: _scrollController,
                   child: Column(
                     children: [
-                      PostCard(
+                      PostCardForComment(
                         post: post,
                         isCommenting: true,
                       ),
@@ -60,17 +68,20 @@ class _CommentsViewState extends ConsumerState<CommentsView> {
                             data: (comments) {
                               return ListView.builder(
                                 shrinkWrap: true,
-                                physics: const NeverScrollableScrollPhysics(),
+                                physics: NeverScrollableScrollPhysics(),
                                 itemCount: comments.length,
                                 itemBuilder: (context, index) {
                                   final comment = comments[index];
-                                  return CommentCard(comment: comment);
+                                  return CommentCard(
+                                    comment: comment,
+                                    postOwnerUid: post.uid,
+                                  );
                                 },
                               );
                             },
                             error: (error, stackTrace) =>
                                 ErrorText(error: error.toString()),
-                            loading: () => const Loader(),
+                            loading: () => Loader(),
                           ),
                     ],
                   ),
@@ -82,26 +93,22 @@ class _CommentsViewState extends ConsumerState<CommentsView> {
           error: (error, stackTrace) => Scaffold(
             body: Center(child: ErrorText(error: error.toString())),
           ),
-          loading: () => Scaffold(body: const Center(child: Loader())),
+          loading: () => Scaffold(body: Center(child: Loader())),
         );
   }
 
   Widget _buildCommentInput(Post post) {
     return SafeArea(
       child: Container(
-        padding: EdgeInsets.only(
-          left: 16,
-          right: 16,
-          top: 8,
-          bottom: MediaQuery.of(context).viewInsets.bottom + 8,
-        ),
+        padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8)
+            .copyWith(bottom: MediaQuery.of(context).viewInsets.bottom + 8),
         decoration: BoxDecoration(
           color: Theme.of(context).scaffoldBackgroundColor,
           boxShadow: [
             BoxShadow(
-              color: Colors.black,
-              blurRadius: 4,
-              offset: const Offset(0, -2),
+              color: Colors.green,
+              blurRadius: 6,
+              offset: Offset(0, -2),
             ),
           ],
         ),
@@ -114,27 +121,33 @@ class _CommentsViewState extends ConsumerState<CommentsView> {
                 onSubmitted: (val) => addComment(post),
                 focusNode: _commentFocusNode,
                 decoration: InputDecoration(
-                  hintText: "Scrivi un commento...",
+                  hintText: "Write a comment...",
+                  filled: true,
+                  fillColor: Colors.grey.shade200,
                   border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(24),
+                    borderRadius: BorderRadius.circular(30),
                     borderSide: BorderSide.none,
                   ),
-                  filled: true,
-                  contentPadding: const EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 12,
-                  ),
+                  contentPadding:
+                      EdgeInsets.symmetric(horizontal: 20, vertical: 12),
                 ),
                 maxLines: 2,
                 minLines: 1,
               ),
             ),
-            IconButton(
-              icon: const Icon(Icons.send),
+            SizedBox(width: 8),
+            ElevatedButton(
               onPressed: () {
                 addComment(post);
                 FocusScope.of(context).unfocus();
               },
+              style: ElevatedButton.styleFrom(
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(30),
+                ),
+                padding: EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+              ),
+              child: Text('Send'),
             ),
           ],
         ),
