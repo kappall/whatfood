@@ -164,7 +164,8 @@ class RecipeModal extends ConsumerWidget {
                     ),
                     const SizedBox(height: 10),
                     ElevatedButton(
-                      onPressed: () => Routemaster.of(context).pop(),
+                      onPressed: () => Routemaster.of(context)
+                          .popUntil((route) => route.path == '/'),
                       style: ButtonStyles.elevatedButtonStyle(
                           backgroundColor: Colors.redAccent),
                       child: const Text(

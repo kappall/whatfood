@@ -5,10 +5,13 @@ import 'package:whatfood/core/common/loader.dart';
 import 'package:whatfood/features/auth/controller/auth_controller.dart';
 import 'package:whatfood/features/preferences/widgets/Intollerances_list.dart';
 import 'package:whatfood/features/preferences/controller/preferences_controller.dart';
+import 'package:whatfood/models/user_model.dart';
 
 class PreferencesView extends ConsumerWidget {
-  const PreferencesView({super.key, required this.isFromProfile});
+  const PreferencesView(
+      {super.key, required this.isFromProfile, this.userModel});
   final bool isFromProfile;
+  final UserModel? userModel;
 
   void navigateToHome(BuildContext context) {
     Routemaster.of(context).replace('/home');
@@ -20,6 +23,10 @@ class PreferencesView extends ConsumerWidget {
           context: context,
           preferences: preferences,
         );
+    if (!isFromProfile) {
+      ref.invalidate(authStateChangeProvider);
+      Routemaster.of(context).replace('/');
+    }
   }
 
   @override
@@ -39,7 +46,10 @@ class PreferencesView extends ConsumerWidget {
       child: Scaffold(
         appBar: AppBar(
           automaticallyImplyLeading: false,
-          title: const Text('Food Preferences'),
+          title: const Text(
+            'Food Preferences',
+            style: TextStyle(color: Colors.white),
+          ),
           actions: [
             if (!isFromProfile)
               TextButton(
@@ -82,11 +92,8 @@ class PreferencesView extends ConsumerWidget {
                 : FilledButton(
                     onPressed: () {
                       savePreferences(context, ref, intolerances);
-                      if (isFromProfile) {
-                        Routemaster.of(context).pop();
-                      } else {
-                        navigateToHome(context);
-                      }
+                      Routemaster.of(context)
+                          .popUntil((route) => route.path == '/');
                     },
                     style: FilledButton.styleFrom(
                       backgroundColor: Colors.green,

@@ -1,14 +1,15 @@
+import 'dart:developer';
+
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:routemaster/routemaster.dart';
 import 'package:whatfood/core/utils.dart';
 import 'package:whatfood/features/auth/repository/auth_repository.dart';
+import 'package:whatfood/features/preferences/views/preferences_view.dart';
 import 'package:whatfood/models/user_model.dart';
 
 final userProvider = StateProvider<UserModel?>((ref) => null);
-
-final isNewLoginProvider = StateProvider<bool>((ref) => false);
 
 final authControllerProvider = StateNotifierProvider<AuthController, bool>(
   (ref) => AuthController(
@@ -45,8 +46,7 @@ class AuthController extends StateNotifier<bool> {
       (l) => showSnackBar(context, l.message),
       (userModel) {
         _ref.read(userProvider.notifier).update((state) => userModel);
-        _ref.read(isNewLoginProvider.notifier).state = true;
-        Routemaster.of(context).replace('/preferences');
+        Routemaster.of(context).push('preferences');
       },
     );
   }
@@ -75,16 +75,17 @@ class AuthController extends StateNotifier<bool> {
         email: email,
         password: password,
       );
-
+      state = false;
       user.fold(
-        (l) => showSnackBar(context, l.message),
+        (l) {
+          log('Errore: ${l.message}');
+          showSnackBar(context, l.message);
+        },
         (userModel) {
-          _ref.read(userProvider.notifier).update((state) => userModel);
-          _ref.read(isNewLoginProvider.notifier).state = true;
-          Routemaster.of(context).replace('/preferences');
+          Routemaster.of(context).push('/preferences');
+          debugPrint("got here");
         },
       );
-      state = false;
     } catch (e) {
       showSnackBar(context, e.toString());
     }

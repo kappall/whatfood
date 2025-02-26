@@ -5,7 +5,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:whatfood/core/common/error_text.dart';
 import 'package:whatfood/core/common/loader.dart';
 import 'package:whatfood/features/auth/controller/auth_controller.dart';
-import 'package:whatfood/features/auth/views/verify_email_view.dart';
 import 'package:whatfood/firebase_options.dart';
 import 'package:whatfood/models/user_model.dart';
 import 'package:whatfood/router.dart';

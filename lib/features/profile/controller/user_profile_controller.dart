@@ -75,7 +75,7 @@ class UserProfileController extends StateNotifier<bool> {
     state = false;
     res.fold((l) => showSnackBar(context, l.message), (r) {
       _ref.read(userProvider.notifier).update((state) => user);
-      Routemaster.of(context).pop();
+      Routemaster.of(context).popUntil((route) => route.path == '/');
     });
   }
 
@@ -84,17 +84,10 @@ class UserProfileController extends StateNotifier<bool> {
   }
 
   void logout() async {
-    _ref.read(isNewLoginProvider.notifier).state = false;
     _userProfileRepository.logOut();
   }
 
-  Future<void> deleteUser(BuildContext context) async {
-    final res = await _userProfileRepository.deleteAcoount();
-
-    res.fold((l) {
-      if (context.mounted) {
-        showSnackBar(context, l.toString());
-      }
-    }, (r) => null);
+  Future<void> deleteUser() async {
+    await _userProfileRepository.deleteAcoount();
   }
 }

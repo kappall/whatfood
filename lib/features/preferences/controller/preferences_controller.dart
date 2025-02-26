@@ -45,7 +45,6 @@ class PreferencesController extends StateNotifier<bool> {
             backgroundColor: Colors.green,
           ),
         );
-        Routemaster.of(context).replace('/home');
       },
     );
   }

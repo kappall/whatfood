@@ -21,10 +21,6 @@ final loggedInRoute = RouteMap(
   )),
   routes: {
     '/': (_) => const MaterialPage(child: MainPage(isGuest: false)),
-    '/:preferences': (route) => MaterialPage(
-        child: route.pathParameters['preferences'] == 'no'
-            ? PreferencesView(isFromProfile: false)
-            : MainPage(isGuest: false)),
     '/home': (_) => const MaterialPage(child: MainPage(isGuest: false)),
     '/preferences': (_) => const MaterialPage(
             child: PreferencesView(
@@ -43,7 +39,7 @@ final loggedInRoute = RouteMap(
             child: EditProfileView(
           uid: route.pathParameters['uid']!,
         )),
-    '/post/:id/comments': (route) => MaterialPage(
+    '/home/:id/comments': (route) => MaterialPage(
             child: CommentsView(
           postId: route.pathParameters['id']!,
         )),
@@ -83,6 +79,10 @@ final loggedOutRoute = RouteMap(routes: {
     }
   },
   '/login': (_) => const MaterialPage(child: LoginView()),
+  '/preferences': (route) => const MaterialPage(
+          child: PreferencesView(
+        isFromProfile: false,
+      )),
   '/verify-email': (_) => const MaterialPage(child: VerifyEmailView()),
   '/register': (_) => const MaterialPage(child: RegisterView()),
   '/main_guest': (_) => const MaterialPage(child: MainPage(isGuest: true)),

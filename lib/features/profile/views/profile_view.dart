@@ -53,7 +53,7 @@ class _ProfileViewState extends ConsumerState<ProfileView>
   }
 
   void navigateToPreferences(BuildContext context) {
-    Routemaster.of(context).push('/preferences');
+    Routemaster.of(context).push('preferences');
   }
 
   Future<bool> showOutDialog(
@@ -102,47 +102,55 @@ class _ProfileViewState extends ConsumerState<ProfileView>
     ref.read(userProfileControllerProvider.notifier).logout();
   }
 
-  void deleteUser(BuildContext context, WidgetRef ref) {
-    ref.read(userProfileControllerProvider.notifier).deleteUser(context);
+  void deleteUser(WidgetRef ref) {
+    ref.read(userProfileControllerProvider.notifier).deleteUser();
   }
 
   Widget popUpMenu(BuildContext context, WidgetRef ref) {
     return PopupMenuButton<String>(
       icon: Icon(Icons.more_horiz),
-      onSelected: (String result) {},
+      onSelected: (String value) async {
+        if (value == 'logout') {
+          final shouldLogout = await showOutDialog(
+              context, 'Sign Out', 'Are you sure you want to sign out?');
+          if (shouldLogout) {
+            logout(ref);
+          }
+        } else if (value == 'delete') {
+          final shouldDelete = await showOutDialog(context, 'Delete Account',
+              'This action is irreversible. Are you sure you want to delete your account?');
+          if (shouldDelete) {
+            deleteUser(ref);
+          }
+        }
+      },
       itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
         PopupMenuItem<String>(
-            child: TextButton.icon(
-          style: ButtonStyles.textButtonStyle(textColor: Colors.green),
-          onPressed: () async {
-            final shouldLogout = await showOutDialog(
-                context, 'Sign Out', 'Are you sure you wnat to sign out?');
-            if (shouldLogout) {
-              logout(ref);
-            }
-          },
-          icon: Icon(
-            Icons.exit_to_app,
-            color: Colors.green,
+          value: 'logout',
+          child: Row(
+            children: [
+              Icon(Icons.exit_to_app, color: Colors.green),
+              SizedBox(width: 8),
+              Text(
+                "Log out",
+                style: TextStyle(color: Colors.green),
+              ),
+            ],
           ),
-          label: Text("Log out"),
-        )),
+        ),
         PopupMenuItem<String>(
-            child: TextButton.icon(
-          style: ButtonStyles.textButtonStyle(textColor: Colors.redAccent),
-          onPressed: () async {
-            final shouldDelete = await showOutDialog(context, 'Delete Account',
-                'This action is irreversible. Are you sure you wnat to delete your account?');
-            if (shouldDelete) {
-              deleteUser(context, ref);
-            }
-          },
-          icon: Icon(
-            Icons.edit,
-            color: Colors.redAccent,
+          value: 'delete',
+          child: Row(
+            children: [
+              Icon(Icons.delete, color: Colors.redAccent),
+              SizedBox(width: 8),
+              Text(
+                "Delete Account",
+                style: TextStyle(color: Colors.redAccent),
+              ),
+            ],
           ),
-          label: Text("Delete Account"),
-        )),
+        ),
       ],
     );
   }
