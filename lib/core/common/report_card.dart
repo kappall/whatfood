@@ -3,87 +3,119 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:whatfood/features/report/controller/report_controller.dart';
 import 'package:whatfood/models/report_model.dart';
 
-class ReportCard extends ConsumerWidget {
+class ReportCard extends ConsumerStatefulWidget {
   final ReportModel report;
+  final bool isSelectionMode;
+  final bool isSelected;
+  final Function(ReportModel) onSelected;
 
   const ReportCard({
     super.key,
     required this.report,
+    required this.isSelectionMode,
+    required this.isSelected,
+    required this.onSelected,
   });
 
-  void _deleteReport(BuildContext context, WidgetRef ref) {
+  @override
+  ConsumerState<ReportCard> createState() => _ReportCardState();
+}
+
+class _ReportCardState extends ConsumerState<ReportCard> {
+  bool _isExpanded = false;
+
+  void _deleteReport(BuildContext context) {
     ref.read(reportControllerProvider.notifier).deleteReport(
           context: context,
-          reportId: report.id,
+          reportId: widget.report.id,
         );
   }
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
     return Card(
       margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
-      child: Stack(
-        children: [
-          Padding(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Padding(
-                  padding: EdgeInsets.only(top: 20),
-                  child: Row(
+      child: InkWell(
+        onTap: () {
+          if (widget.isSelectionMode) {
+            widget.onSelected(widget.report);
+          } else {
+            setState(() {
+              _isExpanded = !_isExpanded;
+            });
+          }
+        },
+        onLongPress: () {
+          if (!widget.isSelectionMode) {
+            widget.onSelected(widget.report);
+          }
+        },
+        child: Stack(
+          children: [
+            Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      SizedBox(
-                        width: MediaQuery.of(context).size.width * 0.6,
+                      if (widget.isSelectionMode)
+                        Padding(
+                          padding: const EdgeInsets.only(right: 8.0),
+                          child: Icon(
+                            widget.isSelected
+                                ? Icons.check_circle
+                                : Icons.circle_outlined,
+                            color:
+                                widget.isSelected ? Colors.green : Colors.grey,
+                          ),
+                        ),
+                      Expanded(
                         child: Text(
-                          report.description,
-                          softWrap: true,
-                          overflow: TextOverflow.ellipsis,
-                          maxLines: 2,
+                          widget.report.description,
                           style: const TextStyle(
                             fontSize: 18,
                             fontWeight: FontWeight.bold,
                           ),
                         ),
                       ),
-                      Text(
-                        '${report.date.day}/${report.date.month}/${report.date.year}',
-                        style: const TextStyle(color: Colors.grey),
-                      ),
+                      if (!widget.isSelectionMode)
+                        Icon(_isExpanded
+                            ? Icons.expand_less
+                            : Icons.expand_more),
                     ],
                   ),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  'Category: ${report.category}',
-                  style: const TextStyle(color: Colors.grey),
-                ),
-                const SizedBox(height: 8),
-                ...report.nutritionalValues.entries.map(
-                  (entry) => Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 2),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(entry.key),
-                        Text('${entry.value}'),
-                      ],
+                  if (_isExpanded && !widget.isSelectionMode) ...[
+                    const SizedBox(height: 16),
+                    Text(
+                      '${widget.report.date.day}/${widget.report.date.month}/${widget.report.date.year}',
+                      style: const TextStyle(color: Colors.grey),
                     ),
-                  ),
-                ),
-              ],
+                    const SizedBox(height: 8),
+                    Text(
+                      'Category: ${widget.report.category}',
+                      style: const TextStyle(color: Colors.grey),
+                    ),
+                    const SizedBox(height: 8),
+                    ...widget.report.nutritionalValues.entries.map(
+                      (entry) => Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 2),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(entry.key),
+                            Text('${entry.value}'),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
+                ],
+              ),
             ),
-          ),
-          Positioned(
-            top: 0,
-            right: 0,
-            child: IconButton(
-              icon: const Icon(Icons.close, color: Colors.red),
-              onPressed: () => _deleteReport(context, ref),
-            ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

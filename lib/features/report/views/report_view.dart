@@ -8,8 +8,40 @@ import 'package:whatfood/features/report/controller/report_controller.dart';
 import 'package:whatfood/core/common/report_card.dart';
 import 'package:whatfood/models/report_model.dart';
 
-class ReportView extends ConsumerWidget {
+class ReportView extends ConsumerStatefulWidget {
   const ReportView({super.key});
+
+  @override
+  ConsumerState<ReportView> createState() => _ReportViewState();
+}
+
+class _ReportViewState extends ConsumerState<ReportView> {
+  bool isSelectionMode = false;
+  Set<String> selectedReports = {};
+
+  void toggleSelection(ReportModel report) {
+    setState(() {
+      if (selectedReports.contains(report.id)) {
+        selectedReports.remove(report.id);
+      } else {
+        selectedReports.add(report.id);
+      }
+    });
+  }
+
+  void deleteSelectedReports(BuildContext context) {
+    for (final reportId in selectedReports) {
+      ref.read(reportControllerProvider.notifier).deleteReport(
+            context: context,
+            reportId: reportId,
+          );
+    }
+    setState(() {
+      selectedReports.clear();
+      isSelectionMode = false;
+    });
+  }
+
   static const List<String> toAvoid = ['saturated', 'salt', 'energy', 'fiber'];
   Map<String, double> aggregateNutritionalValues(List<ReportModel> reports) {
     final Map<String, double> aggregated = {};
@@ -71,11 +103,40 @@ class ReportView extends ConsumerWidget {
   }
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
     final user = ref.watch(userProvider)!;
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Food Reports'),
+        title: Text(
+            isSelectionMode ? '${selectedReports.length} selected' : 'Reports'),
+        actions: [
+          if (!isSelectionMode)
+            IconButton(
+              icon: const Icon(Icons.delete_outline),
+              onPressed: () {
+                setState(() {
+                  isSelectionMode = true;
+                });
+              },
+            )
+          else ...[
+            IconButton(
+              icon: const Icon(Icons.delete),
+              onPressed: selectedReports.isNotEmpty
+                  ? () => deleteSelectedReports(context)
+                  : null,
+            ),
+            IconButton(
+              icon: const Icon(Icons.close),
+              onPressed: () {
+                setState(() {
+                  selectedReports.clear();
+                  isSelectionMode = false;
+                });
+              },
+            ),
+          ],
+        ],
       ),
       body: ref.watch(userReportsProvider(user.uid)).when(
             data: (reports) {
@@ -115,7 +176,7 @@ class ReportView extends ConsumerWidget {
                                     style: TextStyle(
                                       fontSize: 20,
                                       fontWeight: FontWeight.bold,
-                                      color: Theme.of(context).primaryColor,
+                                      color: Colors.white,
                                     ),
                                   ),
                                 ),
@@ -132,7 +193,12 @@ class ReportView extends ConsumerWidget {
                         itemCount: reports.length,
                         itemBuilder: (context, index) {
                           final report = reports[index];
-                          return ReportCard(report: report);
+                          return ReportCard(
+                            report: report,
+                            isSelectionMode: isSelectionMode,
+                            isSelected: selectedReports.contains(report.id),
+                            onSelected: toggleSelection,
+                          );
                         },
                       ),
                     ],
