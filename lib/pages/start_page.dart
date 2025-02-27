@@ -9,7 +9,7 @@ import 'package:whatfood/core/utils.dart';
 import 'package:whatfood/features/home/views/home_view.dart';
 import 'package:whatfood/features/profile/views/profile_view.dart';
 import 'package:whatfood/features/recipes/views/recipes_view.dart';
-import 'package:whatfood/features/report/views/report_page.dart';
+import 'package:whatfood/features/report/views/report_view.dart';
 import 'package:whatfood/features/scanner/camera_scanner.dart';
 import 'package:whatfood/features/auth/controller/auth_controller.dart';
 import 'guest_page.dart';

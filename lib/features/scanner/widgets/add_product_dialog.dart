@@ -91,7 +91,10 @@ class _AddProductDialogState extends ConsumerState<AddProductDialog> {
           ),
         ),
         ElevatedButton(
-          onPressed: () => addProduct(context),
+          onPressed: () {
+            Navigator.of(context).pop();
+            addProduct(context);
+          },
           style: ElevatedButton.styleFrom(
             backgroundColor: Colors.green,
             shape: RoundedRectangleBorder(

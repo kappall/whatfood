@@ -46,20 +46,9 @@ final loggedInRoute = RouteMap(
     '/user_page/:uid': (route) => MaterialPage(
           child: SafeArea(
             child: Scaffold(
-              extendBodyBehindAppBar: true,
-              body: NestedScrollView(
-                headerSliverBuilder: (context, innerBoxIsScrolled) {
-                  return [
-                    SliverAppBar(
-                      backgroundColor: Colors.grey[100],
-                      elevation: 0,
-                      title: const Text("User Profile"),
-                    )
-                  ];
-                },
-                body: ProfileView(
-                    uid: route.pathParameters['uid']!, public: false),
-              ),
+              extendBodyBehindAppBar: false,
+              body:
+                  ProfileView(uid: route.pathParameters['uid']!, public: true),
             ),
           ),
         ),
