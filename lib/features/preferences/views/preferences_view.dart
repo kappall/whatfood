@@ -46,7 +46,7 @@ class PreferencesView extends ConsumerWidget {
 
     final isLoading = ref.watch(preferencesControllerProvider);
     debugPrint(user?.name.toString());
-    Set<String> intolerances = user?.preferences ?? {};
+    Set<String> intolerances = isFromProfile ? user?.preferences ?? {} : {};
 
     return SafeArea(
       child: Scaffold(

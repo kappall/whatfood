@@ -6,6 +6,7 @@ import 'package:whatfood/core/common/loader.dart';
 import 'package:whatfood/core/common/post_card_for_grid.dart';
 import 'package:whatfood/features/auth/controller/auth_controller.dart';
 import 'package:whatfood/features/profile/controller/user_profile_controller.dart';
+import 'package:whatfood/models/user_model.dart';
 
 class ProfileView extends ConsumerStatefulWidget {
   final String uid;
@@ -29,7 +30,7 @@ class _ProfileViewState extends ConsumerState<ProfileView>
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 2, vsync: this);
+    _tabController = TabController(length: widget.public ? 1 : 2, vsync: this);
     _tabController.addListener(_handleTabChange);
   }
 
@@ -101,8 +102,8 @@ class _ProfileViewState extends ConsumerState<ProfileView>
     ref.read(userProfileControllerProvider.notifier).logout();
   }
 
-  void deleteUser(WidgetRef ref) {
-    ref.read(userProfileControllerProvider.notifier).deleteUser();
+  void deleteUser(BuildContext context, WidgetRef ref) {
+    ref.read(userProfileControllerProvider.notifier).deleteUser(context);
   }
 
   Widget popUpMenu(BuildContext context, WidgetRef ref) {
@@ -120,7 +121,7 @@ class _ProfileViewState extends ConsumerState<ProfileView>
           final shouldDelete = await showOutDialog(context, 'Delete Account',
               'This action is irreversible. Are you sure you want to delete your account?');
           if (shouldDelete) {
-            deleteUser(ref);
+            deleteUser(context, ref);
           }
         } else if (value == 'Edit preferences') {
           navigateToPreferences(context);
@@ -170,14 +171,22 @@ class _ProfileViewState extends ConsumerState<ProfileView>
     );
   }
 
+  void followOrUnfollowUser(BuildContext context, UserModel user) {
+    ref
+        .read(userProfileControllerProvider.notifier)
+        .followOrUnfollowUser(context, user);
+  }
+
   @override
   Widget build(BuildContext context) {
     final String uid =
         widget.uid.isEmpty ? ref.read(userProvider)!.uid : widget.uid;
+    final String currUid = ref.read(userProvider)!.uid;
     return ref.watch(getUserDataProvider(uid)).when(
           data: (user) => Scaffold(
             appBar: AppBar(
-              title: Text(user.name),
+              centerTitle: false,
+              title: Text(user.name + (widget.public ? '\'s Page' : '')),
               actions: [if (!widget.public) popUpMenu(context, ref)],
             ),
             body: Column(
@@ -187,56 +196,91 @@ class _ProfileViewState extends ConsumerState<ProfileView>
                   children: [
                     Padding(
                       padding: const EdgeInsets.all(16),
-                      child: Row(
+                      child: Column(
                         children: [
-                          CircleAvatar(
-                            backgroundImage: NetworkImage(user.profilePic),
-                            radius: 45,
-                          ),
-                          const SizedBox(width: 16),
-                          Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
+                          Row(
                             children: [
-                              Text(
-                                user.name,
-                                style: const TextStyle(
-                                  fontSize: 20,
-                                  fontWeight: FontWeight.bold,
-                                ),
+                              CircleAvatar(
+                                backgroundImage: NetworkImage(user.profilePic),
+                                radius: 45,
                               ),
-                              if (user.bio.isNotEmpty)
-                                Padding(
-                                  padding: const EdgeInsets.only(top: 4),
-                                  child: Text(
+                              const SizedBox(width: 32),
+                              Column(
+                                children: [
+                                  Text((user.postsCount).toString()),
+                                  Text('posts')
+                                ],
+                              ),
+                              const SizedBox(width: 16),
+                              Column(
+                                children: [
+                                  Text(('9.7M').toString()),
+                                  Text('followers')
+                                ],
+                              ),
+                              const SizedBox(width: 16),
+                              Column(
+                                children: [
+                                  Text(((user.following?.length) ?? 0)
+                                      .toString()),
+                                  Text('following')
+                                ],
+                              )
+                            ],
+                          ),
+                          if (user.bio.isNotEmpty)
+                            Padding(
+                              padding: const EdgeInsets.only(top: 16),
+                              child: Row(
+                                children: [
+                                  Text(
                                     user.bio,
                                     style: TextStyle(
                                       fontSize: 14,
-                                      color: Colors.grey[600],
+                                      color: Colors.white70,
                                     ),
                                   ),
-                                ),
-                              if (!widget.public)
-                                Padding(
-                                  padding: const EdgeInsets.only(top: 16),
-                                  child: Row(
-                                    children: [
-                                      FilledButton(
-                                        onPressed: () =>
-                                            navigateToEditUser(context),
-                                        style: FilledButton.styleFrom(
-                                          shape: RoundedRectangleBorder(
-                                            borderRadius:
-                                                BorderRadius.circular(20),
-                                          ),
-                                          padding: const EdgeInsets.symmetric(
-                                              horizontal: 25),
-                                        ),
-                                        child: const Text('Edit Profile'),
+                                ],
+                              ),
+                            ),
+                          Padding(
+                            padding: const EdgeInsets.only(top: 16),
+                            child: Row(
+                              children: [
+                                if (currUid != uid) ...[
+                                  FilledButton(
+                                    onPressed: () =>
+                                        followOrUnfollowUser(context, user),
+                                    style: FilledButton.styleFrom(
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(20),
                                       ),
-                                    ],
+                                      padding: const EdgeInsets.symmetric(
+                                          horizontal: 25),
+                                    ),
+                                    child: Text(
+                                      user.followers?.contains(currUid) ?? false
+                                          ? 'Unfollow'
+                                          : 'Follow',
+                                    ),
                                   ),
-                                ),
-                            ],
+                                  SizedBox(width: 16),
+                                ],
+                                if (!widget.public)
+                                  FilledButton(
+                                    onPressed: () =>
+                                        navigateToEditUser(context),
+                                    style: FilledButton.styleFrom(
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(20),
+                                      ),
+                                      padding: const EdgeInsets.symmetric(
+                                          horizontal: 25),
+                                    ),
+                                    child: const Text('Edit Profile'),
+                                  ),
+                              ],
+                            ),
                           ),
                         ],
                       ),
@@ -258,15 +302,16 @@ class _ProfileViewState extends ConsumerState<ProfileView>
                         controller: _tabController,
                         indicatorWeight: 3,
                         indicatorSize: TabBarIndicatorSize.tab,
-                        tabs: const [
+                        tabs: [
                           Tab(
                             icon: Icon(Icons.grid_on),
                             iconMargin: EdgeInsets.only(bottom: 4),
                           ),
-                          Tab(
-                            icon: Icon(Icons.bookmark_outline),
-                            iconMargin: EdgeInsets.only(bottom: 4),
-                          ),
+                          if (!widget.public)
+                            Tab(
+                              icon: Icon(Icons.bookmark_outline),
+                              iconMargin: EdgeInsets.only(bottom: 4),
+                            ),
                         ],
                       ),
                     ),
@@ -276,18 +321,49 @@ class _ProfileViewState extends ConsumerState<ProfileView>
                   fit: FlexFit.loose,
                   child: TabBarView(
                     controller: _tabController,
+                    physics:
+                        widget.public ? NeverScrollableScrollPhysics() : null,
                     children: [
                       UserPosts(uid: uid),
-                      const Center(
-                        child: Text('Your shopping cart'),
-                      ),
+                      if (!widget.public) UserSavedPosts(),
                     ],
                   ),
                 ),
               ],
             ),
           ),
-          error: (error, stackTrace) => ErrorText(error: error.toString()),
+          error: (error, stackTrace) {
+            print(stackTrace.toString());
+            return ErrorText(error: error.toString());
+          },
+          loading: () => const Loader(),
+        );
+  }
+}
+
+class UserSavedPosts extends ConsumerWidget {
+  const UserSavedPosts({super.key});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final userModel = ref.watch(userProvider)!;
+    return ref.watch(getUserSavedPostsProvider(userModel)).when(
+          data: (posts) {
+            return GridView.builder(
+              gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: 2,
+              ),
+              itemCount: posts.length,
+              itemBuilder: (context, index) {
+                final post = posts[index];
+                return PostCard(post: post);
+              },
+            );
+          },
+          error: (error, stackTrace) {
+            debugPrint(error.toString());
+            return ErrorText(error: error.toString());
+          },
           loading: () => const Loader(),
         );
   }
@@ -312,7 +388,10 @@ class UserPosts extends ConsumerWidget {
               },
             );
           },
-          error: (error, stackTrace) => ErrorText(error: error.toString()),
+          error: (error, stackTrace) {
+            debugPrint(error.toString());
+            return ErrorText(error: error.toString());
+          },
           loading: () => const Loader(),
         );
   }

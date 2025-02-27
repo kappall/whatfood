@@ -25,6 +25,13 @@ final getUserPostsProvider = StreamProvider.family((ref, String uid) {
   return ref.read(userProfileControllerProvider.notifier).getUserPosts(uid);
 });
 
+final getUserSavedPostsProvider =
+    StreamProvider.family<List<Post>, UserModel>((ref, user) {
+  final userProfileController =
+      ref.read(userProfileControllerProvider.notifier);
+  return userProfileController.getUserSavedPosts(user.savedPosts);
+});
+
 class UserProfileController extends StateNotifier<bool> {
   final UserProfileRepository _userProfileRepository;
   final StorageRepository _storageRepository;
@@ -42,7 +49,7 @@ class UserProfileController extends StateNotifier<bool> {
   Future<void> updateUserProfile({
     required BuildContext context,
     required String name,
-    required File? bannerFile,
+    required String bio,
     required File? profileFile,
   }) async {
     state = true;
@@ -59,18 +66,8 @@ class UserProfileController extends StateNotifier<bool> {
         (r) => user = user.copyWith(profilePic: r),
       );
     }
-    if (bannerFile != null) {
-      final ris = await _storageRepository.storeFile(
-        path: 'users/banner',
-        id: user.uid,
-        file: bannerFile,
-      );
-      ris.fold(
-        (l) => showSnackBar(context, l.message),
-        (r) => user = user.copyWith(banner: r),
-      );
-    }
-    user = user.copyWith(name: name);
+
+    user = user.copyWith(name: name, bio: bio);
     final res = await _userProfileRepository.editProfile(user);
     state = false;
     res.fold((l) => showSnackBar(context, l.message), (r) {
@@ -83,11 +80,30 @@ class UserProfileController extends StateNotifier<bool> {
     return _userProfileRepository.getUserPosts(uid);
   }
 
+  Stream<List<Post>> getUserSavedPosts(Set<String> savedPosts) {
+    return _userProfileRepository.getUserSavedPosts(savedPosts);
+  }
+
   void logout() async {
     _userProfileRepository.logOut();
   }
 
-  Future<void> deleteUser() async {
-    await _userProfileRepository.deleteAcoount();
+  Future<void> deleteUser(BuildContext context) async {
+    state = true;
+    final res = await _userProfileRepository.deleteAccount();
+
+    res.fold((l) {
+      state = false;
+      showSnackBar(context, l.message);
+    }, (r) {
+      state = false;
+      _ref.read(userProvider.notifier).update((state) => null);
+      Routemaster.of(context).replace('/');
+    });
+  }
+
+  void followOrUnfollowUser(BuildContext context, UserModel user) {
+    final uid = _ref.read(userProvider)!.uid;
+    _userProfileRepository.followOrUnfollowUser(uid, user);
   }
 }

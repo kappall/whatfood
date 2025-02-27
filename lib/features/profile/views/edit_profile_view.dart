@@ -22,29 +22,22 @@ class EditProfileView extends ConsumerStatefulWidget {
 }
 
 class _EditProfileViewState extends ConsumerState<EditProfileView> {
-  File? bannerFile;
   File? profileFile;
   late TextEditingController nameController;
+  late TextEditingController bioController;
 
   @override
   void initState() {
     super.initState();
     nameController = TextEditingController(text: ref.read(userProvider)!.name);
+    bioController = TextEditingController(text: ref.read(userProvider)!.bio);
   }
 
   @override
   void dispose() {
     super.dispose();
     nameController.dispose();
-  }
-
-  void selectBannerImage() async {
-    final res = await pickImage(context);
-    if (res != null) {
-      setState(() {
-        bannerFile = res;
-      });
-    }
+    bioController.dispose();
   }
 
   void selectProfileImage() async {
@@ -61,7 +54,7 @@ class _EditProfileViewState extends ConsumerState<EditProfileView> {
     ref.read(userProfileControllerProvider.notifier).updateUserProfile(
         context: context,
         name: nameController.text.trim(),
-        bannerFile: bannerFile,
+        bio: bioController.text.trim(),
         profileFile: profileFile);
   }
 
@@ -85,64 +78,61 @@ class _EditProfileViewState extends ConsumerState<EditProfileView> {
               ),
               body: Padding(
                 padding: const EdgeInsets.all(8.0),
-                child: Column(
-                  children: [
-                    SizedBox(
-                      height: 200,
-                      child: Stack(
-                        children: [
-                          GestureDetector(
-                            onTap: selectBannerImage,
-                            child: Container(
-                              width: double.infinity,
-                              height: 150,
-                              decoration: BoxDecoration(
-                                borderRadius: BorderRadius.circular(10),
+                child: SingleChildScrollView(
+                  child: Column(
+                    children: [
+                      SizedBox(
+                        height: 200,
+                        child: Stack(
+                          children: [
+                            Positioned(
+                              bottom: 20,
+                              left: 20,
+                              child: GestureDetector(
+                                onTap: selectProfileImage,
+                                child: profileFile != null
+                                    ? CircleAvatar(
+                                        backgroundImage:
+                                            FileImage(profileFile!),
+                                        radius: 32,
+                                      )
+                                    : CircleAvatar(
+                                        backgroundImage:
+                                            NetworkImage(user.profilePic),
+                                        radius: 32,
+                                      ),
                               ),
-                              child: bannerFile != null
-                                  ? Image.file(bannerFile!)
-                                  : user.banner.isEmpty ||
-                                          user.banner == Constants.bannerDefault
-                                      ? const Center(
-                                          child: Icon(
-                                            Icons.camera_alt_outlined,
-                                            size: 40,
-                                          ),
-                                        )
-                                      : Image.network(user.banner),
                             ),
-                          ),
-                          Positioned(
-                            bottom: 20,
-                            left: 20,
-                            child: GestureDetector(
-                              onTap: selectProfileImage,
-                              child: profileFile != null
-                                  ? CircleAvatar(
-                                      backgroundImage: FileImage(profileFile!),
-                                      radius: 32,
-                                    )
-                                  : CircleAvatar(
-                                      backgroundImage:
-                                          NetworkImage(user.profilePic),
-                                      radius: 32,
-                                    ),
-                            ),
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
-                    ),
-                    TextField(
-                      controller: nameController,
-                      decoration: InputDecoration(
+                      TextField(
+                        controller: nameController,
+                        decoration: InputDecoration(
+                            filled: true,
+                            hintText: 'Name',
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(20),
+                            ),
+                            contentPadding: EdgeInsets.all(20)),
+                      ),
+                      const SizedBox(height: 20),
+                      TextField(
+                        controller: bioController,
+                        decoration: InputDecoration(
+                          hintText: "Enter Description here",
+                          hintStyle: const TextStyle(color: Colors.grey),
                           filled: true,
-                          hintText: 'Name',
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(20),
                           ),
-                          contentPadding: EdgeInsets.all(20)),
-                    )
-                  ],
+                          contentPadding: const EdgeInsets.all(20),
+                        ),
+                        maxLines: 3,
+                        maxLength: 100,
+                      )
+                    ],
+                  ),
                 ),
               ),
             ),

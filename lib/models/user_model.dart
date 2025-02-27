@@ -8,6 +8,10 @@ class UserModel {
   final Set<String> preferences;
   final Set<String> savedPosts;
   final String bio;
+  final int postsCount;
+  final Set<String> followers;
+  final Set<String> following;
+
   UserModel({
     required this.name,
     required this.profilePic,
@@ -15,7 +19,10 @@ class UserModel {
     required this.uid,
     required this.preferences,
     required this.savedPosts,
-    required this.bio,
+    this.bio = '',
+    this.postsCount = 0,
+    this.followers = const {},
+    this.following = const {},
   });
 
   UserModel copyWith({
@@ -26,6 +33,9 @@ class UserModel {
     Set<String>? preferences,
     Set<String>? savedPosts,
     String? bio,
+    int? postsCount,
+    Set<String>? followers,
+    Set<String>? following,
   }) {
     return UserModel(
       name: name ?? this.name,
@@ -35,6 +45,9 @@ class UserModel {
       preferences: preferences ?? this.preferences,
       savedPosts: savedPosts ?? this.savedPosts,
       bio: bio ?? this.bio,
+      postsCount: postsCount ?? this.postsCount,
+      followers: followers ?? this.followers,
+      following: following ?? this.following,
     );
   }
 
@@ -47,6 +60,9 @@ class UserModel {
       'preferences': preferences.toList(),
       'savedPosts': savedPosts.toList(),
       'bio': bio,
+      'postsCount': postsCount,
+      'followers': followers.toList(),
+      'following': following.toList(),
     };
   }
 
@@ -64,7 +80,16 @@ class UserModel {
               ?.map((e) => e.toString())
               .toSet() ??
           {},
-      bio: map['bio'] as String,
+      bio: (map['bio'] as String),
+      postsCount: map['postsCount'] as int,
+      followers: (map['followers'] as List<dynamic>?)
+              ?.map((e) => e.toString())
+              .toSet() ??
+          {},
+      following: (map['following'] as List<dynamic>?)
+              ?.map((e) => e.toString())
+              .toSet() ??
+          {},
     );
   }
 
@@ -76,7 +101,7 @@ class UserModel {
 
   @override
   String toString() {
-    return 'UserModel(name: $name, profilePic: $profilePic, banner: $banner, uid: $uid, preferences: $preferences, savedPosts: $savedPosts, bio: $bio)';
+    return 'UserModel(name: $name, profilePic: $profilePic, banner: $banner, uid: $uid, preferences: $preferences, savedPosts: $savedPosts, bio: $bio, postsCount: $postsCount, followers: $followers, following: $following)';
   }
 
   @override
@@ -89,7 +114,10 @@ class UserModel {
         other.uid == uid &&
         other.preferences == preferences &&
         other.savedPosts == savedPosts &&
-        other.bio == bio;
+        other.bio == bio &&
+        other.postsCount == postsCount &&
+        other.followers == followers &&
+        other.following == following;
   }
 
   @override
@@ -100,6 +128,9 @@ class UserModel {
         uid.hashCode ^
         preferences.hashCode ^
         savedPosts.hashCode ^
-        bio.hashCode;
+        bio.hashCode ^
+        postsCount.hashCode ^
+        followers.hashCode ^
+        following.hashCode;
   }
 }
