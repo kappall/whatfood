@@ -214,7 +214,7 @@ class _ProfileViewState extends ConsumerState<ProfileView>
                               const SizedBox(width: 16),
                               Column(
                                 children: [
-                                  Text(('9.7M').toString()),
+                                  Text((user.followers.length).toString()),
                                   Text('followers')
                                 ],
                               ),
