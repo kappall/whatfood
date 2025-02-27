@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:routemaster/routemaster.dart';
 import 'package:whatfood/button_styles.dart';
-import 'package:whatfood/core/utils.dart';
 import 'package:whatfood/features/auth/controller/auth_controller.dart';
 import 'package:whatfood/features/recipes/controller/recipe_controller.dart';
 import 'package:whatfood/features/recipes/widgets/show_recipe_modal.dart';
@@ -83,70 +82,80 @@ class RecipeCard extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final theme = Theme.of(context).bottomNavigationBarTheme;
-    final user = ref.watch(userProvider)!;
     return LayoutBuilder(
       builder: (context, constraints) {
-        double cardWidth = (constraints.maxWidth - 32) / 2;
-
         return GestureDetector(
           onTap: () => showRecipeModal(context),
-          child: Container(
-            width: cardWidth,
-            height: cardWidth,
-            margin: EdgeInsets.all(8),
-            child: Card(
-              shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(16)),
-              elevation: 4,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  Expanded(
-                    child: ClipRRect(
-                      borderRadius:
-                          BorderRadius.vertical(top: Radius.circular(16)),
-                      child: Image.network(
-                        recipe.coverImage,
-                        fit: BoxFit.cover,
+          child: Card(
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+              side: BorderSide(color: Colors.black, width: 1),
+            ),
+            elevation: 4,
+            child: Stack(
+              children: [
+                Positioned.fill(
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(16),
+                    child: Image.network(
+                      recipe.coverImage,
+                      fit: BoxFit.cover,
+                    ),
+                  ),
+                ),
+                Positioned.fill(
+                  child: Container(
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: [
+                          Colors.black87,
+                          Colors.black12,
+                          Colors.transparent,
+                        ],
+                        begin: Alignment.bottomCenter,
+                        end: Alignment.center,
+                      ),
+                      borderRadius: BorderRadius.vertical(
+                        bottom: Radius.circular(16),
                       ),
                     ),
                   ),
-                  Padding(
-                    padding: const EdgeInsets.all(8.0),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          recipe.title,
-                          style: TextStyle(
-                              fontSize: 16, fontWeight: FontWeight.bold),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                        Row(
-                          children: [
-                            IconButton(
-                              icon: Icon(
-                                Icons.thumb_up,
-                                color: recipe.likes.contains(user.uid)
-                                    ? theme.selectedItemColor
-                                    : null,
-                                size: 24,
-                              ),
-                              onPressed: () => likeOrUnlikeRecipe(ref),
-                            ),
-                            Text(
-                              "${recipe.likes.isEmpty ? 'Like' : recipe.likes.length}",
-                              style: TextStyle(fontSize: 14),
-                            ),
-                          ],
-                        ),
-                      ],
+                ),
+                Positioned(
+                  bottom: 0,
+                  left: 0,
+                  right: 0,
+                  child: Container(
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: [
+                          Colors.black87,
+                          Colors.black12,
+                          Colors.transparent,
+                        ],
+                        begin: Alignment.bottomCenter,
+                        end: Alignment.center,
+                      ),
                     ),
                   ),
-                ],
-              ),
+                ),
+                Positioned(
+                  bottom: 20,
+                  left: 20,
+                  right: 20,
+                  child: Text(
+                    recipe.title,
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                    ),
+                    textAlign: TextAlign.center,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+              ],
             ),
           ),
         );

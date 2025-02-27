@@ -29,7 +29,7 @@ class RecipeModal extends ConsumerWidget {
           borderRadius: BorderRadius.circular(8),
           border: Border.all(color: Theme.of(context).primaryColor),
         ),
-        margin: const EdgeInsets.only(bottom: 16),
+        margin: const EdgeInsets.only(bottom: 12),
         padding: const EdgeInsets.all(12),
         child: Text(
           trimmedIngredient,
@@ -59,7 +59,7 @@ class RecipeModal extends ConsumerWidget {
               crossAxisAlignment: WrapCrossAlignment.center,
               children: [
                 const Icon(Icons.warning_amber_rounded,
-                    color: Colors.black, size: 32),
+                    color: Colors.white, size: 32),
                 const SizedBox(width: 8),
                 Text(
                   'Warning: This product contains ingredients you may be intolerant to!',
@@ -86,9 +86,7 @@ class RecipeModal extends ConsumerWidget {
     final user = ref.watch(userProvider);
     final userIntolerances = user?.preferences ?? <String>{};
 
-    bool hasIntolerances = false;
-
-    hasIntolerances = recipe.ingredients
+    bool hasIntolerances = recipe.ingredients
         .any((ingredient) => _hasIntolerance(ingredient, userIntolerances));
 
     return Material(
@@ -127,8 +125,9 @@ class RecipeModal extends ConsumerWidget {
                       borderRadius: BorderRadius.circular(10),
                       child: Image.network(
                         recipe.coverImage,
+                        width: double.infinity,
                         height: 300,
-                        fit: BoxFit.cover,
+                        fit: BoxFit.contain,
                       ),
                     ),
                     const SizedBox(height: 16),
@@ -164,8 +163,7 @@ class RecipeModal extends ConsumerWidget {
                     ),
                     const SizedBox(height: 10),
                     ElevatedButton(
-                      onPressed: () => Routemaster.of(context)
-                          .popUntil((route) => route.path == '/'),
+                      onPressed: () => Routemaster.of(context).pop(),
                       style: ButtonStyles.elevatedButtonStyle(
                           backgroundColor: Colors.redAccent),
                       child: const Text(

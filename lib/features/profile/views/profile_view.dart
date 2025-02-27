@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:routemaster/routemaster.dart';
-import 'package:whatfood/button_styles.dart';
 import 'package:whatfood/core/common/error_text.dart';
 import 'package:whatfood/core/common/loader.dart';
 import 'package:whatfood/core/common/post_card_for_grid.dart';
@@ -108,7 +107,8 @@ class _ProfileViewState extends ConsumerState<ProfileView>
 
   Widget popUpMenu(BuildContext context, WidgetRef ref) {
     return PopupMenuButton<String>(
-      icon: Icon(Icons.more_horiz),
+      offset: const Offset(0, 50),
+      icon: Icon(Icons.settings),
       onSelected: (String value) async {
         if (value == 'logout') {
           final shouldLogout = await showOutDialog(
@@ -122,6 +122,8 @@ class _ProfileViewState extends ConsumerState<ProfileView>
           if (shouldDelete) {
             deleteUser(ref);
           }
+        } else if (value == 'Edit preferences') {
+          navigateToPreferences(context);
         }
       },
       itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
@@ -151,6 +153,19 @@ class _ProfileViewState extends ConsumerState<ProfileView>
             ],
           ),
         ),
+        PopupMenuItem<String>(
+          value: 'Edit preferences',
+          child: Row(
+            children: [
+              Icon(Icons.settings, color: Colors.blueAccent),
+              SizedBox(width: 8),
+              Text(
+                "Edit Preferences",
+                style: TextStyle(color: Colors.blueAccent),
+              ),
+            ],
+          ),
+        ),
       ],
     );
   }
@@ -161,84 +176,72 @@ class _ProfileViewState extends ConsumerState<ProfileView>
         widget.uid.isEmpty ? ref.read(userProvider)!.uid : widget.uid;
     return ref.watch(getUserDataProvider(uid)).when(
           data: (user) => Scaffold(
+            appBar: AppBar(
+              title: Text(user.name),
+              actions: [if (!widget.public) popUpMenu(context, ref)],
+            ),
             body: Column(
               children: [
-                // Sezione header
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Stack(
-                      children: [
-                        Image.network(
-                          user.banner,
-                          height: 250,
-                          width: double.infinity,
-                          fit: BoxFit.cover,
-                        ),
-                        Positioned(
-                          bottom: widget.public ? 30 : 60,
-                          left: 30,
-                          child: CircleAvatar(
+                    Padding(
+                      padding: const EdgeInsets.all(16),
+                      child: Row(
+                        children: [
+                          CircleAvatar(
                             backgroundImage: NetworkImage(user.profilePic),
                             radius: 45,
                           ),
-                        ),
-                        if (!widget.public)
-                          Positioned(
-                            bottom: 5,
-                            left: 10,
-                            child: Row(
-                              children: [
-                                FilledButton(
-                                  onPressed: () => navigateToEditUser(context),
-                                  style: FilledButton.styleFrom(
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(20),
-                                    ),
-                                    padding: const EdgeInsets.symmetric(
-                                        horizontal: 25),
-                                  ),
-                                  child: const Text('Edit Profile'),
-                                ),
-                                const SizedBox(width: 10),
-                                FilledButton(
-                                  onPressed: () =>
-                                      navigateToPreferences(context),
-                                  style: FilledButton.styleFrom(
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(20),
-                                    ),
-                                    padding: const EdgeInsets.symmetric(
-                                        horizontal: 25),
-                                  ),
-                                  child: const Text('Food Preferences'),
-                                ),
-                              ],
-                            ),
-                          )
-                      ],
-                    ),
-                    Padding(
-                      padding: const EdgeInsets.all(16),
-                      child: Column(
-                        children: [
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          const SizedBox(width: 16),
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
                                 user.name,
                                 style: const TextStyle(
-                                  fontSize: 19,
+                                  fontSize: 20,
                                   fontWeight: FontWeight.bold,
                                 ),
                               ),
-                              if (!widget.public) popUpMenu(context, ref)
+                              if (user.bio.isNotEmpty)
+                                Padding(
+                                  padding: const EdgeInsets.only(top: 4),
+                                  child: Text(
+                                    user.bio,
+                                    style: TextStyle(
+                                      fontSize: 14,
+                                      color: Colors.grey[600],
+                                    ),
+                                  ),
+                                ),
+                              if (!widget.public)
+                                Padding(
+                                  padding: const EdgeInsets.only(top: 16),
+                                  child: Row(
+                                    children: [
+                                      FilledButton(
+                                        onPressed: () =>
+                                            navigateToEditUser(context),
+                                        style: FilledButton.styleFrom(
+                                          shape: RoundedRectangleBorder(
+                                            borderRadius:
+                                                BorderRadius.circular(20),
+                                          ),
+                                          padding: const EdgeInsets.symmetric(
+                                              horizontal: 25),
+                                        ),
+                                        child: const Text('Edit Profile'),
+                                      ),
+                                    ],
+                                  ),
+                                ),
                             ],
                           ),
-                          const Divider(thickness: 2),
                         ],
                       ),
                     ),
+                    const Divider(thickness: 1),
                     Container(
                       decoration: BoxDecoration(
                         border: Border(
@@ -261,7 +264,7 @@ class _ProfileViewState extends ConsumerState<ProfileView>
                             iconMargin: EdgeInsets.only(bottom: 4),
                           ),
                           Tab(
-                            icon: Icon(Icons.shopping_cart_rounded),
+                            icon: Icon(Icons.bookmark_outline),
                             iconMargin: EdgeInsets.only(bottom: 4),
                           ),
                         ],

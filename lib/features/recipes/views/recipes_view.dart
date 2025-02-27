@@ -20,12 +20,51 @@ class RecipesViewState extends ConsumerState<RecipesView> {
     final themeNotifier = ref.read(themeProvider.notifier);
     return Scaffold(
       appBar: PreferredSize(
-        preferredSize: const Size.fromHeight(50),
+        preferredSize: const Size.fromHeight(110),
         child: AppBar(
           backgroundColor: Theme.of(context).appBarTheme.backgroundColor,
           iconTheme: Theme.of(context).iconTheme,
           titleTextStyle: Theme.of(context).textTheme.headlineMedium,
           title: const Text('Recipes'),
+          bottom: PreferredSize(
+            preferredSize: const Size.fromHeight(60),
+            child: Center(
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 600),
+                child: Container(
+                  margin:
+                      const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 12), // Padding generale
+                  decoration: BoxDecoration(
+                    border: Border.all(color: Colors.black),
+                    borderRadius: BorderRadius.circular(22),
+                    color: Colors.white,
+                  ),
+                  child: Row(
+                    children: [
+                      const Icon(
+                        Icons.search,
+                        color: Colors.black,
+                        size: 32,
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: TextField(
+                          decoration: InputDecoration(
+                            border: InputBorder.none,
+                            hintText: 'Search...',
+                            contentPadding: const EdgeInsets.symmetric(
+                                vertical: 16), // Padding interno
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ),
         ),
       ),
       body: ref.watch(recpiesProvider).when(

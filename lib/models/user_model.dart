@@ -6,13 +6,16 @@ class UserModel {
   final String banner;
   final String uid;
   final Set<String> preferences;
-
+  final Set<String> savedPosts;
+  final String bio;
   UserModel({
     required this.name,
     required this.profilePic,
     required this.banner,
     required this.uid,
     required this.preferences,
+    required this.savedPosts,
+    required this.bio,
   });
 
   UserModel copyWith({
@@ -20,15 +23,19 @@ class UserModel {
     String? profilePic,
     String? banner,
     String? uid,
-    bool? isAuthenticated,
     Set<String>? preferences,
+    Set<String>? savedPosts,
+    String? bio,
   }) {
     return UserModel(
-        name: name ?? this.name,
-        profilePic: profilePic ?? this.profilePic,
-        banner: banner ?? this.banner,
-        uid: uid ?? this.uid,
-        preferences: preferences ?? this.preferences);
+      name: name ?? this.name,
+      profilePic: profilePic ?? this.profilePic,
+      banner: banner ?? this.banner,
+      uid: uid ?? this.uid,
+      preferences: preferences ?? this.preferences,
+      savedPosts: savedPosts ?? this.savedPosts,
+      bio: bio ?? this.bio,
+    );
   }
 
   Map<String, dynamic> toMap() {
@@ -37,7 +44,9 @@ class UserModel {
       'profilePic': profilePic,
       'banner': banner,
       'uid': uid,
-      'preferences': preferences,
+      'preferences': preferences.toList(),
+      'savedPosts': savedPosts.toList(),
+      'bio': bio,
     };
   }
 
@@ -51,18 +60,23 @@ class UserModel {
               ?.map((e) => e.toString())
               .toSet() ??
           {},
+      savedPosts: (map['savedPosts'] as List<dynamic>?)
+              ?.map((e) => e.toString())
+              .toSet() ??
+          {},
+      bio: map['bio'] as String,
     );
   }
 
   factory UserModel.fromSnapshot(
-      DocumentSnapshot<Map<String, dynamic>> docuument) {
-    final data = docuument.data()!;
+      DocumentSnapshot<Map<String, dynamic>> document) {
+    final data = document.data()!;
     return UserModel.fromMap(data);
   }
 
   @override
   String toString() {
-    return 'UserModel(name: $name, profilePic: $profilePic, banner: $banner, uid: $uid, preferences: $preferences)';
+    return 'UserModel(name: $name, profilePic: $profilePic, banner: $banner, uid: $uid, preferences: $preferences, savedPosts: $savedPosts, bio: $bio)';
   }
 
   @override
@@ -73,7 +87,9 @@ class UserModel {
         other.profilePic == profilePic &&
         other.banner == banner &&
         other.uid == uid &&
-        other.preferences == preferences;
+        other.preferences == preferences &&
+        other.savedPosts == savedPosts &&
+        other.bio == bio;
   }
 
   @override
@@ -82,6 +98,8 @@ class UserModel {
         profilePic.hashCode ^
         banner.hashCode ^
         uid.hashCode ^
-        preferences.hashCode;
+        preferences.hashCode ^
+        savedPosts.hashCode ^
+        bio.hashCode;
   }
 }

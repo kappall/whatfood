@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../models/report_model.dart';
-import '../../features/report/controller/report_controller.dart';
+import 'package:whatfood/features/report/controller/report_controller.dart';
+import 'package:whatfood/models/report_model.dart';
 
 class ReportCard extends ConsumerWidget {
   final ReportModel report;

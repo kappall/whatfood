@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:routemaster/routemaster.dart';
 import 'package:whatfood/button_styles.dart';
 import 'package:whatfood/features/auth/controller/auth_controller.dart';
@@ -82,126 +83,139 @@ class HomePostCard extends ConsumerWidget {
     final bool isTypeImage = post.type == "image";
     final theme = Theme.of(context);
 
-    return Stack(
-      children: [
-        Positioned.fill(
-          child: isTypeImage
-              ? Image.network(
-                  post.imageUrl!,
-                  fit: BoxFit.contain,
-                  width: double.infinity,
-                )
-              : Container(
-                  color: theme.appBarTheme.backgroundColor ?? Colors.black,
+    return GestureDetector(
+      onDoubleTap: () => likeOrUnlikePost(ref),
+      child: Stack(
+        children: [
+          Positioned.fill(
+            child: isTypeImage
+                ? Image.network(
+                    post.imageUrl!,
+                    fit: BoxFit.fitHeight,
+                    width: double.infinity,
+                  )
+                : Container(
+                    color: theme.appBarTheme.backgroundColor ?? Colors.black,
+                  ),
+          ),
+          Positioned.fill(
+            child: Container(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [
+                    Colors.black87,
+                    Colors.black12,
+                    Colors.transparent,
+                  ],
+                  begin: Alignment.bottomCenter,
+                  end: Alignment.center,
                 ),
-        ),
-        Positioned.fill(
-          child: Container(
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: [
-                  Colors.black87,
-                  Colors.black12,
-                  Colors.transparent,
-                ],
-                begin: Alignment.bottomCenter,
-                end: Alignment.center,
               ),
             ),
           ),
-        ),
-        // Contenuto in primo piano
-        Positioned(
-          bottom: 20,
-          left: 20,
-          right: 20,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Header con avatar, username e menu contestuale
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Row(
-                    children: [
-                      GestureDetector(
-                        onTap: () => navigateToUser(context),
-                        child: CircleAvatar(
-                          backgroundImage: NetworkImage(post.userImage),
-                          radius: 24,
+          Positioned(
+            bottom: 20,
+            left: 20,
+            right: 20,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Row(
+                      children: [
+                        GestureDetector(
+                          onTap: () => navigateToUser(context),
+                          child: CircleAvatar(
+                            backgroundImage: NetworkImage(post.userImage),
+                            radius: 24,
+                          ),
                         ),
-                      ),
-                      const SizedBox(width: 10),
-                      Text(
-                        post.username,
-                        style: const TextStyle(
-                          fontSize: 20,
-                          color: Colors.white,
-                          fontWeight: FontWeight.bold,
+                        const SizedBox(width: 10),
+                        Text(
+                          post.username,
+                          style: const TextStyle(
+                            fontSize: 20,
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
+                      ],
+                    ),
+                    IconButton(
+                      icon: Icon(
+                        Icons.send,
+                        color: Colors.white,
                       ),
-                    ],
-                  ),
-                  popUpMenu(
-                      context, ref, post.uid == ref.watch(userProvider)?.uid)
-                ],
-              ),
-              const SizedBox(height: 10),
-              // Titolo del post
-              Text(
-                post.title,
-                style: const TextStyle(
-                  fontSize: 24,
-                  color: Colors.white,
-                  fontWeight: FontWeight.bold,
+                      onPressed: null,
+                    ),
+                  ],
                 ),
-              ),
-              const SizedBox(height: 10),
-              // Se il post è testuale, visualizza anche la descrizione
-              if (!isTypeImage)
+                const SizedBox(height: 10),
                 Text(
-                  post.description ?? "",
+                  post.title,
                   style: const TextStyle(
-                    fontSize: 18,
+                    fontSize: 24,
                     color: Colors.white,
+                    fontWeight: FontWeight.bold,
                   ),
                 ),
-              const SizedBox(height: 20),
-              Row(
-                children: [
-                  IconButton(
-                    icon: Icon(
-                      Icons.thumb_up,
-                      color: post.likes.contains(ref.watch(userProvider)?.uid)
-                          ? Colors.red
-                          : Colors.white,
-                      size: 30,
-                    ),
-                    onPressed: () => likeOrUnlikePost(ref),
-                  ),
+                const SizedBox(height: 10),
+                if (!isTypeImage)
                   Text(
-                    "${post.likes.length}",
-                    style: const TextStyle(fontSize: 18, color: Colors.white),
-                  ),
-                  const SizedBox(width: 20),
-                  IconButton(
-                    icon: const Icon(
-                      Icons.comment,
+                    post.description ?? "",
+                    style: const TextStyle(
+                      fontSize: 18,
                       color: Colors.white,
-                      size: 30,
                     ),
-                    onPressed: () => navigateToComments(context),
                   ),
-                  Text(
-                    "${post.commentCount}",
-                    style: const TextStyle(fontSize: 18, color: Colors.white),
-                  ),
-                ],
-              ),
-            ],
+                const SizedBox(height: 20),
+                Row(
+                  children: [
+                    IconButton(
+                      icon: Icon(
+                        post.likes.contains(ref.watch(userProvider)?.uid)
+                            ? Icons.favorite
+                            : Icons.favorite_outline,
+                        color: post.likes.contains(ref.watch(userProvider)?.uid)
+                            ? Colors.red
+                            : Colors.white,
+                        size: 30,
+                      ),
+                      onPressed: () => likeOrUnlikePost(ref),
+                    ),
+                    Text(
+                      "${post.likes.length}",
+                      style: const TextStyle(fontSize: 18, color: Colors.white),
+                    ),
+                    const SizedBox(width: 20),
+                    IconButton(
+                      icon: FaIcon(
+                        FontAwesomeIcons.commentDots,
+                        color: Colors.white,
+                      ),
+                      onPressed: () => navigateToComments(context),
+                    ),
+                    Text(
+                      "${post.commentCount}",
+                      style: const TextStyle(fontSize: 18, color: Colors.white),
+                    ),
+                    const SizedBox(width: 20),
+                    IconButton(
+                      icon: Icon(
+                        Icons.bookmark_outline,
+                        color: Colors.white,
+                      ),
+                      onPressed: null,
+                    ),
+                  ],
+                ),
+              ],
+            ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 }

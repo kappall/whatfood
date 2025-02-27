@@ -172,34 +172,36 @@ class _MainPageState extends State<MainPage> {
       value: SystemUiOverlayStyle.light,
       child: SafeArea(
         child: Scaffold(
-            body: _pages[_selectedIndex],
-            backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-            bottomNavigationBar: BottomNavigationBar(
+          body: _pages[_selectedIndex],
+          backgroundColor: Colors.black,
+          bottomNavigationBar: SizedBox(
+            height: 50, // Regola l'altezza a tuo piacimento
+            child: BottomNavigationBar(
+              iconSize: 28,
               items: const [
                 BottomNavigationBarItem(
                   icon: Icon(Icons.document_scanner_outlined),
-                  label: 'Scanner',
+                  label: '',
                 ),
                 BottomNavigationBarItem(
                   icon: Icon(Icons.book_outlined),
-                  label: 'Recipes',
+                  label: '',
                 ),
                 BottomNavigationBarItem(
                   icon: Icon(Icons.home_outlined),
-                  label: 'Home',
+                  label: '',
                 ),
                 BottomNavigationBarItem(
                   icon: Icon(Icons.receipt_long),
-                  label: 'Report',
+                  label: '',
                 ),
                 BottomNavigationBarItem(
                   icon: Icon(Icons.person_outlined),
-                  label: 'Profile',
+                  label: '',
                 ),
               ],
               currentIndex: _selectedIndex,
-              backgroundColor:
-                  Theme.of(context).bottomNavigationBarTheme.backgroundColor,
+              backgroundColor: Colors.black,
               selectedItemColor:
                   Theme.of(context).bottomNavigationBarTheme.selectedItemColor,
               unselectedItemColor: Theme.of(context)
@@ -207,7 +209,13 @@ class _MainPageState extends State<MainPage> {
                   .unselectedItemColor,
               onTap: _onItemTapped,
               type: BottomNavigationBarType.fixed,
-            )),
+              showSelectedLabels: false,
+              showUnselectedLabels: false,
+              selectedFontSize: 0,
+              unselectedFontSize: 0,
+            ),
+          ),
+        ),
       ),
     );
   }

@@ -58,6 +58,7 @@ dependencies:
   dotted_border: ^2.1.0
   image: ^4.5.2
   fl_chart: ^0.70.2
+  font_awesome_flutter: ^10.8.0
 
 
 
