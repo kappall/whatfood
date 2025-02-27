@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:routemaster/routemaster.dart';
 import 'package:whatfood/core/utils.dart';
+import 'package:whatfood/features/auth/controller/auth_controller.dart';
 
 class VerifyEmailView extends ConsumerStatefulWidget {
   const VerifyEmailView({super.key});
@@ -21,7 +22,8 @@ class _VerifyEmailViewState extends ConsumerState<VerifyEmailView> {
 
     if (user?.emailVerified ?? false) {
       if (mounted) {
-        Routemaster.of(context).push('/preferences');
+        ref.invalidate(authStateChangeProvider);
+        Routemaster.of(context).replace('/');
       }
     } else {
       showSnackBar(context, 'Email not verified yet');

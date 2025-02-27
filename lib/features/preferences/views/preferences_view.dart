@@ -1,3 +1,4 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:routemaster/routemaster.dart';
@@ -13,34 +14,39 @@ class PreferencesView extends ConsumerWidget {
   final bool isFromProfile;
   final UserModel? userModel;
 
-  void navigateToHome(BuildContext context) {
-    Routemaster.of(context).replace('/home');
+  void navigateToVerify(BuildContext context) {
+    Routemaster.of(context).replace('/verify-email');
   }
 
-  void savePreferences(
-      BuildContext context, WidgetRef ref, Set<String> preferences) {
-    ref.read(preferencesControllerProvider.notifier).savePreferences(
-          context: context,
-          preferences: preferences,
-        );
+  Future<void> savePreferences(
+      BuildContext context, WidgetRef ref, Set<String> preferences) async {
     if (!isFromProfile) {
-      ref.invalidate(authStateChangeProvider);
-      Routemaster.of(context).replace('/');
+      await ref.read(preferencesControllerProvider.notifier).savePreferences(
+            context: context,
+            preferences: preferences,
+          );
+      await Routemaster.of(context).push('/verify-email').result;
+    } else {
+      await ref.read(preferencesControllerProvider.notifier).savePreferences(
+            context: context,
+            preferences: preferences,
+          );
     }
   }
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final user = ref.watch(userProvider);
-
-    if (user == null) {
+    debugPrint(FirebaseAuth.instance.currentUser.toString());
+    if (user == null && isFromProfile) {
       return const Scaffold(
         body: Center(child: Loader()),
       );
     }
 
     final isLoading = ref.watch(preferencesControllerProvider);
-    Set<String> intolerances = user.preferences;
+    debugPrint(user?.name.toString());
+    Set<String> intolerances = user?.preferences ?? {};
 
     return SafeArea(
       child: Scaffold(
@@ -53,7 +59,7 @@ class PreferencesView extends ConsumerWidget {
           actions: [
             if (!isFromProfile)
               TextButton(
-                onPressed: () => navigateToHome(context),
+                onPressed: () => navigateToVerify(context),
                 child: const Text(
                   'Skip',
                   style: TextStyle(color: Colors.white, fontSize: 15),
@@ -87,22 +93,22 @@ class PreferencesView extends ConsumerWidget {
           child: SizedBox(
             width: double.infinity,
             height: 50,
-            child: isLoading
-                ? const Center(child: CircularProgressIndicator())
-                : FilledButton(
-                    onPressed: () {
-                      savePreferences(context, ref, intolerances);
-                      Routemaster.of(context)
-                          .popUntil((route) => route.path == '/');
-                    },
-                    style: FilledButton.styleFrom(
-                      backgroundColor: Colors.green,
-                    ),
-                    child: const Text(
-                      'Save',
-                      style: TextStyle(color: Colors.white, fontSize: 18),
-                    ),
-                  ),
+            child: FilledButton(
+              onPressed: () async {
+                await savePreferences(context, ref, intolerances);
+                if (context.mounted) {
+                  Routemaster.of(context)
+                      .popUntil((route) => route.path == '/');
+                }
+              },
+              style: FilledButton.styleFrom(
+                backgroundColor: Colors.green,
+              ),
+              child: const Text(
+                'Save',
+                style: TextStyle(color: Colors.white, fontSize: 18),
+              ),
+            ),
           ),
         ),
       ),

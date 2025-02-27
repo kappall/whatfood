@@ -1,3 +1,4 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:routemaster/routemaster.dart';
@@ -37,6 +38,7 @@ class _LoginViewState extends ConsumerState<LoginView> {
       child: Scaffold(
         backgroundColor: const Color(0xFFF5F5F5),
         appBar: AppBar(
+          automaticallyImplyLeading: false,
           title: const Text('Login'),
           backgroundColor: Colors.green,
           centerTitle: true,
@@ -101,7 +103,6 @@ class _LoginViewState extends ConsumerState<LoginView> {
                       .read(authControllerProvider.notifier)
                       .signInWithEmailAndPassword(
                           context: context, email: email, password: password);
-                  debugPrint("hi");
                 },
                 style: FilledButton.styleFrom(
                   backgroundColor: Colors.lightGreen,

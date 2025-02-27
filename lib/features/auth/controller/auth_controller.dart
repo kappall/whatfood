@@ -113,7 +113,7 @@ class AuthController extends StateNotifier<bool> {
     user.fold(
       (l) => showSnackBar(context, l.message),
       (userModel) {
-        Routemaster.of(context).push('/verify-email');
+        Routemaster.of(context).push('/preferences');
       },
     );
   }

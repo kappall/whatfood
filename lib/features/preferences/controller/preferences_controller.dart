@@ -1,3 +1,4 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:routemaster/routemaster.dart';
@@ -24,28 +25,17 @@ class PreferencesController extends StateNotifier<bool> {
         _ref = ref,
         super(false);
 
-  void savePreferences({
+  Future<void> savePreferences({
     required BuildContext context,
     required Set<String> preferences,
   }) async {
     state = true;
-    final user = _ref.read(userProvider)!;
+    debugPrint('Saving preferences');
+    final uid = FirebaseAuth.instance.currentUser!.uid;
     final res = await _preferencesRepository.updateUserPreferences(
-      uid: user.uid,
+      uid: uid,
       newPreferences: preferences,
     );
     state = false;
-
-    res.fold(
-      (_) => null,
-      (_) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Preferences saved successfully!'),
-            backgroundColor: Colors.green,
-          ),
-        );
-      },
-    );
   }
 }

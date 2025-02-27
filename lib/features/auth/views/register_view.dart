@@ -42,6 +42,7 @@ class _RegisterViewState extends ConsumerState<RegisterView> {
       child: Scaffold(
         backgroundColor: const Color(0xFFF5F5F5),
         appBar: AppBar(
+          automaticallyImplyLeading: false,
           title: const Text('Register'),
           backgroundColor: Colors.green,
           centerTitle: true,
@@ -148,7 +149,7 @@ class _RegisterViewState extends ConsumerState<RegisterView> {
                   ),
                   const SizedBox(height: 15),
                   TextButton(
-                    onPressed: () => Routemaster.of(context).push('/login/'),
+                    onPressed: () => Routemaster.of(context).push('/login'),
                     child: const Text(
                       'Already have an account? Login here',
                       style: TextStyle(fontSize: 16, color: Colors.lightGreen),

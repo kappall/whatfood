@@ -66,7 +66,9 @@ class AuthRepository {
                 userCredential.user!.photoURL ?? Constants.avatarDefault,
             banner: Constants.bannerDefault,
             uid: userCredential.user!.uid,
-            preferences: {});
+            preferences: {},
+            savedPosts: {},
+            bio: '');
         await _users.doc(userCredential.user!.uid).set(userModel.toMap());
       } else {
         userModel = await getUserData(userCredential.user!.uid).first;
@@ -115,7 +117,9 @@ class AuthRepository {
           profilePic: userCredential.user!.photoURL ?? Constants.avatarDefault,
           banner: Constants.bannerDefault,
           uid: userCredential.user!.uid,
-          preferences: {});
+          preferences: {},
+          savedPosts: {},
+          bio: '');
 
       await _firestore
           .collection('users')
@@ -140,7 +144,9 @@ class AuthRepository {
           profilePic: Constants.avatarDefault,
           banner: Constants.bannerDefault,
           uid: userCredential.user!.uid,
-          preferences: {});
+          preferences: {},
+          savedPosts: {},
+          bio: '');
 
       await _users.doc(userCredential.user!.uid).set(userModel.toMap());
 
