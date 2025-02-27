@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:fpdart/fpdart.dart';
 import 'package:whatfood/core/constants/firebase_constants.dart';
@@ -7,6 +8,7 @@ import 'package:whatfood/core/providers/firebase_providers.dart';
 import 'package:whatfood/core/type_def.dart';
 import 'package:whatfood/models/comment_model.dart';
 import 'package:whatfood/models/post_model.dart';
+import 'package:whatfood/models/user_model.dart';
 
 final postRepositoryProvider = Provider((ref) {
   return PostRepository(
@@ -23,6 +25,8 @@ class PostRepository {
       _firestore.collection(FirebaseConstants.postsCollection);
   CollectionReference get _comments =>
       _firestore.collection(FirebaseConstants.commentsCollection);
+  CollectionReference get _users =>
+      _firestore.collection(FirebaseConstants.usersCollection);
 
   FutureVoid addPost(Post post) async {
     try {
@@ -121,6 +125,20 @@ class PostRepository {
         'likes': FieldValue.arrayUnion([uid])
       });
     }
+  }
+
+  Future<void> addOrRemoveBookmark(Post post, UserModel user) async {
+    debugPrint('addOrRemoveBookmark');
+    if (user.savedPosts.contains(post.id)) {
+      _users.doc(user.uid).update({
+        'savedPosts': FieldValue.arrayRemove([post.id])
+      });
+    } else {
+      _users.doc(user.uid).update({
+        'savedPosts': FieldValue.arrayUnion([post.id])
+      });
+    }
+    debugPrint('addOrRemoveBookmark done');
   }
 
   Stream<Post> getPostById(String id) {

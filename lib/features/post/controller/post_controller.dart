@@ -12,6 +12,7 @@ import 'package:whatfood/features/post/repository/post_repository.dart';
 import 'package:whatfood/features/profile/controller/user_profile_controller.dart';
 import 'package:whatfood/models/comment_model.dart';
 import 'package:whatfood/models/post_model.dart';
+import 'package:whatfood/models/user_model.dart';
 
 final postControllerProvider =
     StateNotifierProvider<PostController, bool>((ref) {
@@ -254,9 +255,17 @@ class PostController extends StateNotifier<bool> {
         (r) => showSnackBar(context, 'Post Deleted successfully!'));
   }
 
-  void likeOrUnlike(Post post) async {
+  void likeOrUnlike(Post post) {
     final uid = _ref.read(userProvider)!.uid;
     _postRepository.likeOrUnlike(post, uid);
+  }
+
+  Future<void> addOrRemoveBookmark(
+    Post post,
+    UserModel user,
+  ) async {
+    final uid = _ref.read(userProvider)!.uid;
+    await _postRepository.addOrRemoveBookmark(post, user);
   }
 
   Stream<Post> getPostById(String id) {

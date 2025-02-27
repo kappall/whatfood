@@ -49,8 +49,7 @@ class _CommentsViewState extends ConsumerState<CommentsView> {
               child: Scaffold(
                 appBar: AppBar(
                   leading: IconButton(
-                    onPressed: () => Routemaster.of(context)
-                        .popUntil((route) => route.path == '/'),
+                    onPressed: () => Routemaster.of(context).pop(),
                     icon: Icon(Icons.arrow_back),
                   ),
                   title: Text('Comments'),

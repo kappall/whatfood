@@ -1,11 +1,14 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:routemaster/routemaster.dart';
 import 'package:whatfood/button_styles.dart';
+import 'package:whatfood/core/common/bounce_icon.dart';
 import 'package:whatfood/features/auth/controller/auth_controller.dart';
 import 'package:whatfood/features/post/controller/post_controller.dart';
 import 'package:whatfood/models/post_model.dart';
+import 'package:whatfood/models/user_model.dart';
 
 class HomePostCard extends ConsumerWidget {
   final Post post;
@@ -77,12 +80,32 @@ class HomePostCard extends ConsumerWidget {
     );
   }
 
+  void addOrRemoveBookmark(WidgetRef ref) async {
+    final user = ref.watch(userProvider);
+    if (user == null) return;
+
+    final isSaved = user.savedPosts.contains(post.id);
+
+    await ref
+        .read(postControllerProvider.notifier)
+        .addOrRemoveBookmark(post, user);
+
+    final updatedSavedPosts = Set<String>.from(user.savedPosts);
+    if (isSaved) {
+      updatedSavedPosts.remove(post.id);
+    } else {
+      updatedSavedPosts.add(post.id);
+    }
+
+    final updatedUser = user.copyWith(savedPosts: updatedSavedPosts);
+    ref.read(userProvider.notifier).state = updatedUser;
+  }
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final Size size = MediaQuery.of(context).size;
     final bool isTypeImage = post.type == "image";
     final theme = Theme.of(context);
-
     return GestureDetector(
       onDoubleTap: () => likeOrUnlikePost(ref),
       child: Stack(
@@ -91,7 +114,7 @@ class HomePostCard extends ConsumerWidget {
             child: isTypeImage
                 ? Image.network(
                     post.imageUrl!,
-                    fit: BoxFit.fitHeight,
+                    fit: BoxFit.contain,
                     width: double.infinity,
                   )
                 : Container(
@@ -202,12 +225,12 @@ class HomePostCard extends ConsumerWidget {
                       style: const TextStyle(fontSize: 18, color: Colors.white),
                     ),
                     const SizedBox(width: 20),
-                    IconButton(
-                      icon: Icon(
-                        Icons.bookmark_outline,
-                        color: Colors.white,
-                      ),
-                      onPressed: null,
+                    BounceIconButton(
+                      activeIcon: Icons.bookmark,
+                      inactiveIcon: Icons.bookmark_outline,
+                      isActive:
+                          ref.watch(userProvider)!.savedPosts.contains(post.id),
+                      onPressed: () => addOrRemoveBookmark(ref),
                     ),
                   ],
                 ),
