@@ -23,7 +23,6 @@ class _VerifyEmailViewState extends ConsumerState<VerifyEmailView> {
     if (user?.emailVerified ?? false) {
       if (mounted) {
         ref.invalidate(authStateChangeProvider);
-        Routemaster.of(context).replace('/');
       }
     } else {
       showSnackBar(context, 'Email not verified yet');

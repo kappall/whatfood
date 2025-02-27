@@ -47,7 +47,7 @@ class _MyAppState extends ConsumerState<MyApp> {
           data: (user) => MaterialApp.router(
             debugShowCheckedModeBanner: false,
             title: 'Whatfood',
-            theme: ref.watch(themeProvider),
+            theme: ThemeData.dark(),
             routerDelegate: RoutemasterDelegate(routesBuilder: (context) {
               if (user == null) return loggedOutRoute;
               if (!user.emailVerified) {

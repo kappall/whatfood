@@ -67,6 +67,7 @@ class _RegisterViewState extends ConsumerState<RegisterView> {
                   ),
                   const SizedBox(height: 20),
                   TextField(
+                    style: const TextStyle(color: Colors.black),
                     controller: _nameController,
                     decoration: InputDecoration(
                       hintText: "Enter your name",
@@ -81,6 +82,7 @@ class _RegisterViewState extends ConsumerState<RegisterView> {
                   ),
                   const SizedBox(height: 15),
                   TextField(
+                    style: const TextStyle(color: Colors.black),
                     controller: _emailController,
                     enableSuggestions: true,
                     keyboardType: TextInputType.emailAddress,
@@ -97,6 +99,7 @@ class _RegisterViewState extends ConsumerState<RegisterView> {
                   ),
                   const SizedBox(height: 15),
                   TextField(
+                    style: const TextStyle(color: Colors.black),
                     controller: _passwordController,
                     obscureText: true,
                     enableSuggestions: false,

@@ -62,6 +62,7 @@ class _LoginViewState extends ConsumerState<LoginView> {
               ),
               const SizedBox(height: 20),
               TextField(
+                style: const TextStyle(color: Colors.black),
                 controller: _email,
                 enableSuggestions: true,
                 autocorrect: false,
@@ -79,6 +80,7 @@ class _LoginViewState extends ConsumerState<LoginView> {
               ),
               const SizedBox(height: 15),
               TextField(
+                style: const TextStyle(color: Colors.black),
                 controller: _password,
                 obscureText: true,
                 enableSuggestions: false,
