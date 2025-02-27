@@ -95,8 +95,7 @@ class _AddRecipeViewState extends ConsumerState<AddRecipeView> {
       appBar: AppBar(
         leading: IconButton(
           icon: Icon(Icons.arrow_back),
-          onPressed: () =>
-              Routemaster.of(context).popUntil((route) => route.path == '/'),
+          onPressed: () => Routemaster.of(context).pop(),
         ),
         title: const Text('Add New Recipe'),
         actions: [

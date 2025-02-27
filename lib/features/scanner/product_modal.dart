@@ -171,7 +171,7 @@ class ProductModal extends ConsumerWidget {
     }
 
     return Material(
-      color: Colors.white,
+      color: Theme.of(context).scaffoldBackgroundColor,
       shape: RoundedRectangleBorder(
         borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
         side: hasIntolerances
@@ -235,7 +235,7 @@ class ProductModal extends ConsumerWidget {
                           'Brand: ${productData['brands']}',
                           style: const TextStyle(
                             fontSize: 16,
-                            color: Colors.black54,
+                            color: Colors.white60,
                           ),
                           textAlign: TextAlign.center,
                         ),

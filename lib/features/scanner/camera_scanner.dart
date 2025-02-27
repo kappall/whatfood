@@ -195,7 +195,6 @@ class CameraScannerState extends State<CameraScanner> {
       });
       _scannedCode = '';
 
-
       final response = await http.get(url);
       if (!mounted) return;
 
@@ -203,13 +202,23 @@ class CameraScannerState extends State<CameraScanner> {
         final jsonResponse =
             convert.jsonDecode(response.body) as Map<String, dynamic>;
         final productData = jsonResponse['product'];
-        final int quantity = int.parse(productData['quantity']?.toString().trim().split(' ')[0]??'100');
+        final String quantityString =
+            productData['quantity']?.toString().trim() ?? '100';
+        final List<String> parts = quantityString.split(' ');
+
+        int quantity = int.tryParse(parts[0]) ?? 100;
+        if (parts.length > 1 && parts[1].toLowerCase() == 'kg') {
+          quantity *= 1000;
+        }
         await showModalBottomSheet(
           context: context,
           isScrollControlled: true,
           useSafeArea: true,
           backgroundColor: Colors.transparent,
-          builder: (context) => ProductModal(productData: productData,quantity: quantity,),
+          builder: (context) => ProductModal(
+            productData: productData,
+            quantity: quantity,
+          ),
         );
       } else {
         await _showErrorDialog();
