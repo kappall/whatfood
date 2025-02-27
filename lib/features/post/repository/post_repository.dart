@@ -30,7 +30,16 @@ class PostRepository {
 
   FutureVoid addPost(Post post) async {
     try {
-      return right(_posts.doc(post.id).set(post.toMap()));
+      final batch = _firestore.batch();
+
+      batch.set(_posts.doc(post.id), post.toMap());
+
+      batch.update(_users.doc(post.uid), {
+        'postsCount': FieldValue.increment(1),
+      });
+
+      await batch.commit();
+      return right(null);
     } on FirebaseException catch (e) {
       throw e.message!;
     } catch (e) {
@@ -105,9 +114,17 @@ class PostRepository {
         );
   }
 
-  FutureVoid deletePost(String id) async {
+  FutureVoid deletePost(String id, String uid) async {
     try {
-      return right(_posts.doc(id).delete());
+      final batch = _firestore.batch();
+
+      batch.delete(_posts.doc(id));
+
+      batch.update(_users.doc(uid), {
+        'postsCount': FieldValue.increment(-1),
+      });
+      await batch.commit();
+      return right(null);
     } on FirebaseException catch (e) {
       throw e.message!;
     } catch (e) {
@@ -128,7 +145,6 @@ class PostRepository {
   }
 
   Future<void> addOrRemoveBookmark(Post post, UserModel user) async {
-    debugPrint('addOrRemoveBookmark');
     if (user.savedPosts.contains(post.id)) {
       _users.doc(user.uid).update({
         'savedPosts': FieldValue.arrayRemove([post.id])
@@ -138,7 +154,6 @@ class PostRepository {
         'savedPosts': FieldValue.arrayUnion([post.id])
       });
     }
-    debugPrint('addOrRemoveBookmark done');
   }
 
   Stream<Post> getPostById(String id) {
@@ -146,5 +161,11 @@ class PostRepository {
         .doc(id)
         .snapshots()
         .map((e) => Post.fromMap(e.data() as Map<String, dynamic>));
+  }
+
+  Future<String> getUserName(String uid) async {
+    final doc = await _users.doc(uid).get();
+    final data = doc.data() as Map<String, dynamic>?;
+    return data?['name'] ?? 'Unknown';
   }
 }

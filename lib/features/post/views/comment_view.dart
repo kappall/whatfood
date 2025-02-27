@@ -115,6 +115,7 @@ class _CommentsViewState extends ConsumerState<CommentsView> {
           children: [
             Expanded(
               child: TextField(
+                style: const TextStyle(color: Colors.black),
                 controller: commentController,
                 textCapitalization: TextCapitalization.sentences,
                 onSubmitted: (val) => addComment(post),

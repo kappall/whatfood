@@ -16,7 +16,9 @@ class PostCard extends ConsumerWidget {
   });
 
   void deletePost(WidgetRef ref, BuildContext context) async {
-    ref.read(postControllerProvider.notifier).deletePost(post.id, context);
+    ref
+        .read(postControllerProvider.notifier)
+        .deletePost(post.id, post.uid, context);
   }
 
   void likeOrUnlikePost(WidgetRef ref) async {
@@ -40,26 +42,35 @@ class PostCard extends ConsumerWidget {
       icon: Icon(
         Icons.more_horiz,
       ),
-      onSelected: (String result) {},
+      onSelected: (String result) {
+        if (result == 'delete') {
+          deletePost(ref, context);
+        }
+      },
       itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
         if (isOwner)
           PopupMenuItem<String>(
-              child: TextButton.icon(
-            style: ButtonStyles.textButtonStyle(textColor: Colors.red),
-            onPressed: () {
-              deletePost(ref, context);
-            },
-            icon: Icon(
-              Icons.delete,
-              color: Colors.red,
+            value: 'delete',
+            child: Row(
+              children: [
+                Icon(
+                  Icons.delete,
+                  color: Colors.red,
+                ),
+                Text(
+                  'Delete account',
+                  style: TextStyle(color: Colors.red),
+                ),
+              ],
             ),
-            label: Text("Delete"),
-          )),
+          ),
         if (isOwner)
           PopupMenuItem<String>(
               child: TextButton.icon(
             style: ButtonStyles.textButtonStyle(textColor: Colors.blueAccent),
             onPressed: () {
+              FocusScope.of(context).unfocus();
+
               print("Pulsante premuto1");
             },
             icon: Icon(
@@ -72,7 +83,9 @@ class PostCard extends ConsumerWidget {
             child: TextButton.icon(
           style: ButtonStyles.textButtonStyle(textColor: Colors.green),
           onPressed: () {
-            print("Pulsante premuto1");
+            FocusScope.of(context).unfocus();
+
+            print("shearing");
           },
           icon: Icon(
             Icons.share,
@@ -123,9 +136,9 @@ class PostCard extends ConsumerWidget {
                               child: Text(
                                 post.username,
                                 style: TextStyle(
-                                    fontSize: 22,
-                                    color:
-                                        Theme.of(context).secondaryHeaderColor),
+                                  fontSize: 22,
+                                  color: Colors.white,
+                                ),
                               ),
                             ),
                           ],
@@ -213,10 +226,13 @@ class PostCard extends ConsumerWidget {
                       children: [
                         IconButton(
                           icon: Icon(
-                            Icons.thumb_up,
-                            color: post.likes.contains(user.uid)
-                                ? theme.selectedItemColor
-                                : null,
+                            post.likes.contains(ref.watch(userProvider)?.uid)
+                                ? Icons.favorite
+                                : Icons.favorite_outline,
+                            color: post.likes
+                                    .contains(ref.watch(userProvider)?.uid)
+                                ? Colors.red
+                                : Colors.white,
                             size: 30,
                           ),
                           onPressed: () => likeOrUnlikePost(ref),

@@ -16,7 +16,9 @@ class PostCardForComment extends ConsumerWidget {
   });
 
   void deletePost(WidgetRef ref, BuildContext context) async {
-    ref.read(postControllerProvider.notifier).deletePost(post.id, context);
+    ref
+        .read(postControllerProvider.notifier)
+        .deletePost(post.id, post.uid, context);
   }
 
   void likeOrUnlikePost(WidgetRef ref) async {

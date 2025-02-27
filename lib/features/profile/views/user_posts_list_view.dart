@@ -17,9 +17,9 @@ class PostList extends ConsumerWidget {
         preferredSize: Size.fromHeight(50),
         child: AppBar(
           leading: IconButton(
-              icon: Icon(Icons.arrow_back),
-              onPressed: () => Routemaster.of(context)
-                  .popUntil((route) => route.path == '/')),
+            icon: Icon(Icons.arrow_back),
+            onPressed: () => Routemaster.of(context).pop(),
+          ),
           title: const Text('Post List'),
         ),
       ),
@@ -32,7 +32,10 @@ class PostList extends ConsumerWidget {
                     return PostCard(post: post);
                   });
             },
-            error: (error, stackTrace) => ErrorText(error: error.toString()),
+            error: (error, stackTrace) {
+              debugPrint(stackTrace.toString());
+              return ErrorText(error: error.toString());
+            },
             loading: () => const Loader(),
           ),
     );

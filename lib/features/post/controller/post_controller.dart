@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image/image.dart' as img;
 import 'package:routemaster/routemaster.dart';
 import 'package:uuid/uuid.dart';
+import 'package:whatfood/core/providers/firebase_providers.dart';
 import 'package:whatfood/core/providers/storage_repository_provider.dart';
 import 'package:whatfood/core/utils.dart';
 import 'package:whatfood/features/auth/controller/auth_controller.dart';
@@ -39,6 +40,26 @@ final postByIdProvider = StreamProvider.family((ref, String id) {
 final getpostCommentsProvider = StreamProvider.family((ref, String id) {
   final posController = ref.watch(postControllerProvider.notifier);
   return posController.fetchCommentsOfPost(id);
+});
+
+final userNameProvider =
+    StreamProvider.family<String, String>((ref, String uid) {
+  return ref
+      .watch(firestoreProvider)
+      .collection('users')
+      .doc(uid)
+      .snapshots()
+      .map((doc) => (doc.data() as Map<String, dynamic>)['name'] as String);
+});
+final userPicProvider =
+    StreamProvider.family<String, String>((ref, String uid) {
+  return ref
+      .watch(firestoreProvider)
+      .collection('users')
+      .doc(uid)
+      .snapshots()
+      .map((doc) =>
+          (doc.data() as Map<String, dynamic>)['profilePic'] as String);
 });
 
 class PostController extends StateNotifier<bool> {
@@ -177,8 +198,6 @@ class PostController extends StateNotifier<bool> {
     state = true;
     final user = _ref.watch(userProvider);
 
-    debugPrint('Current user: ${user?.uid}');
-
     if (user == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('User not logged in')),
@@ -234,9 +253,6 @@ class PostController extends StateNotifier<bool> {
           SnackBar(content: Text(l.message)),
         ),
         (r) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Posted successfully!')),
-          );
           Routemaster.of(context).popUntil((route) => route.path == '/');
         },
       );
@@ -248,8 +264,8 @@ class PostController extends StateNotifier<bool> {
     }
   }
 
-  void deletePost(String id, BuildContext context) async {
-    final res = await _postRepository.deletePost(id);
+  void deletePost(String id, String uid, BuildContext context) async {
+    final res = await _postRepository.deletePost(id, uid);
     _ref.read(userProfileControllerProvider.notifier);
     res.fold((l) => null,
         (r) => showSnackBar(context, 'Post Deleted successfully!'));
@@ -301,5 +317,9 @@ class PostController extends StateNotifier<bool> {
 
   Stream<List<Comment>> fetchCommentsOfPost(String postId) {
     return _postRepository.getCommentsOfPost(postId);
+  }
+
+  Future<String> getUserName(String uid) async {
+    return await _postRepository.getUserName(uid);
   }
 }

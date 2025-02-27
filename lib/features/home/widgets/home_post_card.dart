@@ -20,7 +20,9 @@ class HomePostCard extends ConsumerWidget {
   });
 
   void deletePost(WidgetRef ref, BuildContext context) {
-    ref.read(postControllerProvider.notifier).deletePost(post.id, context);
+    ref
+        .read(postControllerProvider.notifier)
+        .deletePost(post.id, post.uid, context);
   }
 
   void likeOrUnlikePost(WidgetRef ref) {
@@ -29,7 +31,7 @@ class HomePostCard extends ConsumerWidget {
 
   void navigateToComments(BuildContext context) {
     debugPrint('Here');
-    Routemaster.of(context).push('home/${post.id}/comments');
+    Routemaster.of(context).push('/${post.id}/comments');
   }
 
   void navigateToUser(BuildContext context) {
@@ -106,6 +108,9 @@ class HomePostCard extends ConsumerWidget {
     final Size size = MediaQuery.of(context).size;
     final bool isTypeImage = post.type == "image";
     final theme = Theme.of(context);
+    final usernameAsync = ref.watch(userNameProvider(post.uid));
+    final userPicAsync = ref.watch(userPicProvider(post.uid));
+
     return GestureDetector(
       onDoubleTap: () => likeOrUnlikePost(ref),
       child: Stack(
@@ -148,20 +153,48 @@ class HomePostCard extends ConsumerWidget {
                   children: [
                     Row(
                       children: [
-                        GestureDetector(
-                          onTap: () => navigateToUser(context),
-                          child: CircleAvatar(
-                            backgroundImage: NetworkImage(post.userImage),
+                        userPicAsync.when(
+                          data: (userPic) => GestureDetector(
+                            onTap: () => navigateToUser(context),
+                            child: CircleAvatar(
+                              backgroundImage: NetworkImage(userPic),
+                              radius: 24,
+                            ),
+                          ),
+                          loading: () => const SizedBox(
+                            width: 20,
+                            height: 20,
+                            child:
+                                CircularProgressIndicator(color: Colors.white),
+                          ),
+                          error: (_, __) => const CircleAvatar(
                             radius: 24,
+                            backgroundColor: Colors.white,
                           ),
                         ),
                         const SizedBox(width: 10),
-                        Text(
-                          post.username,
-                          style: const TextStyle(
-                            fontSize: 20,
-                            color: Colors.white,
-                            fontWeight: FontWeight.bold,
+                        usernameAsync.when(
+                          data: (username) => Text(
+                            username,
+                            style: const TextStyle(
+                              fontSize: 20,
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          loading: () => const SizedBox(
+                            width: 20,
+                            height: 20,
+                            child:
+                                CircularProgressIndicator(color: Colors.white),
+                          ),
+                          error: (_, __) => const Text(
+                            'Unknown User',
+                            style: TextStyle(
+                              fontSize: 20,
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold,
+                            ),
                           ),
                         ),
                       ],

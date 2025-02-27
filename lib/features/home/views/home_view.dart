@@ -132,13 +132,13 @@ class _HomeViewState extends ConsumerState<HomeView>
                               : Colors.grey,
                         ),
                       ),
-                    ),
+                    ), /*
                     IconButton(
                       onPressed: () => themeNotifier.toggleTheme(),
                       icon: Icon(
                         Icons.brightness_6,
                       ),
-                    )
+                    )*/
                   ],
                 ),
               ),
