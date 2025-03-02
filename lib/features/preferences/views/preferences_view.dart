@@ -4,7 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:routemaster/routemaster.dart';
 import 'package:whatfood/core/common/loader.dart';
 import 'package:whatfood/features/auth/controller/auth_controller.dart';
-import 'package:whatfood/features/preferences/widgets/Intollerances_list.dart';
+import 'package:whatfood/features/preferences/widgets/intollerances_list.dart';
 import 'package:whatfood/features/preferences/controller/preferences_controller.dart';
 import 'package:whatfood/models/user_model.dart';
 
@@ -37,7 +37,6 @@ class PreferencesView extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final user = ref.watch(userProvider);
-    debugPrint(FirebaseAuth.instance.currentUser.toString());
     if (user == null && isFromProfile) {
       return const Scaffold(
         body: Center(child: Loader()),
@@ -45,7 +44,6 @@ class PreferencesView extends ConsumerWidget {
     }
 
     final isLoading = ref.watch(preferencesControllerProvider);
-    debugPrint(user?.name.toString());
     Set<String> intolerances = isFromProfile ? user?.preferences ?? {} : {};
 
     return SafeArea(
@@ -74,14 +72,34 @@ class PreferencesView extends ConsumerWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              const Text(
-                'What foods can\'t you eat?',
-                style: TextStyle(fontSize: 28, fontWeight: FontWeight.w600),
-                textAlign: TextAlign.center,
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Text(
+                    'What foods can\'t you eat?',
+                    style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+                    textAlign: TextAlign.center,
+                  ),
+                ],
               ),
               const SizedBox(height: 30),
-              IntollerancesList(
-                intollerances: intolerances,
+              Container(
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: Colors.grey[100], // Optional: adds a subtle background
+                  border: Border.all(
+                    color: Colors.green,
+                    width: 2,
+                  ),
+                ),
+                padding: const EdgeInsets.all(20),
+                constraints: BoxConstraints(
+                  maxWidth: MediaQuery.of(context).size.width * 0.9,
+                  maxHeight: MediaQuery.of(context).size.width * 0.9,
+                ),
+                child: IntollerancesList(
+                  intollerances: intolerances,
+                ),
               ),
               const SizedBox(height: 30),
             ],

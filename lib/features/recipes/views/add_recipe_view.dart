@@ -22,8 +22,8 @@ class _AddRecipeViewState extends ConsumerState<AddRecipeView> {
   final _cookTimeController = TextEditingController();
 
   File? _image;
-  List<String> _ingredients = [''];
-  List<String> _instructions = [''];
+  final List<String> _ingredients = [''];
+  final List<String> _instructions = [''];
 
   Future<void> _pickImage() async {
     final picker = ImagePicker();
@@ -37,15 +37,19 @@ class _AddRecipeViewState extends ConsumerState<AddRecipeView> {
   }
 
   void _addIngredient() {
-    setState(() {
-      _ingredients.add('');
-    });
+    if (_ingredients[_ingredients.length - 1].isNotEmpty) {
+      setState(() {
+        _ingredients.add('');
+      });
+    }
   }
 
   void _addInstruction() {
-    setState(() {
-      _instructions.add('');
-    });
+    if (_instructions[_instructions.length - 1].isNotEmpty) {
+      setState(() {
+        _instructions.add('');
+      });
+    }
   }
 
   void _updateIngredient(int index, String value) {
@@ -142,6 +146,7 @@ class _AddRecipeViewState extends ConsumerState<AddRecipeView> {
               const SizedBox(height: 16),
               TextFormField(
                 controller: _titleController,
+                autocorrect: false,
                 decoration: const InputDecoration(
                   labelText: 'Title',
                   border: OutlineInputBorder(),
@@ -155,6 +160,7 @@ class _AddRecipeViewState extends ConsumerState<AddRecipeView> {
               ),
               const SizedBox(height: 16),
               TextFormField(
+                autocorrect: false,
                 controller: _descriptionController,
                 decoration: const InputDecoration(
                   labelText: 'Description',
@@ -173,6 +179,7 @@ class _AddRecipeViewState extends ConsumerState<AddRecipeView> {
                 children: [
                   Expanded(
                     child: TextFormField(
+                      autocorrect: false,
                       controller: _servingsController,
                       decoration: const InputDecoration(
                         labelText: 'Servings',
@@ -190,6 +197,7 @@ class _AddRecipeViewState extends ConsumerState<AddRecipeView> {
                   const SizedBox(width: 16),
                   Expanded(
                     child: TextFormField(
+                      autocorrect: false,
                       controller: _cookTimeController,
                       decoration: const InputDecoration(
                         labelText: 'Cook Time',
@@ -223,6 +231,7 @@ class _AddRecipeViewState extends ConsumerState<AddRecipeView> {
                   return Padding(
                     padding: const EdgeInsets.only(bottom: 8),
                     child: TextFormField(
+                      autocorrect: false,
                       initialValue: _ingredients[index],
                       decoration: InputDecoration(
                         labelText: 'Ingredient ${index + 1}',
@@ -249,6 +258,7 @@ class _AddRecipeViewState extends ConsumerState<AddRecipeView> {
                   return Padding(
                     padding: const EdgeInsets.only(bottom: 8),
                     child: TextFormField(
+                      autocorrect: false,
                       initialValue: _instructions[index],
                       decoration: InputDecoration(
                         labelText: 'Step ${index + 1}',

@@ -9,6 +9,7 @@ class UserModel {
   final Set<String> savedPosts;
   final String bio;
   final int postsCount;
+  final int dailyIntake;
   final Set<String> followers;
   final Set<String> following;
 
@@ -23,32 +24,33 @@ class UserModel {
     this.postsCount = 0,
     this.followers = const {},
     this.following = const {},
+    this.dailyIntake = 0,
   });
 
-  UserModel copyWith({
-    String? name,
-    String? profilePic,
-    String? banner,
-    String? uid,
-    Set<String>? preferences,
-    Set<String>? savedPosts,
-    String? bio,
-    int? postsCount,
-    Set<String>? followers,
-    Set<String>? following,
-  }) {
+  UserModel copyWith(
+      {String? name,
+      String? profilePic,
+      String? banner,
+      String? uid,
+      Set<String>? preferences,
+      Set<String>? savedPosts,
+      String? bio,
+      int? postsCount,
+      Set<String>? followers,
+      Set<String>? following,
+      int? dailyIntake}) {
     return UserModel(
-      name: name ?? this.name,
-      profilePic: profilePic ?? this.profilePic,
-      banner: banner ?? this.banner,
-      uid: uid ?? this.uid,
-      preferences: preferences ?? this.preferences,
-      savedPosts: savedPosts ?? this.savedPosts,
-      bio: bio ?? this.bio,
-      postsCount: postsCount ?? this.postsCount,
-      followers: followers ?? this.followers,
-      following: following ?? this.following,
-    );
+        name: name ?? this.name,
+        profilePic: profilePic ?? this.profilePic,
+        banner: banner ?? this.banner,
+        uid: uid ?? this.uid,
+        preferences: preferences ?? this.preferences,
+        savedPosts: savedPosts ?? this.savedPosts,
+        bio: bio ?? this.bio,
+        postsCount: postsCount ?? this.postsCount,
+        followers: followers ?? this.followers,
+        following: following ?? this.following,
+        dailyIntake: dailyIntake ?? this.dailyIntake);
   }
 
   Map<String, dynamic> toMap() {
@@ -63,34 +65,35 @@ class UserModel {
       'postsCount': postsCount,
       'followers': followers.toList(),
       'following': following.toList(),
+      'dailyIntake': dailyIntake,
     };
   }
 
   factory UserModel.fromMap(Map<String, dynamic> map) {
     return UserModel(
-      name: map['name'] as String,
-      profilePic: map['profilePic'] as String,
-      banner: map['banner'] as String,
-      uid: map['uid'] as String,
-      preferences: (map['preferences'] as List<dynamic>?)
-              ?.map((e) => e.toString())
-              .toSet() ??
-          {},
-      savedPosts: (map['savedPosts'] as List<dynamic>?)
-              ?.map((e) => e.toString())
-              .toSet() ??
-          {},
-      bio: (map['bio'] as String),
-      postsCount: map['postsCount'] as int,
-      followers: (map['followers'] as List<dynamic>?)
-              ?.map((e) => e.toString())
-              .toSet() ??
-          {},
-      following: (map['following'] as List<dynamic>?)
-              ?.map((e) => e.toString())
-              .toSet() ??
-          {},
-    );
+        name: map['name'] as String,
+        profilePic: map['profilePic'] as String,
+        banner: map['banner'] as String,
+        uid: map['uid'] as String,
+        preferences: (map['preferences'] as List<dynamic>?)
+                ?.map((e) => e.toString())
+                .toSet() ??
+            {},
+        savedPosts: (map['savedPosts'] as List<dynamic>?)
+                ?.map((e) => e.toString())
+                .toSet() ??
+            {},
+        bio: (map['bio'] as String),
+        postsCount: map['postsCount'] as int,
+        followers: (map['followers'] as List<dynamic>?)
+                ?.map((e) => e.toString())
+                .toSet() ??
+            {},
+        following: (map['following'] as List<dynamic>?)
+                ?.map((e) => e.toString())
+                .toSet() ??
+            {},
+        dailyIntake: (map['dailyIntake'] as int?) ?? 0);
   }
 
   factory UserModel.fromSnapshot(
@@ -101,7 +104,7 @@ class UserModel {
 
   @override
   String toString() {
-    return 'UserModel(name: $name, profilePic: $profilePic, banner: $banner, uid: $uid, preferences: $preferences, savedPosts: $savedPosts, bio: $bio, postsCount: $postsCount, followers: $followers, following: $following)';
+    return 'UserModel(name: $name, profilePic: $profilePic, banner: $banner, uid: $uid, preferences: $preferences, savedPosts: $savedPosts, bio: $bio, postsCount: $postsCount, followers: $followers, following: $following), dailyIntake: $dailyIntake';
   }
 
   @override
@@ -117,7 +120,8 @@ class UserModel {
         other.bio == bio &&
         other.postsCount == postsCount &&
         other.followers == followers &&
-        other.following == following;
+        other.following == following &&
+        other.dailyIntake == dailyIntake;
   }
 
   @override
@@ -131,6 +135,7 @@ class UserModel {
         bio.hashCode ^
         postsCount.hashCode ^
         followers.hashCode ^
-        following.hashCode;
+        following.hashCode ^
+        dailyIntake.hashCode;
   }
 }

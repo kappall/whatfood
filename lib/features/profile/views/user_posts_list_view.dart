@@ -8,7 +8,7 @@ import 'package:whatfood/core/common/post_card_for_list.dart';
 
 class PostList extends ConsumerWidget {
   final String uid;
-  const PostList({super.key, required String this.uid});
+  const PostList({super.key, required this.uid});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {

@@ -50,6 +50,7 @@ class UserProfileController extends StateNotifier<bool> {
     required BuildContext context,
     required String name,
     required String bio,
+    required int dailyIntake,
     required File? profileFile,
   }) async {
     state = true;
@@ -67,7 +68,7 @@ class UserProfileController extends StateNotifier<bool> {
       );
     }
 
-    user = user.copyWith(name: name, bio: bio);
+    user = user.copyWith(name: name, bio: bio, dailyIntake: dailyIntake);
     final res = await _userProfileRepository.editProfile(user);
     state = false;
     res.fold((l) => showSnackBar(context, l.message), (r) {
@@ -94,6 +95,7 @@ class UserProfileController extends StateNotifier<bool> {
 
     res.fold((l) {
       state = false;
+      if (!context.mounted) return;
       showSnackBar(context, l.message);
     }, (r) {
       state = false;

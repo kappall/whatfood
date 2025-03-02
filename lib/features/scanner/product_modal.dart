@@ -7,72 +7,39 @@ import 'package:whatfood/features/auth/controller/auth_controller.dart';
 import 'package:whatfood/features/scanner/widgets/add_product_dialog.dart';
 import 'package:whatfood/features/scanner/widgets/nutriscore_widget.dart';
 import 'package:whatfood/features/scanner/widgets/nutrition_table.dart';
+import 'package:whatfood/features/scanner/utils/ingridients_processor.dart';
 
 class ProductModal extends ConsumerWidget {
   final Map<String, dynamic> productData;
   final int quantity;
+  final List<String> processedIngredients;
+  final List<String> intolerableIngredients;
+  final List<String> unhealthyIngredients;
 
-  const ProductModal(
-      {super.key, required this.productData, required this.quantity});
+  const ProductModal({
+    super.key,
+    required this.productData,
+    required this.quantity,
+    required this.processedIngredients,
+    required this.intolerableIngredients,
+    required this.unhealthyIngredients,
+  });
 
-  bool _hasIntolerance(String ingredient, Set<String> intolerances) {
-    final lowerIngredient = ingredient.toLowerCase();
-    return intolerances.any(
-        (intolerance) => lowerIngredient.contains(intolerance.toLowerCase()));
-  }
-
-  String _cleanIngredients(String text) {
-    return text
-        .replaceAll(RegExp(r'_'), ' ')
-        .replaceAll(RegExp(r'\s+'), ' ')
-        .replaceAll(RegExp(r'\s*([,;])\s*'), r', ')
-        .trim();
-  }
-
-  static const unhealthyIngredients = {
-    'hydrogenated fats',
-    'glucose syrup',
-    'aspartame',
-    'monosodium glutamate',
-    'artificial coloring',
-    'palm oil',
-    'sucrose',
-    'preservative',
-    'E621',
-    'high fructose corn syrup'
-  };
-
-  bool _isUnhealthy(String ingredient) {
-    final lowerIngredient = ingredient.toLowerCase();
-    return unhealthyIngredients.any((bad) => lowerIngredient.contains(bad)) ||
-        RegExp(r'\bE\d{3}\b').hasMatch(lowerIngredient);
-  }
-
-  Widget _buildIngredientsList(
-      String? cleanText, Set<String> intolerances, BuildContext context) {
-    if (cleanText == null || cleanText.isEmpty) {
+  Widget _buildIngredientsList(BuildContext context) {
+    if (processedIngredients.isEmpty) {
       return const Text(
         'No ingredients available',
         style: TextStyle(fontSize: 16),
       );
     }
 
-    final ingredients = cleanText
-        .split(RegExp(r',\s*(?![^()]*\))'))
-        .where((ingredient) =>
-            ingredient.trim().isNotEmpty && !ingredient.trim().contains("%"))
-        .toList();
-
-    bool hasIntolerances = false;
-    final chips = ingredients.map((ingredient) {
-      final trimmedIngredient = ingredient.trim();
-      final isUnhealthy = _isUnhealthy(trimmedIngredient);
-      final hasIntolerance = _hasIntolerance(trimmedIngredient, intolerances);
-      if (hasIntolerance) hasIntolerances = true;
+    final chips = processedIngredients.map((ingredient) {
+      final isIntolerable = intolerableIngredients.contains(ingredient);
+      final isUnhealthy = unhealthyIngredients.contains(ingredient);
 
       return Container(
         decoration: BoxDecoration(
-          color: hasIntolerance
+          color: isIntolerable
               ? Colors.red
               : (isUnhealthy ? Colors.redAccent : Colors.grey[100]),
           borderRadius: BorderRadius.circular(8),
@@ -81,11 +48,10 @@ class ProductModal extends ConsumerWidget {
         margin: const EdgeInsets.only(bottom: 16),
         padding: const EdgeInsets.all(12),
         child: Text(
-          trimmedIngredient,
+          ingredient,
           style: TextStyle(
-            color:
-                hasIntolerance || isUnhealthy ? Colors.white : Colors.black87,
-            fontWeight: hasIntolerance || isUnhealthy
+            color: isIntolerable || isUnhealthy ? Colors.white : Colors.black87,
+            fontWeight: isIntolerable || isUnhealthy
                 ? FontWeight.bold
                 : FontWeight.normal,
           ),
@@ -96,7 +62,7 @@ class ProductModal extends ConsumerWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        if (hasIntolerances)
+        if (intolerableIngredients.isNotEmpty)
           Container(
             margin: const EdgeInsets.only(bottom: 16),
             padding: const EdgeInsets.all(12),
@@ -161,13 +127,13 @@ class ProductModal extends ConsumerWidget {
     // Check if product contains any intolerant ingredients
     bool hasIntolerances = false;
     if (productData['ingredients_text'] != null) {
-      final ingredients = _cleanIngredients(
+      final ingredients = IngredientsProcessor.cleanIngredients(
               productData['ingredients_text_en'] ??
                   productData['ingredients_text'])
           .split(RegExp(r',\s*(?![^()]*\))'));
 
-      hasIntolerances = ingredients
-          .any((ingredient) => _hasIntolerance(ingredient, userIntolerances));
+      hasIntolerances = ingredients.any((ingredient) =>
+          IngredientsProcessor.hasIntolerance(ingredient, userIntolerances));
     }
 
     return Material(
@@ -250,12 +216,7 @@ class ProductModal extends ConsumerWidget {
                                   fontSize: 18, fontWeight: FontWeight.bold),
                             ),
                             const SizedBox(height: 8),
-                            _buildIngredientsList(
-                                _cleanIngredients(
-                                    productData['ingredients_text_en'] ??
-                                        productData['ingredients_text']),
-                                userIntolerances,
-                                context),
+                            _buildIngredientsList(context),
                           ],
                         ),
                       const SizedBox(height: 16),

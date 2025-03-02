@@ -271,6 +271,7 @@ class _ProfileViewState extends ConsumerState<ProfileView>
                                     onPressed: () =>
                                         navigateToEditUser(context),
                                     style: FilledButton.styleFrom(
+                                      backgroundColor: Colors.white,
                                       shape: RoundedRectangleBorder(
                                         borderRadius: BorderRadius.circular(20),
                                       ),
@@ -298,6 +299,7 @@ class _ProfileViewState extends ConsumerState<ProfileView>
                       child: TabBar(
                         labelColor:
                             Theme.of(context).textTheme.bodyLarge?.color,
+                        indicatorColor: Colors.white,
                         unselectedLabelColor: Colors.grey,
                         controller: _tabController,
                         indicatorWeight: 3,

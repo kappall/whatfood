@@ -90,7 +90,7 @@ class RecipeModal extends ConsumerWidget {
         .any((ingredient) => _hasIntolerance(ingredient, userIntolerances));
 
     return Material(
-      color: Colors.white,
+      color: const Color.fromARGB(255, 30, 30, 30),
       shape: RoundedRectangleBorder(
         borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
         side: hasIntolerances

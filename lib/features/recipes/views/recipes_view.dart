@@ -17,7 +17,6 @@ class RecipesView extends ConsumerStatefulWidget {
 class RecipesViewState extends ConsumerState<RecipesView> {
   @override
   Widget build(BuildContext context) {
-    final themeNotifier = ref.read(themeProvider.notifier);
     return GestureDetector(
       onTap: () => FocusScope.of(context).unfocus(),
       child: Scaffold(
@@ -36,18 +35,16 @@ class RecipesViewState extends ConsumerState<RecipesView> {
                   child: Container(
                     margin:
                         const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 12), // Padding generale
+                    padding: const EdgeInsets.symmetric(horizontal: 12),
                     decoration: BoxDecoration(
-                      border: Border.all(color: Colors.black),
+                      border: Border.all(color: Colors.white),
                       borderRadius: BorderRadius.circular(22),
-                      color: Colors.white,
                     ),
                     child: Row(
                       children: [
                         const Icon(
                           Icons.search,
-                          color: Colors.black,
+                          color: Colors.white,
                           size: 32,
                         ),
                         const SizedBox(width: 8),
@@ -59,8 +56,8 @@ class RecipesViewState extends ConsumerState<RecipesView> {
                             decoration: InputDecoration(
                               border: InputBorder.none,
                               hintText: 'Search...',
-                              contentPadding: const EdgeInsets.symmetric(
-                                  vertical: 16), // Padding interno
+                              contentPadding:
+                                  const EdgeInsets.symmetric(vertical: 16),
                             ),
                           ),
                         ),
@@ -96,7 +93,7 @@ class RecipesViewState extends ConsumerState<RecipesView> {
           onPressed: () {
             Routemaster.of(context).push('/add-recipe');
           },
-          backgroundColor: Colors.grey,
+          backgroundColor: Colors.green,
           child: const Icon(
             Icons.add,
             color: Colors.white,

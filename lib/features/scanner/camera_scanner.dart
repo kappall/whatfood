@@ -5,25 +5,28 @@ import 'dart:math';
 import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_mlkit_barcode_scanning/google_mlkit_barcode_scanning.dart';
 import 'package:http/http.dart' as http;
 import 'package:image_picker/image_picker.dart';
+import 'package:whatfood/features/auth/controller/auth_controller.dart';
 import 'dart:convert' as convert;
 
 import 'package:whatfood/features/scanner/painters/barcode_detector_painter.dart';
 import 'package:whatfood/features/scanner/product_modal.dart';
+import 'package:whatfood/features/scanner/utils/ingridients_processor.dart';
 import 'package:whatfood/features/scanner/widgets/detection_toggle.dart';
 import 'package:whatfood/features/scanner/widgets/zoom_control.dart';
 
 enum DetectorViewMode { liveFeed, gallery }
 
-class CameraScanner extends StatefulWidget {
+class CameraScanner extends ConsumerStatefulWidget {
   const CameraScanner({super.key});
   @override
-  State<StatefulWidget> createState() => CameraScannerState();
+  ConsumerState<ConsumerStatefulWidget> createState() => CameraScannerState();
 }
 
-class CameraScannerState extends State<CameraScanner> {
+class CameraScannerState extends ConsumerState<CameraScanner> {
   late final BarcodeScanner _barcodeScanner;
   CustomPaint? _customPaint;
   CameraController? _controller;
@@ -39,6 +42,19 @@ class CameraScannerState extends State<CameraScanner> {
   double _maxAvailableZoom = 1.0;
 
   ImagePicker? _imagePicker;
+
+  static const unhealthyIngredients = {
+    'hydrogenated fats',
+    'glucose syrup',
+    'aspartame',
+    'monosodium glutamate',
+    'artificial coloring',
+    'palm oil',
+    'sucrose',
+    'preservative',
+    'E621',
+    'high fructose corn syrup'
+  };
 
   @override
   void initState() {
@@ -202,24 +218,59 @@ class CameraScannerState extends State<CameraScanner> {
         final jsonResponse =
             convert.jsonDecode(response.body) as Map<String, dynamic>;
         final productData = jsonResponse['product'];
+
+        // Parse quantity
         final String quantityString =
             productData['quantity']?.toString().trim() ?? '100';
         final List<String> parts = quantityString.split(' ');
-
         int quantity = int.tryParse(parts[0]) ?? 100;
         if (parts.length > 1 && parts[1].toLowerCase() == 'kg') {
           quantity *= 1000;
         }
-        await showModalBottomSheet(
-          context: context,
-          isScrollControlled: true,
-          useSafeArea: true,
-          backgroundColor: Colors.transparent,
-          builder: (context) => ProductModal(
-            productData: productData,
-            quantity: quantity,
-          ),
-        );
+
+        final userIntolerances = ref.read(userProvider)!.preferences;
+
+        // Process ingredients
+        final ingredientsText = productData['ingredients_text_en'] ??
+            productData['ingredients_text'];
+        if (ingredientsText != null) {
+          final (
+            processedIngredients,
+            intolerableIngredients,
+            unhealthyIngredients
+          ) = IngredientsProcessor.processIngredients(
+              ingredientsText, userIntolerances);
+
+          // Show warning for intolerances
+          if (intolerableIngredients.isNotEmpty) {
+            final shouldContinue =
+                await _showIntoleranceWarningDialog(intolerableIngredients);
+            if (!shouldContinue) return;
+          }
+
+          // Show warning for unhealthy ingredients
+          if (unhealthyIngredients.isNotEmpty) {
+            final shouldContinue =
+                await _showUnhealthyWarningDialog(unhealthyIngredients);
+            if (!shouldContinue) return;
+          }
+
+          // Show product modal if user wants to continue
+          if (!mounted) return;
+          await showModalBottomSheet(
+            context: context,
+            isScrollControlled: true,
+            useSafeArea: true,
+            backgroundColor: Colors.transparent,
+            builder: (context) => ProductModal(
+              productData: productData,
+              quantity: quantity,
+              processedIngredients: processedIngredients,
+              intolerableIngredients: intolerableIngredients,
+              unhealthyIngredients: unhealthyIngredients,
+            ),
+          );
+        }
       } else {
         await _showErrorDialog();
       }
@@ -260,6 +311,104 @@ class CameraScannerState extends State<CameraScanner> {
         ],
       ),
     );
+  }
+
+  Future<bool> _showIntoleranceWarningDialog(
+      List<String> intolerableIngredients) {
+    return showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: Colors.white,
+        icon: const Icon(
+          Icons.warning_amber_rounded,
+          color: Colors.red,
+          size: 48,
+        ),
+        title: const Text(
+          'Intolerance Warning!',
+          style: TextStyle(color: Colors.black),
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            ...intolerableIngredients.map((ingredient) => Padding(
+                  padding: const EdgeInsets.only(left: 8.0),
+                  child: Text(
+                    ingredient,
+                    style: const TextStyle(color: Colors.black),
+                  ),
+                )),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            style: TextButton.styleFrom(
+              foregroundColor: Colors.blueGrey, // Colore del testo
+              textStyle: const TextStyle(
+                fontSize: 14, // Dimensione del testo
+                fontWeight: FontWeight.bold, // Spessore del testo
+              ),
+            ),
+            child: const Text(
+              'Back',
+            ),
+          ),
+          TextButton(
+            style: TextButton.styleFrom(
+              foregroundColor: Colors.redAccent, // Colore del testo
+              textStyle: const TextStyle(
+                fontSize: 16, // Dimensione del testo
+                fontWeight: FontWeight.bold, // Spessore del testo
+              ),
+            ),
+            onPressed: () => Navigator.of(context).pop(true),
+            child: const Text(
+              'Continue Anyway',
+            ),
+          ),
+        ],
+      ),
+    ).then((value) => value ?? false);
+  }
+
+  Future<bool> _showUnhealthyWarningDialog(List<String> unhealthyIngredients) {
+    return showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        icon: const Icon(
+          Icons.warning_rounded,
+          color: Colors.orange,
+          size: 48,
+        ),
+        title: const Text('Unhealthy Ingredients'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+                'This product contains potentially unhealthy ingredients:'),
+            const SizedBox(height: 8),
+            ...unhealthyIngredients.map((ingredient) => Padding(
+                  padding: const EdgeInsets.only(left: 8.0),
+                  child: Text('• $ingredient',
+                      style: const TextStyle(fontWeight: FontWeight.bold)),
+                )),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('Go Back'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            child: const Text('Continue Anyway'),
+          ),
+        ],
+      ),
+    ).then((value) => value ?? false);
   }
 
   InputImage? _inputImageFromCameraImage(CameraImage image) {

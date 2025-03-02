@@ -1,6 +1,7 @@
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:path/path.dart';
 import 'package:whatfood/core/common/error_text.dart';
 import 'package:whatfood/core/common/loader.dart';
 import 'package:whatfood/features/auth/controller/auth_controller.dart';
@@ -48,6 +49,7 @@ class _ReportViewState extends ConsumerState<ReportView> {
     for (final report in reports) {
       report.nutritionalValues.forEach((key, value) {
         aggregated[key] = (aggregated[key] ?? 0) + value;
+        debugPrint(key);
       });
     }
     return aggregated;
@@ -56,7 +58,13 @@ class _ReportViewState extends ConsumerState<ReportView> {
   List<PieChartSectionData> buildPieChartSections(
       Map<String, double> aggregatedData) {
     final List<PieChartSectionData> sections = [];
-    final colors = [Colors.blue, Colors.red, Colors.green, Colors.orange];
+    final colors = [
+      Colors.blue,
+      Colors.red,
+      Colors.green,
+      Colors.orange,
+      Colors.grey
+    ];
     int idx = 0;
     aggregatedData.forEach((key, value) {
       if (!toAvoid.any((avoid) => key.toLowerCase().contains(avoid))) {
@@ -83,8 +91,9 @@ class _ReportViewState extends ConsumerState<ReportView> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: aggregatedData.keys.map((key) {
-        if (toAvoid.any((avoid) => key.toLowerCase().contains(avoid)))
+        if (toAvoid.any((avoid) => key.toLowerCase().contains(avoid))) {
           return const SizedBox.shrink();
+        }
         final color = colors[idx % colors.length];
         idx++;
         return Padding(
@@ -105,6 +114,7 @@ class _ReportViewState extends ConsumerState<ReportView> {
   @override
   Widget build(BuildContext context) {
     final user = ref.watch(userProvider)!;
+    debugPrint('here');
     return Scaffold(
       appBar: AppBar(
         title: Text(
@@ -142,14 +152,16 @@ class _ReportViewState extends ConsumerState<ReportView> {
             data: (reports) {
               if (reports.isNotEmpty) {
                 final aggregatedData = aggregateNutritionalValues(reports);
-                final pieChartSections = buildPieChartSections(aggregatedData);
                 double totalCalories = 0.0;
-
                 aggregatedData.forEach((key, value) {
                   if (key.toLowerCase().contains('energy')) {
                     totalCalories = value;
                   }
                 });
+                //aggregatedData[''] = user.dailyIntake - totalCalories;
+                //aggregatedData['enegy'] = totalCalories;
+                final pieChartSections = buildPieChartSections(aggregatedData);
+
                 return SingleChildScrollView(
                   child: Column(
                     children: [
@@ -171,13 +183,32 @@ class _ReportViewState extends ConsumerState<ReportView> {
                                   ),
                                 ),
                                 Center(
-                                  child: Text(
-                                    '${totalCalories.toStringAsFixed(0)} kcal',
-                                    style: TextStyle(
-                                      fontSize: 20,
-                                      fontWeight: FontWeight.bold,
-                                      color: Colors.white,
-                                    ),
+                                  child: Column(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      Text(
+                                        totalCalories.toStringAsFixed(0),
+                                        style: TextStyle(
+                                          fontSize: 20,
+                                          fontWeight: FontWeight.bold,
+                                          color: Colors.white,
+                                        ),
+                                      ),
+                                      Divider(
+                                        color: Colors.white,
+                                        thickness: 2,
+                                        endIndent: 65,
+                                        indent: 50,
+                                      ),
+                                      Text(
+                                        user.dailyIntake.toStringAsFixed(0),
+                                        style: TextStyle(
+                                          fontSize: 20,
+                                          fontWeight: FontWeight.bold,
+                                          color: Colors.white,
+                                        ),
+                                      )
+                                    ],
                                   ),
                                 ),
                               ],

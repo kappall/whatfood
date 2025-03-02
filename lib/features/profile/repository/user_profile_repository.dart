@@ -86,24 +86,20 @@ class UserProfileRepository {
       final user = _auth.currentUser!;
       final String uid = user.uid;
 
-      // First delete all user's posts
       final userPosts = await _posts.where('uid', isEqualTo: uid).get();
 
       for (var doc in userPosts.docs) {
         await _posts.doc(doc.id).delete();
       }
 
-      // Then delete all user's recipes
       final userRecipes = await _recipes.where('uid', isEqualTo: uid).get();
 
       for (var doc in userRecipes.docs) {
         await _recipes.doc(doc.id).delete();
       }
 
-      // Delete user document
       await _users.doc(uid).delete();
 
-      // Finally delete auth user
       await user.delete();
 
       return right(null);
