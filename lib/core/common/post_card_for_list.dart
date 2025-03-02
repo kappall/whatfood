@@ -101,7 +101,6 @@ class PostCard extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final isTypeImage = post.type == "image";
     final isTypeText = post.type == "text";
-    final theme = Theme.of(context).bottomNavigationBarTheme;
     final user = ref.watch(userProvider)!;
     return Column(
       children: [

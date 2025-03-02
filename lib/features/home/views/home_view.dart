@@ -165,7 +165,7 @@ class _HomeViewState extends ConsumerState<HomeView>
         onPressed: () {
           Routemaster.of(context).push('/home/add_post');
         },
-        backgroundColor: Colors.grey,
+        backgroundColor: Colors.green,
         child: const Icon(
           Icons.add,
           color: Colors.white,

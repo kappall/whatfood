@@ -24,13 +24,6 @@ class ReportCard extends ConsumerStatefulWidget {
 class _ReportCardState extends ConsumerState<ReportCard> {
   bool _isExpanded = false;
 
-  void _deleteReport(BuildContext context) {
-    ref.read(reportControllerProvider.notifier).deleteReport(
-          context: context,
-          reportId: widget.report.id,
-        );
-  }
-
   @override
   Widget build(BuildContext context) {
     return Card(
@@ -43,11 +36,6 @@ class _ReportCardState extends ConsumerState<ReportCard> {
             setState(() {
               _isExpanded = !_isExpanded;
             });
-          }
-        },
-        onLongPress: () {
-          if (!widget.isSelectionMode) {
-            widget.onSelected(widget.report);
           }
         },
         child: Stack(
@@ -67,8 +55,7 @@ class _ReportCardState extends ConsumerState<ReportCard> {
                             widget.isSelected
                                 ? Icons.check_circle
                                 : Icons.circle_outlined,
-                            color:
-                                widget.isSelected ? Colors.green : Colors.grey,
+                            color: widget.isSelected ? Colors.red : Colors.grey,
                           ),
                         ),
                       Expanded(

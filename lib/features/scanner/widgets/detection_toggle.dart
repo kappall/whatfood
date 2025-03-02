@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 
 class DetectionToggle extends StatelessWidget {
-  final onPressed;
+  final Function onPressed;
   const DetectionToggle({super.key, required this.onPressed});
 
   @override

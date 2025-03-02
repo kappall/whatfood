@@ -110,7 +110,7 @@ class HomePostCard extends ConsumerWidget {
     final theme = Theme.of(context);
     final usernameAsync = ref.watch(userNameProvider(post.uid));
     final userPicAsync = ref.watch(userPicProvider(post.uid));
-
+    final user = ref.watch(userProvider);
     return GestureDetector(
       onDoubleTap: () => likeOrUnlikePost(ref),
       child: Stack(

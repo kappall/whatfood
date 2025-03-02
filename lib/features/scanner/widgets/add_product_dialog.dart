@@ -30,7 +30,6 @@ class _AddProductDialogState extends ConsumerState<AddProductDialog> {
     final totalGramsDouble = widget.totalGrams.toDouble();
     final ratio = quantity / totalGramsDouble;
 
-    // Filter and adjust only the essential nutritional values
     final filteredNutritionalValues = Map<String, dynamic>.fromEntries(
       NutritionTable.essentialKeys
           .where((key) => widget.nutritionalValues.containsKey(key))

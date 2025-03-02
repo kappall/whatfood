@@ -175,7 +175,7 @@ class _MainPageState extends State<MainPage> {
           body: _pages[_selectedIndex],
           backgroundColor: Colors.black,
           bottomNavigationBar: SizedBox(
-            height: 50, // Regola l'altezza a tuo piacimento
+            height: 50,
             child: BottomNavigationBar(
               iconSize: 28,
               items: const [

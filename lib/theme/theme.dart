@@ -54,18 +54,6 @@ final darkTheme = ThemeData(
       color: Colors.white60,
     ),
   ),
-  inputDecorationTheme: InputDecorationTheme(
-    filled: true, // Per sfondo visibile
-    fillColor: Colors.grey[900], // Sfondo del campo di input
-    hintStyle: TextStyle(color: Colors.grey[500]), // Colore placeholder
-    labelStyle: TextStyle(color: Colors.white), // Colore etichetta
-    focusedBorder: OutlineInputBorder(
-      borderSide: BorderSide(color: Colors.blueAccent), // Bordo in focus
-    ),
-    enabledBorder: OutlineInputBorder(
-      borderSide: BorderSide(color: Colors.grey), // Bordo normale
-    ),
-  ),
   bottomNavigationBarTheme: const BottomNavigationBarThemeData(
     backgroundColor: Color(0xFF121212),
     selectedItemColor: Colors.orange,

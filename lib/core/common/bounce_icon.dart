@@ -19,10 +19,10 @@ class BounceIconButton extends StatefulWidget {
   });
 
   @override
-  _BounceIconButtonState createState() => _BounceIconButtonState();
+  BounceIconButtonState createState() => BounceIconButtonState();
 }
 
-class _BounceIconButtonState extends State<BounceIconButton> {
+class BounceIconButtonState extends State<BounceIconButton> {
   double _scale = 1.0;
   late bool _isActive;
 
