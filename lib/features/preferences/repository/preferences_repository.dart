@@ -39,7 +39,7 @@ class PreferencesRepository {
       await _users.doc(uid).update({
         'preferences': newPreferences.toList(),
       });
-      return right(0);
+      return right(null);
     } on FirebaseException catch (e) {
       return left(Failure(e.message ?? "Unknown Firebase error"));
     } catch (e) {

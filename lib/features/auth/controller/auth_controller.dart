@@ -6,7 +6,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:routemaster/routemaster.dart';
 import 'package:whatfood/core/utils.dart';
 import 'package:whatfood/features/auth/repository/auth_repository.dart';
-import 'package:whatfood/features/preferences/views/preferences_view.dart';
 import 'package:whatfood/models/user_model.dart';
 
 final userProvider = StateProvider<UserModel?>((ref) => null);
@@ -87,7 +86,9 @@ class AuthController extends StateNotifier<bool> {
         },
       );
     } catch (e) {
-      showSnackBar(context, e.toString());
+      if (context.mounted) {
+        showSnackBar(context, e.toString());
+      }
     }
   }
 

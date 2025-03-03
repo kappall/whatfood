@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:routemaster/routemaster.dart';
 import 'package:whatfood/button_styles.dart';
-import 'package:whatfood/core/utils.dart';
 import 'package:whatfood/features/auth/controller/auth_controller.dart';
 import 'package:whatfood/features/scanner/widgets/add_product_dialog.dart';
 import 'package:whatfood/features/scanner/widgets/nutriscore_widget.dart';
@@ -152,99 +151,96 @@ class ProductModal extends ConsumerWidget {
         builder: (context, scrollController) {
           return ClipRRect(
             borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
-            child: Container(
-              // Se desideri aggiungere ulteriori decorazioni interne, puoi farlo qui
-              child: SingleChildScrollView(
-                controller: scrollController,
-                child: Padding(
-                  padding: const EdgeInsets.all(16.0),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Container(
-                        height: 5,
-                        width: 50,
-                        margin: const EdgeInsets.only(bottom: 16),
-                        decoration: BoxDecoration(
-                          color: Colors.grey[300],
-                          borderRadius: BorderRadius.circular(10),
+            child: SingleChildScrollView(
+              controller: scrollController,
+              child: Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Container(
+                      height: 5,
+                      width: 50,
+                      margin: const EdgeInsets.only(bottom: 16),
+                      decoration: BoxDecoration(
+                        color: Colors.grey[300],
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                    ),
+                    if (productData['image_url']?.isNotEmpty ?? false)
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(10),
+                        child: Image.network(
+                          productData['image_url']!,
+                          height: 150,
+                          fit: BoxFit.cover,
                         ),
                       ),
-                      if (productData['image_url']?.isNotEmpty ?? false)
-                        ClipRRect(
-                          borderRadius: BorderRadius.circular(10),
-                          child: Image.network(
-                            productData['image_url']!,
-                            height: 150,
-                            fit: BoxFit.cover,
-                          ),
+                    if (productData['nutriscore_grade'] != null)
+                      Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 8),
+                        child: NutriScoreWidget(
+                          grade: productData['nutriscore_grade'],
                         ),
-                      if (productData['nutriscore_grade'] != null)
-                        Padding(
-                          padding: const EdgeInsets.symmetric(vertical: 8),
-                          child: NutriScoreWidget(
-                            grade: productData['nutriscore_grade'],
-                          ),
-                        ),
-                      const SizedBox(height: 16),
+                      ),
+                    const SizedBox(height: 16),
+                    Text(
+                      '${productData['product_name'] ?? 'Product Name not available'} ${productData['product_name'] != null && productData['product_name']!.isNotEmpty ? '${quantity}g' : ''}',
+                      style: const TextStyle(
+                        fontSize: 22,
+                        fontWeight: FontWeight.bold,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 8),
+                    if (productData['brands']?.isNotEmpty ?? false)
                       Text(
-                        '${productData['product_name'] ?? 'Product Name not available'} ${productData['product_name'] != null && productData['product_name']!.isNotEmpty ? '${quantity}g' : ''}',
+                        'Brand: ${productData['brands']}',
                         style: const TextStyle(
-                          fontSize: 22,
-                          fontWeight: FontWeight.bold,
+                          fontSize: 16,
+                          color: Colors.white60,
                         ),
                         textAlign: TextAlign.center,
                       ),
-                      const SizedBox(height: 8),
-                      if (productData['brands']?.isNotEmpty ?? false)
-                        Text(
-                          'Brand: ${productData['brands']}',
-                          style: const TextStyle(
-                            fontSize: 16,
-                            color: Colors.white60,
+                    const SizedBox(height: 16),
+                    if (productData['ingredients_text'] != null)
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text(
+                            'Ingredients:',
+                            style: TextStyle(
+                                fontSize: 18, fontWeight: FontWeight.bold),
                           ),
-                          textAlign: TextAlign.center,
-                        ),
-                      const SizedBox(height: 16),
-                      if (productData['ingredients_text'] != null)
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const Text(
-                              'Ingredients:',
-                              style: TextStyle(
-                                  fontSize: 18, fontWeight: FontWeight.bold),
-                            ),
-                            const SizedBox(height: 8),
-                            _buildIngredientsList(context),
-                          ],
-                        ),
-                      const SizedBox(height: 16),
-                      NutritionTable(data: productData["nutriments"]),
-                      const SizedBox(height: 16),
-                      ElevatedButton(
-                        onPressed: () async {
-                          await _handleAddProduct(context);
-                        },
-                        style: ButtonStyles.elevatedButtonStyle(
-                            backgroundColor: Colors.green),
-                        child: const Text(
-                          'Add to report',
-                          style: TextStyle(fontSize: 16),
-                        ),
+                          const SizedBox(height: 8),
+                          _buildIngredientsList(context),
+                        ],
                       ),
-                      const SizedBox(height: 10),
-                      ElevatedButton(
-                        onPressed: () => Routemaster.of(context).pop(),
-                        style: ButtonStyles.elevatedButtonStyle(
-                            backgroundColor: Colors.redAccent),
-                        child: const Text(
-                          'Close',
-                          style: TextStyle(fontSize: 16),
-                        ),
+                    const SizedBox(height: 16),
+                    NutritionTable(data: productData["nutriments"]),
+                    const SizedBox(height: 16),
+                    ElevatedButton(
+                      onPressed: () async {
+                        await _handleAddProduct(context);
+                      },
+                      style: ButtonStyles.elevatedButtonStyle(
+                          backgroundColor: Colors.green),
+                      child: const Text(
+                        'Add to report',
+                        style: TextStyle(fontSize: 16),
                       ),
-                    ],
-                  ),
+                    ),
+                    const SizedBox(height: 10),
+                    ElevatedButton(
+                      onPressed: () => Routemaster.of(context).pop(),
+                      style: ButtonStyles.elevatedButtonStyle(
+                          backgroundColor: Colors.redAccent),
+                      child: const Text(
+                        'Close',
+                        style: TextStyle(fontSize: 16),
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ),

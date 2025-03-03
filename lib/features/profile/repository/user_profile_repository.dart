@@ -1,6 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:fpdart/fpdart.dart';
 import 'package:whatfood/core/constants/firebase_constants.dart';
@@ -8,7 +7,6 @@ import 'package:whatfood/core/failure.dart';
 import 'package:whatfood/core/providers/firebase_providers.dart';
 import 'package:whatfood/core/type_def.dart';
 import 'package:whatfood/models/post_model.dart';
-import 'package:whatfood/models/recipe_model.dart';
 import 'package:whatfood/models/user_model.dart';
 
 final userProfileRepositoryProvider = Provider((ref) {

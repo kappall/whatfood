@@ -71,7 +71,7 @@ class PostCard extends ConsumerWidget {
             onPressed: () {
               FocusScope.of(context).unfocus();
 
-              print("Pulsante premuto1");
+              debugPrint("Pulsante premuto1");
             },
             icon: Icon(
               Icons.edit,
@@ -85,7 +85,7 @@ class PostCard extends ConsumerWidget {
           onPressed: () {
             FocusScope.of(context).unfocus();
 
-            print("shearing");
+            debugPrint("shearing");
           },
           icon: Icon(
             Icons.share,

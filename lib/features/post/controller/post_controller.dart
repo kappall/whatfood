@@ -213,9 +213,9 @@ class PostController extends StateNotifier<bool> {
       try {
         processedFile = await compressImage(image);
       } catch (e) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error compressing image: ${e.toString()}')),
-        );
+        if (context.mounted) {
+          showSnackBar(context, 'Error compressing image: ${e.toString()}');
+        }
         state = false;
         return;
       }
@@ -258,9 +258,9 @@ class PostController extends StateNotifier<bool> {
       );
     } catch (e) {
       state = false;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error: ${e.toString()}')),
-      );
+      if (context.mounted) {
+        showSnackBar(context, 'Error: ${e.toString()}');
+      }
     }
   }
 
@@ -280,7 +280,6 @@ class PostController extends StateNotifier<bool> {
     Post post,
     UserModel user,
   ) async {
-    final uid = _ref.read(userProvider)!.uid;
     await _postRepository.addOrRemoveBookmark(post, user);
   }
 

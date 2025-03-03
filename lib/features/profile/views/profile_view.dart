@@ -121,6 +121,7 @@ class _ProfileViewState extends ConsumerState<ProfileView>
           final shouldDelete = await showOutDialog(context, 'Delete Account',
               'This action is irreversible. Are you sure you want to delete your account?');
           if (shouldDelete) {
+            // ignore: use_build_context_synchronously
             deleteUser(context, ref);
           }
         } else if (value == 'Edit preferences') {
@@ -221,8 +222,7 @@ class _ProfileViewState extends ConsumerState<ProfileView>
                               const SizedBox(width: 16),
                               Column(
                                 children: [
-                                  Text(((user.following?.length) ?? 0)
-                                      .toString()),
+                                  Text((user.following.length).toString()),
                                   Text('following')
                                 ],
                               )
@@ -259,7 +259,7 @@ class _ProfileViewState extends ConsumerState<ProfileView>
                                           horizontal: 25),
                                     ),
                                     child: Text(
-                                      user.followers?.contains(currUid) ?? false
+                                      user.followers.contains(currUid)
                                           ? 'Unfollow'
                                           : 'Follow',
                                     ),
@@ -335,7 +335,7 @@ class _ProfileViewState extends ConsumerState<ProfileView>
             ),
           ),
           error: (error, stackTrace) {
-            print(stackTrace.toString());
+            debugPrint(stackTrace.toString());
             return ErrorText(error: error.toString());
           },
           loading: () => const Loader(),

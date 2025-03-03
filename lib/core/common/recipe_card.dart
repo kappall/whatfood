@@ -49,7 +49,7 @@ class RecipeCard extends ConsumerWidget {
             child: TextButton.icon(
               style: ButtonStyles.textButtonStyle(textColor: Colors.blueAccent),
               onPressed: () {
-                print("Edit pressed");
+                debugPrint("Edit pressed");
               },
               icon: Icon(Icons.edit, color: Colors.blueAccent),
               label: Text("Edit"),

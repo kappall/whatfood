@@ -2,10 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:uuid/uuid.dart';
 import 'package:whatfood/core/utils.dart';
-import 'package:whatfood/features/profile/controller/user_profile_controller.dart';
-import '../../../models/report_model.dart';
-import '../repository/report_repository.dart';
-import '../../auth/controller/auth_controller.dart';
+import 'package:whatfood/features/auth/controller/auth_controller.dart';
+import 'package:whatfood/features/report/repository/report_repository.dart';
+import 'package:whatfood/models/report_model.dart';
 
 final reportControllerProvider =
     StateNotifierProvider<ReportController, bool>((ref) {
@@ -62,7 +61,9 @@ class ReportController extends StateNotifier<bool> {
         showSnackBar(context, 'Food added to your report successfully');
       });
     } catch (e) {
-      showSnackBar(context, e.toString());
+      if (context.mounted) {
+        showSnackBar(context, e.toString());
+      }
     } finally {
       state = false;
     }

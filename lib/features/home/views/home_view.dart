@@ -5,7 +5,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:routemaster/routemaster.dart';
 import 'package:whatfood/features/home/views/for_you_view.dart';
 import 'package:whatfood/models/user_model.dart';
-import 'package:whatfood/theme/theme.dart';
 
 class HomeView extends ConsumerStatefulWidget {
   const HomeView({super.key});
@@ -78,7 +77,6 @@ class _HomeViewState extends ConsumerState<HomeView>
 
   @override
   Widget build(BuildContext context) {
-    final themeNotifier = ref.read(themeProvider.notifier);
     return Scaffold(
       appBar: PreferredSize(
         preferredSize: const Size.fromHeight(50),

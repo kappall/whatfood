@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:routemaster/routemaster.dart';
-import 'package:whatfood/pages/start_page.dart';
 
 class GuestHomePage extends StatelessWidget {
   const GuestHomePage({super.key});

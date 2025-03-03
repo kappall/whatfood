@@ -1,4 +1,3 @@
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
@@ -8,7 +7,6 @@ import 'package:whatfood/core/common/bounce_icon.dart';
 import 'package:whatfood/features/auth/controller/auth_controller.dart';
 import 'package:whatfood/features/post/controller/post_controller.dart';
 import 'package:whatfood/models/post_model.dart';
-import 'package:whatfood/models/user_model.dart';
 
 class HomePostCard extends ConsumerWidget {
   final Post post;
@@ -64,7 +62,7 @@ class HomePostCard extends ConsumerWidget {
             child: TextButton.icon(
               style: ButtonStyles.textButtonStyle(textColor: Colors.blueAccent),
               onPressed: () {
-                print("Edit pressed");
+                debugPrint("Edit pressed");
               },
               icon: const Icon(Icons.edit, color: Colors.blueAccent),
               label: const Text("Edit"),
@@ -105,12 +103,10 @@ class HomePostCard extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final Size size = MediaQuery.of(context).size;
     final bool isTypeImage = post.type == "image";
     final theme = Theme.of(context);
     final usernameAsync = ref.watch(userNameProvider(post.uid));
     final userPicAsync = ref.watch(userPicProvider(post.uid));
-    final user = ref.watch(userProvider);
     return GestureDetector(
       onDoubleTap: () => likeOrUnlikePost(ref),
       child: Stack(

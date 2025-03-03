@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:whatfood/features/report/controller/report_controller.dart';
+
 import 'package:whatfood/models/report_model.dart';
 
 class ReportCard extends ConsumerStatefulWidget {

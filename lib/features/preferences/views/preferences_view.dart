@@ -1,4 +1,3 @@
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:routemaster/routemaster.dart';
@@ -25,6 +24,8 @@ class PreferencesView extends ConsumerWidget {
             context: context,
             preferences: preferences,
           );
+
+      // ignore: use_build_context_synchronously
       await Routemaster.of(context).push('/verify-email').result;
     } else {
       await ref.read(preferencesControllerProvider.notifier).savePreferences(
@@ -43,7 +44,6 @@ class PreferencesView extends ConsumerWidget {
       );
     }
 
-    final isLoading = ref.watch(preferencesControllerProvider);
     Set<String> intolerances = isFromProfile ? user?.preferences ?? {} : {};
 
     return SafeArea(

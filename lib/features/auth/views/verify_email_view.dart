@@ -1,7 +1,6 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:routemaster/routemaster.dart';
 import 'package:whatfood/core/utils.dart';
 import 'package:whatfood/features/auth/controller/auth_controller.dart';
 
@@ -13,8 +12,6 @@ class VerifyEmailView extends ConsumerStatefulWidget {
 }
 
 class _VerifyEmailViewState extends ConsumerState<VerifyEmailView> {
-  bool _isLoading = false;
-
   Future<void> _checkVerification() async {
     await FirebaseAuth.instance.currentUser?.reload();
     final user = FirebaseAuth.instance.currentUser;
@@ -25,16 +22,22 @@ class _VerifyEmailViewState extends ConsumerState<VerifyEmailView> {
         ref.invalidate(authStateChangeProvider);
       }
     } else {
-      showSnackBar(context, 'Email not verified yet');
+      if (context.mounted) {
+        showSnackBar(context, 'Email not verified yet');
+      }
     }
   }
 
   Future<void> _resendVerification() async {
     try {
       await FirebaseAuth.instance.currentUser?.sendEmailVerification();
-      showSnackBar(context, 'Email di verifica inviata');
+      if (context.mounted) {
+        showSnackBar(context, 'Email di verifica inviata');
+      }
     } catch (e) {
-      showSnackBar(context, 'Errore durante l\'invio: ${e.toString()}');
+      if (context.mounted) {
+        showSnackBar(context, 'Errore durante l\'invio: ${e.toString()}');
+      }
     }
   }
 
@@ -73,7 +76,7 @@ class _VerifyEmailViewState extends ConsumerState<VerifyEmailView> {
             ),
             const SizedBox(height: 80),
             FilledButton(
-                onPressed: _isLoading ? null : _resendVerification,
+                onPressed: _resendVerification,
                 style: FilledButton.styleFrom(
                   backgroundColor: Colors.lightGreen,
                   shape: RoundedRectangleBorder(
@@ -82,13 +85,11 @@ class _VerifyEmailViewState extends ConsumerState<VerifyEmailView> {
                   padding:
                       const EdgeInsets.symmetric(vertical: 15, horizontal: 40),
                 ),
-                child: _isLoading
-                    ? const CircularProgressIndicator()
-                    : const Text('Resend Email',
-                        style: TextStyle(fontSize: 18, color: Colors.white))),
+                child: const Text('Resend Email',
+                    style: TextStyle(fontSize: 18, color: Colors.white))),
             const SizedBox(height: 30),
             TextButton(
-              onPressed: _isLoading ? null : _checkVerification,
+              onPressed: _checkVerification,
               child: const Text(
                 'I have verified my email',
                 style: TextStyle(
