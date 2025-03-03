@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-class BounceIconButton extends StatefulWidget {
+class BounceIconButton extends ConsumerStatefulWidget {
   final IconData activeIcon;
   final IconData inactiveIcon;
   final bool isActive;
@@ -19,23 +20,15 @@ class BounceIconButton extends StatefulWidget {
   });
 
   @override
-  BounceIconButtonState createState() => BounceIconButtonState();
+  ConsumerState<BounceIconButton> createState() => BounceIconButtonState();
 }
 
-class BounceIconButtonState extends State<BounceIconButton> {
+class BounceIconButtonState extends ConsumerState<BounceIconButton> {
   double _scale = 1.0;
-  late bool _isActive;
-
-  @override
-  void initState() {
-    super.initState();
-    _isActive = widget.isActive;
-  }
 
   void _animate() async {
     setState(() {
       _scale = 1.2;
-      _isActive = !_isActive;
     });
 
     await Future.delayed(const Duration(milliseconds: 100));
@@ -56,8 +49,8 @@ class BounceIconButtonState extends State<BounceIconButton> {
         duration: const Duration(milliseconds: 50),
         curve: Curves.easeOut,
         child: Icon(
-          _isActive ? widget.activeIcon : widget.inactiveIcon,
-          color: _isActive ? widget.activeColor : widget.inactiveColor,
+          widget.isActive ? widget.activeIcon : widget.inactiveIcon,
+          color: widget.isActive ? widget.activeColor : widget.inactiveColor,
           size: 30,
         ),
       ),

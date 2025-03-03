@@ -197,10 +197,10 @@ class HomePostCard extends ConsumerWidget {
                     ),
                     IconButton(
                       icon: Icon(
-                        Icons.send,
+                        Icons.delete,
                         color: Colors.white,
                       ),
-                      onPressed: null,
+                      onPressed: () => deletePost(ref, context),
                     ),
                   ],
                 ),
