@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:routemaster/routemaster.dart';
-import 'package:whatfood/button_styles.dart';
 import 'package:whatfood/features/auth/controller/auth_controller.dart';
 import 'package:whatfood/features/post/controller/post_controller.dart';
 import 'package:whatfood/models/post_model.dart';
@@ -165,7 +164,7 @@ class PostCard extends ConsumerWidget {
                     decoration: BoxDecoration(
                         color: Theme.of(context).appBarTheme.backgroundColor),
                     child: Image.network(
-                      post.imageUrl!,
+                      post.imageUrl,
                       fit: BoxFit.contain,
                       width: double.infinity,
                     ),
@@ -202,7 +201,7 @@ class PostCard extends ConsumerWidget {
                           child: Padding(
                             padding: const EdgeInsets.all(16.0),
                             child: Text(
-                              post.description!,
+                              post.description,
                               style: TextStyle(
                                 fontSize: 16,
                                 fontWeight: FontWeight.w400,

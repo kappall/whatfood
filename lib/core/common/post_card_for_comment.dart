@@ -125,7 +125,7 @@ class PostCardForComment extends ConsumerWidget {
               ClipRRect(
                 borderRadius: BorderRadius.circular(16),
                 child: Image.network(
-                  post.imageUrl!,
+                  post.imageUrl,
                   fit: BoxFit.cover,
                   width: double.infinity,
                   height: MediaQuery.of(context).size.height * 0.35,
@@ -141,7 +141,7 @@ class PostCardForComment extends ConsumerWidget {
                   borderRadius: BorderRadius.circular(16),
                 ),
                 child: Text(
-                  post.description!,
+                  post.description,
                   style: TextStyle(fontSize: 16, height: 1.5),
                 ),
               ),

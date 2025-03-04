@@ -35,7 +35,7 @@ class PostCard extends ConsumerWidget {
                 child: isTypeImage
                     ? ClipRRect(
                         child: Image.network(
-                          post.imageUrl!,
+                          post.imageUrl,
                           fit: BoxFit.cover,
                         ),
                       )
