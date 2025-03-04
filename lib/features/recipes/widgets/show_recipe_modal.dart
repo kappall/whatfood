@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:routemaster/routemaster.dart';
 import 'package:whatfood/button_styles.dart';
 import 'package:whatfood/features/auth/controller/auth_controller.dart';
+import 'package:whatfood/features/scanner/utils/ingridients_processor.dart';
 import 'package:whatfood/models/recipe_model.dart';
 
 class RecipeModal extends ConsumerWidget {
@@ -16,30 +17,10 @@ class RecipeModal extends ConsumerWidget {
         (intolerance) => lowerIngredient.contains(intolerance.toLowerCase()));
   }
 
-  Widget _buildIngredientsList(Set<String> intolerances, BuildContext context) {
-    bool hasIntolerances = false;
-    final chips = recipe.ingredients.map((ingredient) {
-      final trimmedIngredient = ingredient.trim();
-      final hasIntolerance = _hasIntolerance(trimmedIngredient, intolerances);
-      if (hasIntolerance) hasIntolerances = true;
-
-      return Container(
-        decoration: BoxDecoration(
-          color: hasIntolerance ? Colors.red : Colors.grey[100],
-          borderRadius: BorderRadius.circular(8),
-          border: Border.all(color: Theme.of(context).primaryColor),
-        ),
-        margin: const EdgeInsets.only(bottom: 12),
-        padding: const EdgeInsets.all(12),
-        child: Text(
-          trimmedIngredient,
-          style: TextStyle(
-            color: hasIntolerance ? Colors.white : Colors.black87,
-            fontWeight: hasIntolerance ? FontWeight.bold : FontWeight.normal,
-          ),
-        ),
-      );
-    }).toList();
+  Widget _buildIngredientsList(Set<String> intolerances, BuildContext context,
+      Set<String> userIntolerances) {
+    bool hasIntolerances = recipe.ingredients.any((ingredient) =>
+        IngredientsProcessor.hasIntolerance(ingredient, userIntolerances));
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -51,31 +32,129 @@ class RecipeModal extends ConsumerWidget {
             decoration: BoxDecoration(
               color: Colors.red,
               borderRadius: BorderRadius.circular(8),
-              border: Border.all(color: Colors.black),
             ),
-            child: Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              crossAxisAlignment: WrapCrossAlignment.center,
-              children: [
-                const Icon(Icons.warning_amber_rounded,
-                    color: Colors.white, size: 32),
-                const SizedBox(width: 8),
-                Text(
-                  'Warning: This product contains ingredients you may be intolerant to!',
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 16,
+            child: Row(
+              children: const [
+                Icon(Icons.warning_amber_rounded,
+                    color: Colors.white, size: 24),
+                SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    'Contains ingredients you may be intolerant to!',
+                    style: TextStyle(
+                        color: Colors.white, fontWeight: FontWeight.bold),
                   ),
                 ),
               ],
             ),
           ),
-        Wrap(
-          spacing: 8.0,
-          runSpacing: 8.0,
-          children: chips,
+        Container(
+          decoration: BoxDecoration(
+            color: Colors.grey[900],
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: Colors.grey[800]!),
+          ),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(12),
+            child: Table(
+              border: TableBorder(
+                horizontalInside: BorderSide(color: Colors.grey[800]!),
+              ),
+              defaultVerticalAlignment: TableCellVerticalAlignment.middle,
+              children: [
+                const TableRow(
+                  decoration: BoxDecoration(
+                    color: Colors.black26,
+                  ),
+                  children: [
+                    Padding(
+                      padding:
+                          EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                      child: Text(
+                        'Ingredient',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 16,
+                        ),
+                      ),
+                    ),
+                    Center(
+                      child: Text(
+                        'Status',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 16,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                ...recipe.ingredients.map(
+                  (ingredient) {
+                    final trimmedIngredient = ingredient.trim();
+                    final hasIntolerance =
+                        _hasIntolerance(trimmedIngredient, intolerances);
+                    if (hasIntolerance) hasIntolerances = true;
+
+                    return TableRow(
+                      children: [
+                        Padding(
+                          padding: const EdgeInsets.only(
+                            left: 8,
+                            right: 0,
+                            top: 12,
+                          ),
+                          child: Text(
+                            trimmedIngredient,
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 14,
+                            ),
+                          ),
+                        ),
+                        Padding(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 12,
+                          ),
+                          child: Center(
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Container(
+                                  width: 8,
+                                  height: 8,
+                                  decoration: BoxDecoration(
+                                    shape: BoxShape.circle,
+                                    color: hasIntolerance
+                                        ? Colors.red
+                                        : Colors.green,
+                                  ),
+                                ),
+                                const SizedBox(width: 8),
+                                Text(
+                                  hasIntolerance ? 'Warning' : 'Safe',
+                                  style: TextStyle(
+                                    color: hasIntolerance
+                                        ? Colors.red
+                                        : Colors.green,
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 14,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ],
+                    );
+                  },
+                ),
+              ],
+            ),
+          ),
         ),
       ],
     );
@@ -83,10 +162,9 @@ class RecipeModal extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final user = ref.watch(userProvider);
+    final user = ref.watch(userProvider)!;
     final userIntolerances = user?.preferences ?? <String>{};
-
-    bool hasIntolerances = recipe.ingredients
+    final hasIntolerances = recipe.ingredients
         .any((ingredient) => _hasIntolerance(ingredient, userIntolerances));
 
     return Material(
@@ -107,72 +185,154 @@ class RecipeModal extends ConsumerWidget {
             borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
             child: SingleChildScrollView(
               controller: scrollController,
-              child: Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Container(
-                      height: 5,
-                      width: 50,
-                      margin: const EdgeInsets.only(bottom: 16),
-                      decoration: BoxDecoration(
-                        color: Colors.grey[300],
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                    ),
-                    ClipRRect(
-                      borderRadius: BorderRadius.circular(10),
-                      child: Image.network(
+              child: Column(
+                children: [
+                  Stack(
+                    children: [
+                      Image.network(
                         recipe.coverImage,
                         width: double.infinity,
-                        height: 300,
-                        fit: BoxFit.contain,
+                        height: 250,
+                        fit: BoxFit.cover,
                       ),
-                    ),
-                    const SizedBox(height: 16),
-                    Text(
-                      recipe.title,
-                      style: const TextStyle(
-                        fontSize: 22,
-                        fontWeight: FontWeight.bold,
+                      Positioned.fill(
+                        child: DecoratedBox(
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              begin: Alignment.topCenter,
+                              end: Alignment.bottomCenter,
+                              colors: [
+                                Colors.transparent,
+                                Colors.black.withOpacity(0.7),
+                              ],
+                            ),
+                          ),
+                        ),
                       ),
-                      textAlign: TextAlign.center,
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      'Ready in: ${recipe.cookTimeMinutes} minute',
-                      style: const TextStyle(
-                        fontSize: 16,
-                        color: Colors.black54,
+                      Positioned(
+                        bottom: 16,
+                        left: 16,
+                        right: 16,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              recipe.title,
+                              style: const TextStyle(
+                                fontSize: 24,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.white,
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                            Row(
+                              children: [
+                                Icon(Icons.timer,
+                                    color: Colors.white, size: 20),
+                                const SizedBox(width: 4),
+                                Text(
+                                  '${recipe.cookTimeMinutes} min',
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 16,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
                       ),
-                      textAlign: TextAlign.center,
-                    ),
-                    const SizedBox(height: 16),
-                    Column(
+                    ],
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
+                        // Ingredients Section
                         const Text(
-                          'Ingredients:',
+                          'Ingredients',
                           style: TextStyle(
-                              fontSize: 18, fontWeight: FontWeight.bold),
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white,
+                          ),
                         ),
-                        const SizedBox(height: 8),
-                        _buildIngredientsList(userIntolerances, context),
+                        const SizedBox(height: 16),
+                        _buildIngredientsList(
+                            userIntolerances, context, user.preferences),
+                        const SizedBox(height: 24),
+
+                        // Instructions Section
+                        const Text(
+                          'Instructions',
+                          style: TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white,
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                        ListView.builder(
+                          shrinkWrap: true,
+                          physics: NeverScrollableScrollPhysics(),
+                          itemCount: recipe.instructions.length,
+                          itemBuilder: (context, index) {
+                            return Padding(
+                              padding: const EdgeInsets.only(bottom: 16),
+                              child: Row(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Container(
+                                    width: 24,
+                                    height: 24,
+                                    decoration: BoxDecoration(
+                                      color: Theme.of(context).primaryColor,
+                                      shape: BoxShape.circle,
+                                    ),
+                                    child: Center(
+                                      child: Text(
+                                        '${index + 1}',
+                                        style: const TextStyle(
+                                          color: Colors.black,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                  const SizedBox(width: 12),
+                                  Expanded(
+                                    child: Text(
+                                      recipe.instructions[index],
+                                      style: const TextStyle(
+                                        fontSize: 16,
+                                        color: Colors.white,
+                                        height: 1.5,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            );
+                          },
+                        ),
+                        const SizedBox(height: 24),
+                        SizedBox(
+                          width: double.infinity,
+                          child: ElevatedButton(
+                            onPressed: () => Routemaster.of(context).pop(),
+                            style: ButtonStyles.elevatedButtonStyle(
+                                backgroundColor: Colors.redAccent),
+                            child: const Text(
+                              'Close',
+                              style: TextStyle(fontSize: 16),
+                            ),
+                          ),
+                        ),
                       ],
                     ),
-                    const SizedBox(height: 10),
-                    ElevatedButton(
-                      onPressed: () => Routemaster.of(context).pop(),
-                      style: ButtonStyles.elevatedButtonStyle(
-                          backgroundColor: Colors.redAccent),
-                      child: const Text(
-                        'Close',
-                        style: TextStyle(fontSize: 16),
-                      ),
-                    ),
-                  ],
-                ),
+                  ),
+                ],
               ),
             ),
           );

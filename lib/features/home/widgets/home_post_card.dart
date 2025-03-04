@@ -208,7 +208,6 @@ class HomePostCard extends ConsumerWidget {
                             : TextOverflow.ellipsis,
                         style: const TextStyle(
                           fontSize: 18,
-                          fontFamily: 'Montserrat',
                           color: Colors.white,
                           fontWeight: FontWeight.bold,
                         ),
