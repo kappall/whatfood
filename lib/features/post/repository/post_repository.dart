@@ -1,4 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_storage/firebase_storage.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:fpdart/fpdart.dart';
 import 'package:whatfood/core/constants/firebase_constants.dart';
@@ -12,13 +14,17 @@ import 'package:whatfood/models/user_model.dart';
 final postRepositoryProvider = Provider((ref) {
   return PostRepository(
     firestore: ref.watch(firestoreProvider),
+    storage: ref.watch(storageProvider),
   );
 });
 
 class PostRepository {
   final FirebaseFirestore _firestore;
-  PostRepository({required FirebaseFirestore firestore})
-      : _firestore = firestore;
+  final FirebaseStorage _storage;
+  PostRepository(
+      {required FirebaseFirestore firestore, required FirebaseStorage storage})
+      : _firestore = firestore,
+        _storage = storage;
 
   CollectionReference get _posts =>
       _firestore.collection(FirebaseConstants.postsCollection);
@@ -115,8 +121,9 @@ class PostRepository {
 
   FutureVoid deletePost(String id, String uid) async {
     try {
+      debugPrint(id.toString());
+      await _storage.ref('posts/$id').delete();
       final batch = _firestore.batch();
-
       batch.delete(_posts.doc(id));
 
       batch.update(_users.doc(uid), {

@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:fpdart/fpdart.dart';
 import 'package:whatfood/core/constants/firebase_constants.dart';
@@ -10,13 +11,17 @@ import 'package:whatfood/models/recipe_model.dart';
 final recipeRepositoryProvider = Provider((ref) {
   return RecipeRepository(
     firestore: ref.watch(firestoreProvider),
+    storage: ref.watch(storageProvider),
   );
 });
 
 class RecipeRepository {
   final FirebaseFirestore _firestore;
-  RecipeRepository({required FirebaseFirestore firestore})
-      : _firestore = firestore;
+  final FirebaseStorage _storage;
+  RecipeRepository(
+      {required FirebaseFirestore firestore, required FirebaseStorage storage})
+      : _firestore = firestore,
+        _storage = storage;
 
   CollectionReference get _recipes =>
       _firestore.collection(FirebaseConstants.recipesCollection);
@@ -53,6 +58,7 @@ class RecipeRepository {
 
   FutureVoid deleteRecipe(String id) async {
     try {
+      await _storage.ref('recipes/$id').delete();
       return right(_recipes.doc(id).delete());
     } on FirebaseException catch (e) {
       throw e.message!;

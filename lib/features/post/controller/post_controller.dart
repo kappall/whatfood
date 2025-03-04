@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image/image.dart' as img;
 import 'package:routemaster/routemaster.dart';
 import 'package:uuid/uuid.dart';
+import 'package:whatfood/core/common/meal_type_enum.dart';
 import 'package:whatfood/core/providers/firebase_providers.dart';
 import 'package:whatfood/core/providers/storage_repository_provider.dart';
 import 'package:whatfood/core/utils.dart';
@@ -25,6 +26,8 @@ final postControllerProvider =
     storageRepository: storageRepository,
   );
 });
+
+final mealFilterProvider = StateProvider<MealType?>((ref) => null);
 
 final postsProvider = StreamProvider((ref) {
   final postController = ref.watch(postControllerProvider.notifier);
@@ -78,56 +81,6 @@ class PostController extends StateNotifier<bool> {
 
   Stream<List<Post>> fetchPosts() {
     return _postRepository.fetchPosts();
-  }
-
-  void shareTextPost({
-    required BuildContext context,
-    required String title,
-    required List<String> tags,
-    required String description,
-  }) async {
-    state = true;
-    final user = _ref.watch(userProvider);
-
-    debugPrint('Current user for text post: ${user?.uid}');
-
-    if (user == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('User not logged in')),
-      );
-      state = false;
-      return;
-    }
-
-    String postId = const Uuid().v1();
-
-    final Post post = Post(
-      id: postId,
-      title: title,
-      description: description,
-      uid: user.uid,
-      userImage: user.profilePic,
-      username: user.name,
-      createdAt: DateTime.now(),
-      likes: [],
-      tags: tags,
-      commentCount: 0,
-      type: 'text',
-    );
-
-    final res = await _postRepository.addPost(post);
-    state = false;
-    res.fold(
-      (l) => ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(l.message)),
-      ),
-      (r) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Posted successfully!')),
-        );
-        Routemaster.of(context).popUntil((route) => route.path == '/');
-      },
-    );
   }
 
   Future<File> compressImage(File file,
@@ -191,9 +144,10 @@ class PostController extends StateNotifier<bool> {
 
   void shareimagePost({
     required BuildContext context,
-    required String title,
+    required String description,
     required List<String> tags,
     required File image,
+    required MealType mealType,
   }) async {
     state = true;
     final user = _ref.watch(userProvider);
@@ -220,10 +174,9 @@ class PostController extends StateNotifier<bool> {
         return;
       }
 
-      final imageId = const Uuid().v1();
       final result = await _storageRepository.storeFile(
         path: 'posts',
-        id: imageId,
+        id: postId,
         file: processedFile,
       );
 
@@ -234,8 +187,8 @@ class PostController extends StateNotifier<bool> {
 
       final Post post = Post(
         id: postId,
-        title: title,
         uid: user.uid,
+        description: description,
         userImage: user.profilePic,
         username: user.name,
         createdAt: DateTime.now(),
@@ -244,6 +197,7 @@ class PostController extends StateNotifier<bool> {
         imageUrl: imageUrl,
         commentCount: 0,
         type: 'image',
+        mealType: mealType,
       );
 
       final res = await _postRepository.addPost(post);
@@ -264,8 +218,8 @@ class PostController extends StateNotifier<bool> {
     }
   }
 
-  void deletePost(String id, String uid, BuildContext context) async {
-    final res = await _postRepository.deletePost(id, uid);
+  void deletePost(Post post, BuildContext context) async {
+    final res = await _postRepository.deletePost(post.id, post.uid);
     _ref.read(userProfileControllerProvider.notifier);
     res.fold((l) => null,
         (r) => showSnackBar(context, 'Post Deleted successfully!'));

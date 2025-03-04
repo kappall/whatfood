@@ -4,6 +4,7 @@ import 'package:dotted_border/dotted_border.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:whatfood/core/common/loader.dart';
+import 'package:whatfood/core/common/meal_type_enum.dart';
 import 'package:whatfood/core/utils.dart';
 import 'package:whatfood/features/post/controller/post_controller.dart';
 
@@ -17,16 +18,16 @@ class AddPostTypeView extends ConsumerStatefulWidget {
 }
 
 class _AddPostTypeViewState extends ConsumerState<AddPostTypeView> {
-  final titleController = TextEditingController();
   final descriptionController = TextEditingController();
   File? image;
   final List<String> tags = [];
   final FocusNode _tagFocusNode = FocusNode();
+  MealType? selectedMealType;
 
   @override
   void dispose() {
-    titleController.dispose();
     descriptionController.dispose();
+    _tagFocusNode.dispose();
     super.dispose();
   }
 
@@ -112,34 +113,103 @@ class _AddPostTypeViewState extends ConsumerState<AddPostTypeView> {
   }
 
   void sharePost(BuildContext context) {
-    if (titleController.text.isEmpty) {
-      showSnackBar(context, "Title missing");
+    if (image == null) {
+      showSnackBar(context, "Image missing");
+      return;
+    }
+    if (descriptionController.text.isEmpty) {
+      showSnackBar(context, "Description missing");
+      return;
+    }
+    if (selectedMealType == null) {
+      showSnackBar(context, "Please select a meal type");
       return;
     }
     if (ref.read(postControllerProvider)) return;
 
-    if (widget.type == 'image' && image != null) {
-      ref.read(postControllerProvider.notifier).shareimagePost(
+    ref.read(postControllerProvider.notifier).shareimagePost(
           context: context,
-          title: titleController.text.trim(),
+          description: descriptionController.text.trim(),
           tags: tags,
-          image: image!);
-    } else if (widget.type == 'text') {
-      ref.read(postControllerProvider.notifier).shareTextPost(
-          context: context,
-          title: titleController.text.trim(),
-          tags: tags,
-          description: descriptionController.text.trim());
-    } else {
-      showSnackBar(context, "You must all fill the fields");
-      return;
+          image: image!,
+          mealType: selectedMealType!,
+        );
+  }
+
+  Widget _buildMealTypeSelector() {
+    return Container(
+      margin: const EdgeInsets.symmetric(vertical: 16),
+      child: Column(
+        children: [
+          Align(
+            alignment: Alignment.centerLeft,
+            child: const Text(
+              'Meal Type:',
+              style: TextStyle(fontSize: 24),
+            ),
+          ),
+          const SizedBox(height: 8),
+          Wrap(
+            spacing: 6.0,
+            runSpacing: 6.0,
+            children: MealType.values.map((type) {
+              final isSelected = selectedMealType == type;
+              return IntrinsicWidth(
+                child: FilterChip(
+                  selected: isSelected,
+                  showCheckmark: false,
+                  materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                  label: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        _getMealTypeIcon(type),
+                        size: 20,
+                        color: isSelected ? Colors.white : Colors.grey,
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        type.name,
+                        style: TextStyle(
+                          color: isSelected ? Colors.white : Colors.black,
+                        ),
+                      ),
+                    ],
+                  ),
+                  selectedColor: Colors.green,
+                  backgroundColor: Colors.grey[200],
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  onSelected: (bool selected) {
+                    setState(() {
+                      selectedMealType = selected ? type : null;
+                    });
+                  },
+                ),
+              );
+            }).toList(),
+          ),
+        ],
+      ),
+    );
+  }
+
+  IconData _getMealTypeIcon(MealType type) {
+    switch (type) {
+      case MealType.breakfast:
+        return Icons.breakfast_dining;
+      case MealType.lunch:
+        return Icons.lunch_dining;
+      case MealType.dinner:
+        return Icons.dinner_dining;
+      case MealType.snack:
+        return Icons.cookie;
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    final isTypeImage = widget.type == "image";
-    final isTypeText = widget.type == "text";
     final isLoading = ref.watch(postControllerProvider);
 
     return GestureDetector(
@@ -170,111 +240,100 @@ class _AddPostTypeViewState extends ConsumerState<AddPostTypeView> {
           child: SingleChildScrollView(
             child: Column(
               children: [
-                TextField(
-                  controller: titleController,
-                  textCapitalization: TextCapitalization.sentences,
-                  enableSuggestions: true,
-                  autocorrect: true,
-                  keyboardType: TextInputType.text,
-                  decoration: InputDecoration(
-                    hintText: "Enter Title here",
-                    hintStyle: const TextStyle(color: Colors.grey),
-                    filled: true,
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    contentPadding: const EdgeInsets.all(20),
-                  ),
-                  maxLength: 30,
-                ),
-                const SizedBox(height: 10),
-                if (isTypeImage)
-                  Wrap(
-                    spacing: 8,
-                    runSpacing: 8,
-                    children: [
-                      if (image != null)
-                        Stack(
-                          children: [
-                            Container(
-                              width: 150,
-                              height: 150,
-                              decoration: BoxDecoration(
-                                borderRadius: BorderRadius.circular(10),
-                              ),
-                              child: ClipRRect(
+                Stack(
+                  children: [
+                    GestureDetector(
+                      onTap: selectImage,
+                      child: Container(
+                        width: double.infinity,
+                        height: 300,
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: image != null
+                            ? ClipRRect(
                                 borderRadius: BorderRadius.circular(10),
                                 child: Image.file(
                                   image!,
                                   fit: BoxFit.cover,
                                 ),
-                              ),
-                            ),
-                            Positioned(
-                              top: 5,
-                              right: 5,
-                              child: GestureDetector(
-                                onTap: () => removeImage(image!),
-                                child: Container(
-                                  decoration: BoxDecoration(
-                                    shape: BoxShape.circle,
-                                    color: Colors.white,
-                                  ),
-                                  child: const Icon(
-                                    Icons.close,
-                                    color: Colors.black,
-                                    size: 20,
+                              )
+                            : DottedBorder(
+                                borderType: BorderType.RRect,
+                                radius: const Radius.circular(10),
+                                dashPattern: const [10, 4],
+                                strokeCap: StrokeCap.round,
+                                color: Theme.of(context).primaryColor,
+                                child: const Center(
+                                  child: Icon(
+                                    Icons.camera_alt_outlined,
+                                    size: 40,
                                   ),
                                 ),
                               ),
-                            ),
-                          ],
-                        ),
-                      if (image == null)
-                        GestureDetector(
-                          onTap: selectImage,
+                      ),
+                    ),
+                    if (image != null)
+                      Positioned(
+                        top: 10,
+                        right: 10,
+                        child: GestureDetector(
+                          onTap: () => removeImage(image!),
                           child: Container(
-                            width: 150,
-                            height: 150,
                             decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(10),
+                              shape: BoxShape.circle,
+                              color: Colors.white,
                             ),
-                            child: DottedBorder(
-                              borderType: BorderType.RRect,
-                              radius: const Radius.circular(10),
-                              dashPattern: const [10, 4],
-                              strokeCap: StrokeCap.round,
-                              color: Theme.of(context).primaryColor,
-                              child: const Center(
-                                child: Icon(
-                                  Icons.camera_alt_outlined,
-                                  size: 40,
-                                ),
-                              ),
+                            child: const Icon(
+                              Icons.close,
+                              color: Colors.black,
+                              size: 25,
                             ),
                           ),
                         ),
-                    ],
-                  ),
-                if (isTypeText)
-                  TextField(
-                    controller: descriptionController,
-                    textCapitalization: TextCapitalization.sentences,
-                    enableSuggestions: true,
-                    autocorrect: true,
-                    keyboardType: TextInputType.text,
-                    decoration: InputDecoration(
-                      hintText: "Enter Description here",
-                      hintStyle: const TextStyle(color: Colors.grey),
-                      filled: true,
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(20),
                       ),
-                      contentPadding: const EdgeInsets.all(20),
+                  ],
+                ),
+                const SizedBox(
+                  height: 20,
+                ),
+                Stack(
+                  children: [
+                    Positioned(
+                      child: Container(
+                        margin: const EdgeInsets.symmetric(vertical: 8),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            TextField(
+                              controller: descriptionController,
+                              textCapitalization: TextCapitalization.sentences,
+                              enableSuggestions: true,
+                              autocorrect: true,
+                              keyboardType: TextInputType.text,
+                              decoration: InputDecoration(
+                                hintText: "Enter Description here",
+                                counterText: "",
+                                hintStyle: const TextStyle(color: Colors.grey),
+                                filled: true,
+                                border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(20),
+                                ),
+                                contentPadding: const EdgeInsets.all(20),
+                              ),
+                              maxLines: 3,
+                              maxLength: 70,
+                            ),
+                          ],
+                        ),
+                      ),
                     ),
-                    maxLines: 8,
-                    maxLength: 300,
-                  ),
+                  ],
+                ),
+                const SizedBox(
+                  height: 20,
+                ),
+                _buildMealTypeSelector(),
                 const SizedBox(
                   height: 20,
                 ),

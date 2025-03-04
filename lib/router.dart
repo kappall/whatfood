@@ -4,7 +4,6 @@ import 'package:routemaster/routemaster.dart';
 import 'package:whatfood/features/auth/views/login_view.dart';
 import 'package:whatfood/features/auth/views/register_view.dart';
 import 'package:whatfood/features/auth/views/verify_email_view.dart';
-import 'package:whatfood/features/post/views/add_post_view.dart';
 import 'package:whatfood/features/post/views/add_post_type_view.dart';
 import 'package:whatfood/features/post/views/comment_view.dart';
 import 'package:whatfood/features/preferences/views/preferences_view.dart';
@@ -28,12 +27,12 @@ final loggedInRoute = RouteMap(
         )),
     '/login': (_) => const MaterialPage(child: LoginView()),
     '/register': (_) => const MaterialPage(child: RegisterView()),
-    '/home/add_post': (_) => const MaterialPage(child: AddPostView()),
-    '/home/add_post/add_post_type/:type': (route) => MaterialPage(
-          child: AddPostTypeView(
-            type: route.pathParameters['type']!,
-          ),
-        ),
+    '/home/add_post_type/:type': (route) => MaterialPage(
+        child: (route.pathParameters['type']!) == 'image'
+            ? AddPostTypeView(
+                type: route.pathParameters['type']!,
+              )
+            : AddRecipeView()),
     '/add-recipe': (_) => const MaterialPage(child: AddRecipeView()),
     '/edit_profile/:uid': (route) => MaterialPage(
             child: EditProfileView(

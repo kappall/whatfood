@@ -3,7 +3,10 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:routemaster/routemaster.dart';
+import 'package:whatfood/core/common/meal_type_enum.dart';
 import 'package:whatfood/features/home/views/for_you_view.dart';
+import 'package:whatfood/features/home/widgets/add_post_modal.dart';
+import 'package:whatfood/features/post/controller/post_controller.dart';
 import 'package:whatfood/models/user_model.dart';
 
 class HomeView extends ConsumerStatefulWidget {
@@ -75,8 +78,80 @@ class _HomeViewState extends ConsumerState<HomeView>
     }
   }
 
+  void _showFilterMenu(BuildContext context) {
+    final currentFilter = ref.read(mealFilterProvider);
+
+    showMenu(
+      context: context,
+      position: RelativeRect.fromLTRB(0, 80, 0, 0),
+      items: [
+        PopupMenuItem<MealType?>(
+          value: null,
+          child: Row(
+            children: [
+              Icon(
+                Icons.clear_all,
+                color: currentFilter == null ? Colors.green : null,
+              ),
+              const SizedBox(width: 8),
+              Text(
+                'All Posts',
+                style: TextStyle(
+                  fontWeight: currentFilter == null
+                      ? FontWeight.bold
+                      : FontWeight.normal,
+                  color: currentFilter == null ? Colors.green : null,
+                ),
+              ),
+            ],
+          ),
+        ),
+        ...MealType.values.map(
+          (type) => PopupMenuItem<MealType?>(
+            value: type,
+            child: Row(
+              children: [
+                Icon(
+                  _getMealTypeIcon(type),
+                  color: currentFilter == type ? Colors.green : null,
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  type.name,
+                  style: TextStyle(
+                    fontWeight: currentFilter == type
+                        ? FontWeight.bold
+                        : FontWeight.normal,
+                    color: currentFilter == type ? Colors.green : null,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ],
+    ).then((selectedType) {
+      ref.read(mealFilterProvider.notifier).state = selectedType;
+    });
+  }
+
+  IconData _getMealTypeIcon(MealType type) {
+    switch (type) {
+      case MealType.breakfast:
+        return Icons.breakfast_dining;
+      case MealType.lunch:
+        return Icons.lunch_dining;
+      case MealType.dinner:
+        return Icons.dinner_dining;
+      case MealType.snack:
+        return Icons.cookie;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
+    final selectedFilter = ref.watch(mealFilterProvider);
+
     return Scaffold(
       appBar: PreferredSize(
         preferredSize: const Size.fromHeight(50),
@@ -95,8 +170,11 @@ class _HomeViewState extends ConsumerState<HomeView>
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     IconButton(
-                      onPressed: () {},
-                      icon: const Icon(Icons.filter_list),
+                      onPressed: () => _showFilterMenu(context),
+                      icon: Icon(
+                        Icons.filter_list,
+                        color: selectedFilter != null ? Colors.green : null,
+                      ),
                     ),
                     Align(
                       alignment: Alignment.centerRight,
@@ -160,8 +238,14 @@ class _HomeViewState extends ConsumerState<HomeView>
       ),
       floatingActionButton: FloatingActionButton(
         shape: CircleBorder(),
-        onPressed: () {
-          Routemaster.of(context).push('/home/add_post');
+        onPressed: () async {
+          await showModalBottomSheet(
+            context: context,
+            isScrollControlled: false,
+            useSafeArea: true,
+            backgroundColor: Colors.transparent,
+            builder: (context) => AddPostModal(),
+          );
         },
         backgroundColor: Colors.green,
         child: const Icon(
