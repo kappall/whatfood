@@ -48,7 +48,6 @@ class _ReportViewState extends ConsumerState<ReportView> {
     for (final report in reports) {
       report.nutritionalValues.forEach((key, value) {
         aggregated[key] = (aggregated[key] ?? 0) + value;
-        debugPrint(key);
       });
     }
     return aggregated;
@@ -113,7 +112,6 @@ class _ReportViewState extends ConsumerState<ReportView> {
   @override
   Widget build(BuildContext context) {
     final user = ref.watch(userProvider)!;
-    debugPrint('here');
     return Scaffold(
       appBar: AppBar(
         title: Text(

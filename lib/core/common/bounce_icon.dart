@@ -15,7 +15,7 @@ class BounceIconButton extends ConsumerStatefulWidget {
     required this.inactiveIcon,
     required this.isActive,
     required this.onPressed,
-    this.activeColor = Colors.red,
+    this.activeColor = Colors.white,
     this.inactiveColor = Colors.white,
   });
 

@@ -16,9 +16,7 @@ class PostCard extends ConsumerWidget {
   });
 
   void deletePost(WidgetRef ref, BuildContext context) async {
-    ref
-        .read(postControllerProvider.notifier)
-        .deletePost(post.id, post.uid, context);
+    ref.read(postControllerProvider.notifier).deletePost(post, context);
   }
 
   void likeOrUnlikePost(WidgetRef ref) async {
@@ -40,7 +38,7 @@ class PostCard extends ConsumerWidget {
   Widget popUpMenu(BuildContext context, WidgetRef ref, bool isOwner) {
     return PopupMenuButton<String>(
       icon: Icon(
-        Icons.more_horiz,
+        Icons.more_vert,
       ),
       onSelected: (String result) {
         if (result == 'delete') {
@@ -57,8 +55,9 @@ class PostCard extends ConsumerWidget {
                   Icons.delete,
                   color: Colors.red,
                 ),
+                SizedBox(width: 8),
                 Text(
-                  'Delete account',
+                  'Delete',
                   style: TextStyle(color: Colors.red),
                 ),
               ],
@@ -66,33 +65,34 @@ class PostCard extends ConsumerWidget {
           ),
         if (isOwner)
           PopupMenuItem<String>(
-              child: TextButton.icon(
-            style: ButtonStyles.textButtonStyle(textColor: Colors.blueAccent),
-            onPressed: () {
-              FocusScope.of(context).unfocus();
-
-              debugPrint("Pulsante premuto1");
-            },
-            icon: Icon(
-              Icons.edit,
-              color: Colors.blueAccent,
+            value: 'edit',
+            child: Row(
+              children: [
+                Icon(
+                  Icons.edit,
+                  color: Colors.blueAccent,
+                ),
+                SizedBox(width: 8),
+                Text(
+                  "Edit",
+                  style: TextStyle(color: Colors.blueAccent),
+                ),
+              ],
             ),
-            label: Text("Edit"),
-          )),
-        PopupMenuItem<String>(
-            child: TextButton.icon(
-          style: ButtonStyles.textButtonStyle(textColor: Colors.green),
-          onPressed: () {
-            FocusScope.of(context).unfocus();
-
-            debugPrint("shearing");
-          },
-          icon: Icon(
-            Icons.share,
-            color: Colors.green,
           ),
-          label: Text("Share"),
-        )),
+        PopupMenuItem<String>(
+          value: 'share',
+          child: Row(
+            children: [
+              Icon(Icons.send, color: Colors.greenAccent),
+              SizedBox(width: 8),
+              Text(
+                "Share",
+                style: TextStyle(color: Colors.greenAccent),
+              ),
+            ],
+          ),
+        ),
       ],
     );
   }
@@ -148,7 +148,7 @@ class PostCard extends ConsumerWidget {
                     Padding(
                       padding: EdgeInsets.only(top: 10),
                       child: Text(
-                        post.title,
+                        post.description,
                         style: TextStyle(
                           fontSize: 20,
                         ),

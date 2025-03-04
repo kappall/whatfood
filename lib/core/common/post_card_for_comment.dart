@@ -16,9 +16,7 @@ class PostCardForComment extends ConsumerWidget {
   });
 
   void deletePost(WidgetRef ref, BuildContext context) async {
-    ref
-        .read(postControllerProvider.notifier)
-        .deletePost(post.id, post.uid, context);
+    ref.read(postControllerProvider.notifier).deletePost(post, context);
   }
 
   void likeOrUnlikePost(WidgetRef ref) async {
@@ -116,7 +114,7 @@ class PostCardForComment extends ConsumerWidget {
             ),
             SizedBox(height: 12),
             Text(
-              post.title,
+              post.description,
               style: Theme.of(context)
                   .textTheme
                   .headlineSmall

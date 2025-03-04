@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:routemaster/routemaster.dart';
-import 'package:whatfood/button_styles.dart';
 import 'package:whatfood/core/common/bounce_icon.dart';
 import 'package:whatfood/features/auth/controller/auth_controller.dart';
 import 'package:whatfood/features/post/controller/post_controller.dart';
@@ -18,9 +17,7 @@ class HomePostCard extends ConsumerWidget {
   });
 
   void deletePost(WidgetRef ref, BuildContext context) {
-    ref
-        .read(postControllerProvider.notifier)
-        .deletePost(post.id, post.uid, context);
+    ref.read(postControllerProvider.notifier).deletePost(post, context);
   }
 
   void likeOrUnlikePost(WidgetRef ref) {
@@ -42,39 +39,43 @@ class HomePostCard extends ConsumerWidget {
 
   Widget popUpMenu(BuildContext context, WidgetRef ref, bool isOwner) {
     return PopupMenuButton<String>(
-      icon: const Icon(Icons.more_horiz, color: Colors.white),
+      offset: const Offset(-40, 0),
+      icon: const Icon(Icons.more_vert, color: Colors.white),
       iconSize: 32,
-      onSelected: (String result) {},
+      onSelected: (String value) async {
+        if (value == 'delete') {
+          deletePost(ref, context);
+        } else if (value == 'share') {
+          debugPrint('Share');
+        }
+      },
       itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
         if (isOwner)
           PopupMenuItem<String>(
-            child: TextButton.icon(
-              style: ButtonStyles.textButtonStyle(textColor: Colors.red),
-              onPressed: () {
-                deletePost(ref, context);
-              },
-              icon: const Icon(Icons.delete, color: Colors.red),
-              label: const Text("Delete"),
+            value: 'delete',
+            child: Row(
+              children: [
+                Icon(Icons.delete, color: Colors.redAccent),
+                SizedBox(width: 8),
+                Text(
+                  "Delete",
+                  style: TextStyle(color: Colors.redAccent),
+                ),
+              ],
             ),
           ),
-        if (isOwner)
-          PopupMenuItem<String>(
-            child: TextButton.icon(
-              style: ButtonStyles.textButtonStyle(textColor: Colors.blueAccent),
-              onPressed: () {
-                debugPrint("Edit pressed");
-              },
-              icon: const Icon(Icons.edit, color: Colors.blueAccent),
-              label: const Text("Edit"),
-            ),
+        PopupMenuItem<String>(
+          value: 'share',
+          child: Row(
+            children: [
+              Icon(Icons.send, color: Colors.blueAccent),
+              SizedBox(width: 8),
+              Text(
+                "Share",
+                style: TextStyle(color: Colors.blueAccent),
+              ),
+            ],
           ),
-        const PopupMenuItem<String>(
-          value: 'Option 2',
-          child: Text('Option 2'),
-        ),
-        const PopupMenuItem<String>(
-          value: 'Option 3',
-          child: Text('Option 3'),
         ),
       ],
     );
@@ -103,25 +104,20 @@ class HomePostCard extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final bool isTypeImage = post.type == "image";
-    final theme = Theme.of(context);
     final usernameAsync = ref.watch(userNameProvider(post.uid));
     final userPicAsync = ref.watch(userPicProvider(post.uid));
+    bool isExpanded = false;
+
     return GestureDetector(
       onDoubleTap: () => likeOrUnlikePost(ref),
       child: Stack(
         children: [
           Positioned.fill(
-            child: isTypeImage
-                ? Image.network(
-                    post.imageUrl!,
-                    fit: BoxFit.contain,
-                    width: double.infinity,
-                  )
-                : Container(
-                    color: theme.appBarTheme.backgroundColor ?? Colors.black,
-                  ),
-          ),
+              child: Image.network(
+            post.imageUrl,
+            fit: BoxFit.contain,
+            width: double.infinity,
+          )),
           Positioned.fill(
             child: Container(
               decoration: BoxDecoration(
@@ -195,33 +191,46 @@ class HomePostCard extends ConsumerWidget {
                         ),
                       ],
                     ),
-                    IconButton(
-                      icon: Icon(
-                        Icons.delete,
-                        color: Colors.white,
-                      ),
-                      onPressed: () => deletePost(ref, context),
-                    ),
+                    popUpMenu(
+                        context, ref, post.uid == ref.watch(userProvider)?.uid),
                   ],
                 ),
                 const SizedBox(height: 10),
-                Text(
-                  post.title,
-                  style: const TextStyle(
-                    fontSize: 24,
-                    color: Colors.white,
-                    fontWeight: FontWeight.bold,
+                StatefulBuilder(
+                  builder: (context, setState) => Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        post.description,
+                        maxLines: isExpanded ? null : 1,
+                        overflow: isExpanded
+                            ? TextOverflow.visible
+                            : TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          fontSize: 18,
+                          fontFamily: 'Montserrat',
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      if (post.description.length > 50)
+                        GestureDetector(
+                          onTap: () => setState(() => isExpanded = !isExpanded),
+                          child: Padding(
+                            padding: const EdgeInsets.only(top: 4.0),
+                            child: Text(
+                              isExpanded ? 'Show less' : 'Show more',
+                              style: TextStyle(
+                                color: Colors.white..withValues(alpha: 0.7),
+                                fontSize: 14,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ),
+                        ),
+                    ],
                   ),
                 ),
-                const SizedBox(height: 10),
-                if (!isTypeImage)
-                  Text(
-                    post.description ?? "",
-                    style: const TextStyle(
-                      fontSize: 18,
-                      color: Colors.white,
-                    ),
-                  ),
                 const SizedBox(height: 20),
                 Row(
                   children: [

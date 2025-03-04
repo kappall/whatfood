@@ -187,7 +187,10 @@ class _ProfileViewState extends ConsumerState<ProfileView>
           data: (user) => Scaffold(
             appBar: AppBar(
               centerTitle: false,
-              title: Text(user.name + (widget.public ? '\'s Page' : '')),
+              title: Text(
+                user.name + (widget.public ? '\'s Page' : ''),
+                style: TextStyle(fontSize: 16),
+              ),
               actions: [if (!widget.public) popUpMenu(context, ref)],
             ),
             body: Column(
