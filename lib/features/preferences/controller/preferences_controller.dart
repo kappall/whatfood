@@ -1,4 +1,4 @@
-import 'package:firebase_auth/firebase_auth.dart';
+import 'package:amplify_flutter/amplify_flutter.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:whatfood/features/preferences/repository/preferences_repository.dart';
@@ -25,11 +25,11 @@ class PreferencesController extends StateNotifier<bool> {
 
   Future<void> savePreferences({
     required BuildContext context,
-    required Set<String> preferences,
+    required List<String> preferences,
   }) async {
     state = true;
     debugPrint('Saving preferences');
-    final uid = FirebaseAuth.instance.currentUser!.uid;
+    final uid = (await Amplify.Auth.getCurrentUser()).userId;
     await _preferencesRepository.updateUserPreferences(
       uid: uid,
       newPreferences: preferences,

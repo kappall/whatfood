@@ -1,13 +1,14 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-
-import 'package:whatfood/models/report_model.dart';
+import 'package:whatfood/models/Report.dart';
 
 class ReportCard extends ConsumerStatefulWidget {
-  final ReportModel report;
+  final Report report;
   final bool isSelectionMode;
   final bool isSelected;
-  final Function(ReportModel) onSelected;
+  final Function(Report) onSelected;
 
   const ReportCard({
     super.key,
@@ -76,7 +77,7 @@ class _ReportCardState extends ConsumerState<ReportCard> {
                   if (_isExpanded && !widget.isSelectionMode) ...[
                     const SizedBox(height: 16),
                     Text(
-                      '${widget.report.date.day}/${widget.report.date.month}/${widget.report.date.year}',
+                      '${widget.report.date.getDateTimeInUtc().day}/${widget.report.date.getDateTimeInUtc().month}/${widget.report.date.getDateTimeInUtc().year}',
                       style: const TextStyle(color: Colors.grey),
                     ),
                     const SizedBox(height: 8),
@@ -85,18 +86,21 @@ class _ReportCardState extends ConsumerState<ReportCard> {
                       style: const TextStyle(color: Colors.grey),
                     ),
                     const SizedBox(height: 8),
-                    ...widget.report.nutritionalValues.entries.map(
-                      (entry) => Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 2),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Text(entry.key),
-                            Text('${entry.value}'),
-                          ],
+                    ...(jsonEncode(widget.report.nutritionalValues)
+                            as Map<String, dynamic>)
+                        .entries
+                        .map(
+                          (entry) => Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 2),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Text(entry.key),
+                                Text('${entry.value}'),
+                              ],
+                            ),
+                          ),
                         ),
-                      ),
-                    ),
                   ],
                 ],
               ),

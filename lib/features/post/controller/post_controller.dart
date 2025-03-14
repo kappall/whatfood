@@ -1,20 +1,20 @@
 import 'dart:io';
 
+import 'package:amplify_flutter/amplify_flutter.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image/image.dart' as img;
 import 'package:routemaster/routemaster.dart';
 import 'package:uuid/uuid.dart';
-import 'package:whatfood/core/common/meal_type_enum.dart';
-import 'package:whatfood/core/providers/firebase_providers.dart';
 import 'package:whatfood/core/providers/storage_repository_provider.dart';
 import 'package:whatfood/core/utils.dart';
 import 'package:whatfood/features/auth/controller/auth_controller.dart';
 import 'package:whatfood/features/post/repository/post_repository.dart';
 import 'package:whatfood/features/profile/controller/user_profile_controller.dart';
-import 'package:whatfood/models/comment_model.dart';
-import 'package:whatfood/models/post_model.dart';
-import 'package:whatfood/models/user_model.dart';
+import 'package:whatfood/models/MealType.dart';
+import 'package:whatfood/models/User.dart';
+import 'package:whatfood/models/Comment.dart';
+import 'package:whatfood/models/Post.dart';
 
 final postControllerProvider =
     StateNotifierProvider<PostController, bool>((ref) {
@@ -29,40 +29,48 @@ final postControllerProvider =
 
 final mealFilterProvider = StateProvider<MealType?>((ref) => null);
 
-final postsProvider = StreamProvider((ref) {
+final postsProvider = FutureProvider((ref) {
   final postController = ref.watch(postControllerProvider.notifier);
 
   return postController.fetchPosts();
 });
 
-final postByIdProvider = StreamProvider.family((ref, String id) {
+final postByIdProvider = FutureProvider.family((ref, String id) {
   final posController = ref.watch(postControllerProvider.notifier);
   return posController.getPostById(id);
 });
 
-final getpostCommentsProvider = StreamProvider.family((ref, String id) {
+final getpostCommentsProvider = FutureProvider.family((ref, String id) {
   final posController = ref.watch(postControllerProvider.notifier);
   return posController.fetchCommentsOfPost(id);
 });
 
 final userNameProvider =
     StreamProvider.family<String, String>((ref, String uid) {
-  return ref
-      .watch(firestoreProvider)
-      .collection('users')
-      .doc(uid)
-      .snapshots()
-      .map((doc) => (doc.data() as Map<String, dynamic>)['name'] as String);
+  // Osserva le modifiche al modello User filtrando per l'ID utente
+  return Amplify.DataStore.observeQuery(
+    User.classType,
+    where: User.ID.eq(uid),
+  ).map((querySnapshot) {
+    // querySnapshot.items contiene la lista degli utenti che corrispondono al filtro
+    if (querySnapshot.items.isNotEmpty) {
+      return querySnapshot.items.first.name;
+    }
+    return '';
+  });
 });
+
 final userPicProvider =
     StreamProvider.family<String, String>((ref, String uid) {
-  return ref
-      .watch(firestoreProvider)
-      .collection('users')
-      .doc(uid)
-      .snapshots()
-      .map((doc) =>
-          (doc.data() as Map<String, dynamic>)['profilePic'] as String);
+  return Amplify.DataStore.observeQuery(
+    User.classType,
+    where: User.ID.eq(uid),
+  ).map((querySnapshot) {
+    if (querySnapshot.items.isNotEmpty) {
+      return querySnapshot.items.first.profilePic;
+    }
+    return '';
+  });
 });
 
 class PostController extends StateNotifier<bool> {
@@ -79,7 +87,7 @@ class PostController extends StateNotifier<bool> {
         _ref = ref,
         super(false);
 
-  Stream<List<Post>> fetchPosts() {
+  Future<List<Post>> fetchPosts() {
     return _postRepository.fetchPosts();
   }
 
@@ -174,16 +182,10 @@ class PostController extends StateNotifier<bool> {
         return;
       }
 
-      final result = await _storageRepository.storeFile(
-        path: 'posts',
-        id: postId,
-        file: processedFile,
-      );
+      final result =
+          await _storageRepository.uploadImage(processedFile, user.uid);
 
-      final imageUrl = result.fold(
-        (l) => throw Exception(l.message),
-        (r) => r,
-      );
+      final imageUrl = result;
 
       final Post post = Post(
         id: postId,
@@ -191,7 +193,7 @@ class PostController extends StateNotifier<bool> {
         description: description,
         userImage: user.profilePic,
         username: user.name,
-        createdAt: DateTime.now(),
+        createdAt: TemporalDateTime.now(),
         likes: [],
         tags: tags,
         imageUrl: imageUrl,
@@ -199,8 +201,7 @@ class PostController extends StateNotifier<bool> {
         type: 'image',
         mealType: mealType,
       );
-
-      final res = await _postRepository.addPost(post);
+      final res = await _postRepository.addPost(post, user.postsCount);
       state = false;
       res.fold(
         (l) => ScaffoldMessenger.of(context).showSnackBar(
@@ -232,12 +233,12 @@ class PostController extends StateNotifier<bool> {
 
   Future<void> addOrRemoveBookmark(
     Post post,
-    UserModel user,
+    User user,
   ) async {
     await _postRepository.addOrRemoveBookmark(post, user);
   }
 
-  Stream<Post> getPostById(String id) {
+  Future<Post?> getPostById(String id) {
     return _postRepository.getPostById(id);
   }
 
@@ -245,18 +246,21 @@ class PostController extends StateNotifier<bool> {
     required BuildContext context,
     required String content,
     required String postId,
+    required int commentCount,
   }) async {
     final user = _ref.read(userProvider)!;
     String cId = const Uuid().v1();
     Comment comment = Comment(
-        id: cId,
-        text: content,
-        createdAt: DateTime.now(),
-        postId: postId,
-        username: user.name,
-        profilePic: user.profilePic,
-        uid: user.uid);
-    _postRepository.addComment(comment);
+      id: cId,
+      text: content,
+      createdAt: TemporalDateTime.now(),
+      postID: postId,
+      username: user.name,
+      userImage: user.profilePic,
+      uid: user.uid,
+      likes: [],
+    );
+    _postRepository.addComment(comment, commentCount);
   }
 
   void deleteComment({
@@ -268,7 +272,7 @@ class PostController extends StateNotifier<bool> {
     debugPrint("comment deleted");
   }
 
-  Stream<List<Comment>> fetchCommentsOfPost(String postId) {
+  Future<List<Comment>> fetchCommentsOfPost(String postId) {
     return _postRepository.getCommentsOfPost(postId);
   }
 

@@ -6,7 +6,7 @@ import 'package:whatfood/core/common/loader.dart';
 import 'package:whatfood/core/common/post_card_for_comment.dart';
 import 'package:whatfood/features/post/controller/post_controller.dart';
 import 'package:whatfood/features/post/widgets/comment_card.dart';
-import 'package:whatfood/models/post_model.dart';
+import 'package:whatfood/models/Post.dart';
 
 class CommentsView extends ConsumerStatefulWidget {
   final String postId;
@@ -34,6 +34,7 @@ class _CommentsViewState extends ConsumerState<CommentsView> {
           context: context,
           content: commentController.text.trim(),
           postId: post.id,
+          commentCount: post.commentCount,
         );
     commentController.clear();
   }
@@ -60,7 +61,7 @@ class _CommentsViewState extends ConsumerState<CommentsView> {
                   child: Column(
                     children: [
                       PostCardForComment(
-                        post: post,
+                        post: post!,
                         isCommenting: true,
                       ),
                       ref.watch(getpostCommentsProvider(widget.postId)).when(

@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -6,7 +8,7 @@ import 'package:whatfood/core/common/loader.dart';
 import 'package:whatfood/features/auth/controller/auth_controller.dart';
 import 'package:whatfood/features/report/controller/report_controller.dart';
 import 'package:whatfood/core/common/report_card.dart';
-import 'package:whatfood/models/report_model.dart';
+import 'package:whatfood/models/Report.dart';
 
 class ReportView extends ConsumerStatefulWidget {
   const ReportView({super.key});
@@ -17,9 +19,9 @@ class ReportView extends ConsumerStatefulWidget {
 
 class _ReportViewState extends ConsumerState<ReportView> {
   bool isSelectionMode = false;
-  Set<String> selectedReports = {};
+  List<String> selectedReports = [];
 
-  void toggleSelection(ReportModel report) {
+  void toggleSelection(Report report) {
     setState(() {
       if (selectedReports.contains(report.id)) {
         selectedReports.remove(report.id);
@@ -43,10 +45,12 @@ class _ReportViewState extends ConsumerState<ReportView> {
   }
 
   static const List<String> toAvoid = ['saturated', 'salt', 'energy', 'fiber'];
-  Map<String, double> aggregateNutritionalValues(List<ReportModel> reports) {
+
+  Map<String, double> aggregateNutritionalValues(List<Report> reports) {
     final Map<String, double> aggregated = {};
     for (final report in reports) {
-      report.nutritionalValues.forEach((key, value) {
+      (jsonDecode(report.nutritionalValues) as Map<String, dynamic>)
+          .forEach((key, value) {
         aggregated[key] = (aggregated[key] ?? 0) + value;
       });
     }

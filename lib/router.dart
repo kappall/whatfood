@@ -1,4 +1,3 @@
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:routemaster/routemaster.dart';
 import 'package:whatfood/features/auth/views/login_view.dart';
@@ -11,6 +10,7 @@ import 'package:whatfood/features/profile/views/edit_profile_view.dart';
 import 'package:whatfood/features/profile/views/user_posts_list_view.dart';
 import 'package:whatfood/features/profile/views/profile_view.dart';
 import 'package:whatfood/features/recipes/views/add_recipe_view.dart';
+import 'package:whatfood/features/recipes/views/edit_recipe_view.dart';
 import 'package:whatfood/pages/start_page.dart';
 
 final loggedInRoute = RouteMap(
@@ -34,6 +34,8 @@ final loggedInRoute = RouteMap(
               )
             : AddRecipeView()),
     '/add-recipe': (_) => const MaterialPage(child: AddRecipeView()),
+    '/edit-recipe/:id': (route) => MaterialPage(
+        child: EditRecipeView(recipeId: route.pathParameters['id']!)),
     '/edit_profile/:uid': (route) => MaterialPage(
             child: EditProfileView(
           uid: route.pathParameters['uid']!,
@@ -62,14 +64,7 @@ final loggedInRoute = RouteMap(
 );
 
 final loggedOutRoute = RouteMap(routes: {
-  '/': (_) {
-    final user = FirebaseAuth.instance.currentUser;
-    if (user == null) {
-      return const MaterialPage(child: LoginView());
-    } else {
-      return const MaterialPage(child: VerifyEmailView());
-    }
-  },
+  '/': (_) => const MaterialPage(child: LoginView()),
   '/login': (_) => const MaterialPage(child: LoginView()),
   '/preferences': (route) => const MaterialPage(
           child: PreferencesView(

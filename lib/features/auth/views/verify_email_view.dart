@@ -1,8 +1,8 @@
-import 'package:firebase_auth/firebase_auth.dart';
+import 'package:amplify_flutter/amplify_flutter.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:whatfood/core/utils.dart';
 import 'package:whatfood/features/auth/controller/auth_controller.dart';
+import 'package:whatfood/core/utils.dart';
 
 class VerifyEmailView extends ConsumerStatefulWidget {
   const VerifyEmailView({super.key});
@@ -13,30 +13,46 @@ class VerifyEmailView extends ConsumerStatefulWidget {
 
 class _VerifyEmailViewState extends ConsumerState<VerifyEmailView> {
   Future<void> _checkVerification() async {
-    await FirebaseAuth.instance.currentUser?.reload();
-    final user = FirebaseAuth.instance.currentUser;
-    debugPrint(user.toString());
+    try {
+      final user = await Amplify.Auth.getCurrentUser();
+      final attributes = await Amplify.Auth.fetchUserAttributes();
+      final emailVerified = attributes
+              .firstWhere((attr) =>
+                  attr.userAttributeKey ==
+                  CognitoUserAttributeKey.emailVerified)
+              .value
+              .toLowerCase() ==
+          'true';
 
-    if (user?.emailVerified ?? false) {
-      if (mounted) {
-        ref.invalidate(authStateChangeProvider);
+      debugPrint("User: ${user.username}, Email Verified: $emailVerified");
+
+      if (emailVerified) {
+        if (mounted) {
+          ref.invalidate(getUserDataProvider);
+        }
+      } else {
+        if (context.mounted) {
+          showSnackBar(context, 'Email not verified yet');
+        }
       }
-    } else {
+    } catch (e) {
       if (context.mounted) {
-        showSnackBar(context, 'Email not verified yet');
+        showSnackBar(context, 'Error checking verification: ${e.toString()}');
       }
     }
   }
 
   Future<void> _resendVerification() async {
     try {
-      await FirebaseAuth.instance.currentUser?.sendEmailVerification();
+      await Amplify.Auth.resendSignUpCode(
+        username: CognitoUserAttributeKey.email.toString(),
+      );
       if (context.mounted) {
-        showSnackBar(context, 'Email di verifica inviata');
+        showSnackBar(context, 'Verification email sent');
       }
     } catch (e) {
       if (context.mounted) {
-        showSnackBar(context, 'Errore durante l\'invio: ${e.toString()}');
+        showSnackBar(context, 'Error sending email: ${e.toString()}');
       }
     }
   }
@@ -76,17 +92,18 @@ class _VerifyEmailViewState extends ConsumerState<VerifyEmailView> {
             ),
             const SizedBox(height: 80),
             FilledButton(
-                onPressed: _resendVerification,
-                style: FilledButton.styleFrom(
-                  backgroundColor: Colors.lightGreen,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  padding:
-                      const EdgeInsets.symmetric(vertical: 15, horizontal: 40),
+              onPressed: _resendVerification,
+              style: FilledButton.styleFrom(
+                backgroundColor: Colors.lightGreen,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
                 ),
-                child: const Text('Resend Email',
-                    style: TextStyle(fontSize: 18, color: Colors.white))),
+                padding:
+                    const EdgeInsets.symmetric(vertical: 15, horizontal: 40),
+              ),
+              child: const Text('Resend Email',
+                  style: TextStyle(fontSize: 18, color: Colors.white)),
+            ),
             const SizedBox(height: 30),
             TextButton(
               onPressed: _checkVerification,

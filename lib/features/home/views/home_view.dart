@@ -1,12 +1,11 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:whatfood/core/common/meal_type_enum.dart';
+import 'package:whatfood/features/auth/controller/auth_controller.dart';
 import 'package:whatfood/features/home/views/for_you_view.dart';
 import 'package:whatfood/features/home/widgets/add_post_modal.dart';
 import 'package:whatfood/features/post/controller/post_controller.dart';
-import 'package:whatfood/models/user_model.dart';
+import 'package:whatfood/models/MealType.dart';
+import 'package:whatfood/models/User.dart';
 
 class HomeView extends ConsumerStatefulWidget {
   const HomeView({super.key});
@@ -17,7 +16,7 @@ class HomeView extends ConsumerStatefulWidget {
 
 class _HomeViewState extends ConsumerState<HomeView>
     with SingleTickerProviderStateMixin {
-  UserModel? userModel;
+  late User userModel;
   late TabController _tabController;
   late PageController _pageController;
   bool _mounted = true;
@@ -28,7 +27,7 @@ class _HomeViewState extends ConsumerState<HomeView>
     _tabController = TabController(length: 2, vsync: this);
     _pageController = PageController();
     _tabController.addListener(_handleTabChange);
-    _fetchUserData();
+    userModel = ref.read(userProvider)!;
   }
 
   void _handleTabChange() {
@@ -50,31 +49,6 @@ class _HomeViewState extends ConsumerState<HomeView>
     _tabController.dispose();
     _pageController.dispose();
     super.dispose();
-  }
-
-  Future<void> _fetchUserData() async {
-    if (!_mounted) return;
-
-    final user = FirebaseAuth.instance.currentUser;
-    if (user != null) {
-      try {
-        final userDoc = await FirebaseFirestore.instance
-            .collection('users')
-            .doc(user.uid)
-            .get();
-
-        if (!_mounted) return;
-
-        if (userDoc.exists) {
-          setState(() {
-            userModel =
-                UserModel.fromMap(userDoc.data() as Map<String, dynamic>);
-          });
-        }
-      } catch (e) {
-        debugPrint('Error fetching user data: $e');
-      }
-    }
   }
 
   void _showFilterMenu(BuildContext context) {
@@ -136,13 +110,13 @@ class _HomeViewState extends ConsumerState<HomeView>
 
   IconData _getMealTypeIcon(MealType type) {
     switch (type) {
-      case MealType.breakfast:
+      case MealType.BREAKFAST:
         return Icons.breakfast_dining;
-      case MealType.lunch:
+      case MealType.LUNCH:
         return Icons.lunch_dining;
-      case MealType.dinner:
+      case MealType.DINNER:
         return Icons.dinner_dining;
-      case MealType.snack:
+      case MealType.SNACK:
         return Icons.cookie;
     }
   }

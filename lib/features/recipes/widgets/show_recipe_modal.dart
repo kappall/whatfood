@@ -4,21 +4,27 @@ import 'package:routemaster/routemaster.dart';
 import 'package:whatfood/button_styles.dart';
 import 'package:whatfood/features/auth/controller/auth_controller.dart';
 import 'package:whatfood/features/scanner/utils/ingridients_processor.dart';
-import 'package:whatfood/models/recipe_model.dart';
+import 'package:whatfood/models/Recipe.dart';
+import 'package:whatfood/features/recipes/controller/recipe_controller.dart';
 
 class RecipeModal extends ConsumerWidget {
   final Recipe recipe;
 
   const RecipeModal({super.key, required this.recipe});
 
-  bool _hasIntolerance(String ingredient, Set<String> intolerances) {
+  bool _hasIntolerance(String ingredient, List<String> intolerances) {
     final lowerIngredient = ingredient.toLowerCase();
     return intolerances.any(
         (intolerance) => lowerIngredient.contains(intolerance.toLowerCase()));
   }
 
-  Widget _buildIngredientsList(Set<String> intolerances, BuildContext context,
-      Set<String> userIntolerances) {
+  void _editRecipe(BuildContext context, WidgetRef ref) {
+    Navigator.of(context).pop();
+    Routemaster.of(context).push('edit-recipe/${recipe.id}');
+  }
+
+  Widget _buildIngredientsList(List<String> intolerances, BuildContext context,
+      List<String> userIntolerances) {
     bool hasIntolerances = recipe.ingredients.any((ingredient) =>
         IngredientsProcessor.hasIntolerance(ingredient, userIntolerances));
 
@@ -160,12 +166,49 @@ class RecipeModal extends ConsumerWidget {
     );
   }
 
+  void _showDeleteConfirmation(BuildContext context, WidgetRef ref) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: Colors.grey[900],
+        title: const Text(
+          'Delete Recipe',
+          style: TextStyle(color: Colors.white),
+        ),
+        content: const Text(
+          'Are you sure you want to delete this recipe?',
+          style: TextStyle(color: Colors.white70),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () {
+              ref
+                  .read(recipeControllerProvider.notifier)
+                  .deleteRecipe(recipe.id, context);
+              Navigator.pop(context);
+              Routemaster.of(context).pop();
+            },
+            child: const Text(
+              'Delete',
+              style: TextStyle(color: Colors.red),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final user = ref.watch(userProvider)!;
-    final userIntolerances = user?.preferences ?? <String>{};
+    final userIntolerances = user.preferences;
     final hasIntolerances = recipe.ingredients
         .any((ingredient) => _hasIntolerance(ingredient, userIntolerances));
+    final isOwner = recipe.uid == user.uid;
 
     return Material(
       color: const Color.fromARGB(255, 30, 30, 30),
@@ -242,6 +285,38 @@ class RecipeModal extends ConsumerWidget {
                           ],
                         ),
                       ),
+                      if (isOwner)
+                        Positioned(
+                          bottom: 16,
+                          right: 16,
+                          child: Container(
+                            decoration: BoxDecoration(
+                              color: Colors.black45,
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                IconButton(
+                                  icon: const Icon(
+                                    Icons.edit,
+                                    color: Colors.white,
+                                  ),
+                                  onPressed: () => _editRecipe(context, ref),
+                                ),
+                                IconButton(
+                                  icon: const Icon(
+                                    Icons.delete,
+                                    color: Colors.red,
+                                  ),
+                                  onPressed: () {
+                                    _showDeleteConfirmation(context, ref);
+                                  },
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
                     ],
                   ),
                   Padding(

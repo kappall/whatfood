@@ -5,20 +5,20 @@ import 'package:whatfood/core/common/loader.dart';
 import 'package:whatfood/features/auth/controller/auth_controller.dart';
 import 'package:whatfood/features/preferences/widgets/intollerances_list.dart';
 import 'package:whatfood/features/preferences/controller/preferences_controller.dart';
-import 'package:whatfood/models/user_model.dart';
+import 'package:whatfood/models/User.dart';
 
 class PreferencesView extends ConsumerWidget {
   const PreferencesView(
       {super.key, required this.isFromProfile, this.userModel});
   final bool isFromProfile;
-  final UserModel? userModel;
+  final User? userModel;
 
   void navigateToVerify(BuildContext context) {
     Routemaster.of(context).replace('/verify-email');
   }
 
   Future<void> savePreferences(
-      BuildContext context, WidgetRef ref, Set<String> preferences) async {
+      BuildContext context, WidgetRef ref, List<String> preferences) async {
     if (!isFromProfile) {
       await ref.read(preferencesControllerProvider.notifier).savePreferences(
             context: context,
@@ -44,7 +44,7 @@ class PreferencesView extends ConsumerWidget {
       );
     }
 
-    Set<String> intolerances = isFromProfile ? user?.preferences ?? {} : {};
+    List<String> intolerances = isFromProfile ? user?.preferences ?? [] : [];
 
     return SafeArea(
       child: Scaffold(

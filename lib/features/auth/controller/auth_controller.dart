@@ -1,14 +1,13 @@
 import 'dart:developer';
 
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:routemaster/routemaster.dart';
 import 'package:whatfood/core/utils.dart';
 import 'package:whatfood/features/auth/repository/auth_repository.dart';
-import 'package:whatfood/models/user_model.dart';
+import 'package:whatfood/models/User.dart';
 
-final userProvider = StateProvider<UserModel?>((ref) => null);
+final userProvider = StateProvider<User?>((ref) => null);
 
 final authControllerProvider = StateNotifierProvider<AuthController, bool>(
   (ref) => AuthController(
@@ -17,14 +16,15 @@ final authControllerProvider = StateNotifierProvider<AuthController, bool>(
   ),
 );
 
-final authStateChangeProvider = StreamProvider((ref) {
-  final authController = ref.watch(authControllerProvider.notifier);
-  return authController.authStateChange;
-});
+final getUserDataProvider = FutureProvider<User?>((ref) async {
+  final authRepo = ref.watch(authRepositoryProvider);
+  final userId = await authRepo.getCurrentUserId();
 
-final getUserDataProvider = StreamProvider.family((ref, String uid) {
-  final authController = ref.watch(authControllerProvider.notifier);
-  return authController.getUserData(uid);
+  if (userId == null) {
+    return null;
+  }
+
+  return authRepo.getUserData(userId);
 });
 
 class AuthController extends StateNotifier<bool> {
@@ -35,20 +35,18 @@ class AuthController extends StateNotifier<bool> {
         _ref = ref,
         super(false);
 
-  Stream<User?> get authStateChange => _authRepository.authStateChange;
-
-  void signInWithGoogle(BuildContext context, bool isFromLogin) async {
-    state = true;
-    final user = await _authRepository.signInWithGoogle(isFromLogin);
-    state = false;
-    user.fold(
-      (l) => showSnackBar(context, l.message),
-      (userModel) {
-        _ref.read(userProvider.notifier).update((state) => userModel);
-        Routemaster.of(context).push('preferences');
-      },
-    );
-  }
+  // void signInWithGoogle(BuildContext context, bool isFromLogin) async {
+  //   state = true;
+  //   final user = await _authRepository.signInWithGoogle(isFromLogin);
+  //   state = false;
+  //   user.fold(
+  //     (l) => showSnackBar(context, l.message),
+  //     (userModel) {
+  //       _ref.read(userProvider.notifier).update((state) => userModel);
+  //       Routemaster.of(context).push('preferences');
+  //     },
+  //   );
+  // }
 
   void signInAsGuest(BuildContext context) async {
     state = true;
@@ -92,10 +90,8 @@ class AuthController extends StateNotifier<bool> {
     }
   }
 
-  Stream<UserModel> getUserData(String uid) {
-    return _authRepository.getUserData(uid).map((userData) {
-      return userData;
-    });
+  Future<User?> getUserData(String uid) {
+    return _authRepository.getUserData(uid);
   }
 
   Future<void> registerWithEmailAndPassword({

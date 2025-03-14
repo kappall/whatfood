@@ -4,7 +4,7 @@ import 'package:routemaster/routemaster.dart';
 import 'package:whatfood/button_styles.dart';
 import 'package:whatfood/features/auth/controller/auth_controller.dart';
 import 'package:whatfood/features/post/controller/post_controller.dart';
-import 'package:whatfood/models/post_model.dart';
+import 'package:whatfood/models/Post.dart';
 
 class PostCardForComment extends ConsumerWidget {
   final Post post;

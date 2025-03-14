@@ -6,7 +6,7 @@ import 'package:whatfood/core/common/loader.dart';
 import 'package:whatfood/core/common/post_card_for_grid.dart';
 import 'package:whatfood/features/auth/controller/auth_controller.dart';
 import 'package:whatfood/features/profile/controller/user_profile_controller.dart';
-import 'package:whatfood/models/user_model.dart';
+import 'package:whatfood/models/User.dart';
 
 class ProfileView extends ConsumerStatefulWidget {
   final String uid;
@@ -172,7 +172,7 @@ class _ProfileViewState extends ConsumerState<ProfileView>
     );
   }
 
-  void followOrUnfollowUser(BuildContext context, UserModel user) {
+  void followOrUnfollowUser(BuildContext context, User user) {
     ref
         .read(userProfileControllerProvider.notifier)
         .followOrUnfollowUser(context, user);
@@ -183,12 +183,12 @@ class _ProfileViewState extends ConsumerState<ProfileView>
     final String uid =
         widget.uid.isEmpty ? ref.read(userProvider)!.uid : widget.uid;
     final String currUid = ref.read(userProvider)!.uid;
-    return ref.watch(getUserDataProvider(uid)).when(
+    return ref.watch(getUserDataProvider).when(
           data: (user) => Scaffold(
             appBar: AppBar(
               centerTitle: false,
               title: Text(
-                user.name + (widget.public ? '\'s Page' : ''),
+                user!.name + (widget.public ? '\'s Page' : ''),
                 style: TextStyle(fontSize: 16),
               ),
               actions: [if (!widget.public) popUpMenu(context, ref)],
@@ -231,13 +231,13 @@ class _ProfileViewState extends ConsumerState<ProfileView>
                               )
                             ],
                           ),
-                          if (user.bio.isNotEmpty)
+                          if (user.bio!.isNotEmpty)
                             Padding(
                               padding: const EdgeInsets.only(top: 16),
                               child: Row(
                                 children: [
                                   Text(
-                                    user.bio,
+                                    user.bio!,
                                     style: TextStyle(
                                       fontSize: 14,
                                       color: Colors.white70,

@@ -1,4 +1,3 @@
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:routemaster/routemaster.dart';
@@ -132,9 +131,8 @@ class _RegisterViewState extends ConsumerState<RegisterView> {
                             );
 
                         if (!context.mounted) return;
-                      } on FirebaseAuthException catch (e) {
-                        showSnackBar(
-                            context, e.message ?? 'Registration failed');
+                      } catch (e) {
+                        showSnackBar(context, e.toString());
                       }
                     },
                     style: FilledButton.styleFrom(

@@ -4,7 +4,7 @@ import 'package:routemaster/routemaster.dart';
 import 'package:whatfood/button_styles.dart';
 import 'package:whatfood/features/recipes/controller/recipe_controller.dart';
 import 'package:whatfood/features/recipes/widgets/show_recipe_modal.dart';
-import 'package:whatfood/models/recipe_model.dart';
+import 'package:whatfood/models/Recipe.dart';
 
 class RecipeCard extends ConsumerWidget {
   final Recipe recipe;
@@ -15,10 +15,10 @@ class RecipeCard extends ConsumerWidget {
         .read(recipeControllerProvider.notifier)
         .deleteRecipe(recipe.id, context);
   }
-
+/*
   void likeOrUnlikeRecipe(WidgetRef ref) async {
     ref.read(recipeControllerProvider.notifier).likeOrUnlike(recipe);
-  }
+  }*/
 
   void navigateToUser(BuildContext context) {
     try {

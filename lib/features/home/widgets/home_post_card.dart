@@ -5,7 +5,7 @@ import 'package:routemaster/routemaster.dart';
 import 'package:whatfood/core/common/bounce_icon.dart';
 import 'package:whatfood/features/auth/controller/auth_controller.dart';
 import 'package:whatfood/features/post/controller/post_controller.dart';
-import 'package:whatfood/models/post_model.dart';
+import 'package:whatfood/models/Post.dart';
 
 class HomePostCard extends ConsumerWidget {
   final Post post;
@@ -91,7 +91,7 @@ class HomePostCard extends ConsumerWidget {
         .read(postControllerProvider.notifier)
         .addOrRemoveBookmark(post, user);
 
-    final updatedSavedPosts = Set<String>.from(user.savedPosts);
+    final updatedSavedPosts = List<String>.from(user.savedPosts);
     if (isSaved) {
       updatedSavedPosts.remove(post.id);
     } else {
@@ -212,7 +212,7 @@ class HomePostCard extends ConsumerWidget {
                           fontWeight: FontWeight.bold,
                         ),
                       ),
-                      if (post.description.length > 50)
+                      if (post.description.length > 30)
                         GestureDetector(
                           onTap: () => setState(() => isExpanded = !isExpanded),
                           child: Padding(

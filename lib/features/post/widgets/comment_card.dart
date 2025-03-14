@@ -1,9 +1,10 @@
+import 'package:amplify_flutter/amplify_flutter.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:routemaster/routemaster.dart';
 import 'package:whatfood/features/auth/controller/auth_controller.dart';
 import 'package:whatfood/features/post/controller/post_controller.dart';
-import 'package:whatfood/models/comment_model.dart';
+import 'package:whatfood/models/Comment.dart';
 
 class CommentCard extends ConsumerWidget {
   void navigateToUser(BuildContext context) {
@@ -42,7 +43,7 @@ class CommentCard extends ConsumerWidget {
                         padding: EdgeInsets.only(right: 0)),
                     onPressed: () => navigateToUser(context),
                     child: CircleAvatar(
-                      backgroundImage: NetworkImage(comment.profilePic),
+                      backgroundImage: NetworkImage(comment.userImage),
                       radius: 24,
                     ),
                   ),
@@ -55,7 +56,7 @@ class CommentCard extends ConsumerWidget {
               Column(
                 children: [
                   Text(
-                      '${DateTime.now().difference(comment.createdAt).inDays}d ago'),
+                      '${TemporalDate.now().getDateTime().difference((comment.createdAt.getDateTimeInUtc())).inDays}d ago'),
                   Container(
                     child: canDelete
                         ? IconButton(
@@ -66,7 +67,7 @@ class CommentCard extends ConsumerWidget {
                                   .read(postControllerProvider.notifier)
                                   .deleteComment(
                                       commentId: comment.id,
-                                      postId: comment.postId,
+                                      postId: comment.postID,
                                       context: context);
                             },
                           )

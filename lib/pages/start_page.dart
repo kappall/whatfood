@@ -1,4 +1,4 @@
-import 'package:firebase_auth/firebase_auth.dart';
+import 'package:amplify_flutter/amplify_flutter.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -86,7 +86,7 @@ class StartPage extends ConsumerWidget {
                     ),
                   ),
                   const SizedBox(height: 15),
-                  const GoogleSigninButton(),
+                  //const GoogleSigninButton(),
                   const SizedBox(height: 30),
                   const GuestAccessWidget(),
                   const Spacer(),
@@ -97,15 +97,20 @@ class StartPage extends ConsumerWidget {
   }
 }
 
-class GuestAccessWidget extends StatelessWidget {
+class GuestAccessWidget extends ConsumerStatefulWidget {
   const GuestAccessWidget({super.key});
 
+  @override
+  ConsumerState<GuestAccessWidget> createState() => _GuestAccessWidgetState();
+}
+
+class _GuestAccessWidgetState extends ConsumerState<GuestAccessWidget> {
   @override
   Widget build(BuildContext context) {
     return TextButton(
       onPressed: () async {
         try {
-          await FirebaseAuth.instance.signInAnonymously();
+          ref.read(authControllerProvider.notifier).signInAsGuest(context);
           if (!context.mounted) return;
           Routemaster.of(context).push('/main_guest/');
         } catch (e) {
@@ -136,7 +141,7 @@ class _MainPageState extends State<MainPage> {
   late int _selectedIndex;
   late final List<Widget> _pages;
   @override
-  void initState() {
+  void initState() async {
     super.initState();
 
     if (widget.isGuest) {
@@ -153,7 +158,7 @@ class _MainPageState extends State<MainPage> {
         HomeView(),
         ReportView(),
         ProfileView(
-          uid: FirebaseAuth.instance.currentUser!.uid,
+          uid: (await Amplify.Auth.getCurrentUser()).userId,
           public: false,
         ),
       ];

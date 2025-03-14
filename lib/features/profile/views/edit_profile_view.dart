@@ -105,7 +105,7 @@ class _EditProfileViewState extends ConsumerState<EditProfileView> {
     return SafeArea(
       child: GestureDetector(
         onTap: () => FocusScope.of(context).unfocus(),
-        child: ref.watch(getUserDataProvider(widget.uid)).when(
+        child: ref.watch(getUserDataProvider).when(
               data: (user) => Scaffold(
                 appBar: AppBar(
                   title: const Text('Edit Profile'),
@@ -146,7 +146,7 @@ class _EditProfileViewState extends ConsumerState<EditProfileView> {
                                         fit: BoxFit.cover,
                                       )
                                     : Image.network(
-                                        user.profilePic,
+                                        user!.profilePic,
                                         fit: BoxFit.cover,
                                       ),
                               ),

@@ -231,7 +231,7 @@ class CameraScannerState extends ConsumerState<CameraScanner> {
         final userIntolerances = ref.read(userProvider)!.preferences;
 
         // Process ingredients
-        final ingredientsText = productData['ingredients_text_en'] ??
+        final ingredientsText = productData['ingredientes_text_en'] ??
             productData['ingredients_text'];
         if (ingredientsText != null) {
           final (
@@ -506,19 +506,29 @@ class CameraScannerState extends ConsumerState<CameraScanner> {
   }
 
   Future _getImage(ImageSource source) async {
+    if (_isBusy) return;
+
     setState(() {
       _isGalleryMode = true;
       _customPaint = null;
     });
+
     try {
       final pickedFile = await _imagePicker?.pickImage(source: source);
       if (pickedFile != null) {
-        _processFile(pickedFile.path);
+        await _processFile(pickedFile.path);
       }
     } catch (e) {
-      rethrow;
-    } finally {
       if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error picking image: ${e.toString()}'),
+            duration: const Duration(seconds: 2),
+          ),
+        );
+      }
+    } finally {
+      if (mounted && _scannedCode.isEmpty) {
         setState(() {
           _isGalleryMode = false;
         });
@@ -527,7 +537,40 @@ class CameraScannerState extends ConsumerState<CameraScanner> {
   }
 
   Future _processFile(String path) async {
-    final inputImage = InputImage.fromFilePath(path);
-    await _processImage(inputImage);
+    setState(() => _isBusy = true);
+    try {
+      final inputImage = InputImage.fromFilePath(path);
+      final barcodes = await _barcodeScanner.processImage(inputImage);
+
+      if (barcodes.isNotEmpty && barcodes.first.rawValue != null) {
+        _scannedCode = barcodes.first.rawValue!;
+        await _showProductModal();
+      } else {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('No barcode found in the image'),
+              duration: Duration(seconds: 2),
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error processing image: ${e.toString()}'),
+            duration: const Duration(seconds: 2),
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isBusy = false;
+          _isGalleryMode = false;
+        });
+      }
+    }
   }
 }

@@ -1,10 +1,11 @@
+import 'package:amplify_flutter/amplify_flutter.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:uuid/uuid.dart';
 import 'package:whatfood/core/utils.dart';
 import 'package:whatfood/features/auth/controller/auth_controller.dart';
 import 'package:whatfood/features/report/repository/report_repository.dart';
-import 'package:whatfood/models/report_model.dart';
+import 'package:whatfood/models/Report.dart';
 
 final reportControllerProvider =
     StateNotifierProvider<ReportController, bool>((ref) {
@@ -14,7 +15,7 @@ final reportControllerProvider =
   );
 });
 
-final userReportsProvider = StreamProvider.family((ref, String uid) {
+final userReportsProvider = FutureProvider.family((ref, String uid) {
   final reportController = ref.watch(reportControllerProvider.notifier);
   return reportController.getUserReports(uid);
 });
@@ -32,10 +33,9 @@ class ReportController extends StateNotifier<bool> {
 
   void addFoodReport({
     required BuildContext context,
-    required Map<String, dynamic> nutritionalValues,
+    required String nutritionalValues,
     required String description,
     required String category,
-    DateTime? date,
   }) async {
     try {
       state = true;
@@ -45,9 +45,9 @@ class ReportController extends StateNotifier<bool> {
       }
 
       String reportId = const Uuid().v1();
-      ReportModel report = ReportModel(
+      Report report = Report(
           id: reportId,
-          date: date ?? DateTime.now(),
+          date: TemporalDateTime.now(),
           nutritionalValues: nutritionalValues,
           description: description,
           category: category,
@@ -76,14 +76,14 @@ class ReportController extends StateNotifier<bool> {
     final uid = _ref.read(userProvider)?.uid ?? '';
     if (uid.isEmpty) return;
 
-    final res = await _reportRepository.deleteReport(reportId, uid);
+    final res = await _reportRepository.deleteReport(reportId);
     res.fold(
       (l) => showSnackBar(context, l.message),
       (r) => null,
     );
   }
 
-  Stream<List<ReportModel>> getUserReports(String uid) {
+  Future<List<Report>> getUserReports(String uid) {
     return _reportRepository.getUserReports(uid);
   }
 }

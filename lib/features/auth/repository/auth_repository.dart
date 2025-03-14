@@ -1,167 +1,252 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
+import 'dart:convert';
+
+import 'package:amplify_auth_cognito/amplify_auth_cognito.dart';
+import 'package:amplify_flutter/amplify_flutter.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:fpdart/fpdart.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:whatfood/core/constants/costants.dart';
-import 'package:whatfood/core/constants/firebase_constants.dart';
-import 'package:whatfood/core/providers/firebase_providers.dart';
+import 'package:whatfood/core/providers/aws_providers.dart';
 import 'package:whatfood/core/type_def.dart';
-import 'package:whatfood/models/user_model.dart';
 import 'package:whatfood/core/failure.dart';
+import 'package:whatfood/models/User.dart';
 
 final authRepositoryProvider = Provider(
   (ref) => AuthRepository(
-    firestore: ref.read(firestoreProvider),
     auth: ref.read(authProvider),
     googleSignIn: ref.read(googleSignInProvider),
   ),
 );
 
 class AuthRepository {
-  final FirebaseFirestore _firestore;
-  final FirebaseAuth _auth;
+  final AmplifyAuthCognito _auth;
   final GoogleSignIn _googleSignIn;
 
   AuthRepository({
-    required FirebaseFirestore firestore,
-    required FirebaseAuth auth,
+    required AmplifyAuthCognito auth,
     required GoogleSignIn googleSignIn,
   })  : _auth = auth,
-        _firestore = firestore,
         _googleSignIn = googleSignIn;
 
-  CollectionReference get _users =>
-      _firestore.collection(FirebaseConstants.usersCollection);
-
-  Stream<User?> get authStateChange => _auth.authStateChanges();
-
-  FutureEither<UserModel> signInWithGoogle(bool isFromLogin) async {
+  Future<String?> getCurrentUserId() async {
     try {
-      UserCredential userCredential;
-
-      final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
-
-      final googleAuth = await googleUser?.authentication;
-
-      final credential = GoogleAuthProvider.credential(
-        accessToken: googleAuth?.accessToken,
-        idToken: googleAuth?.idToken,
-      );
-
-      if (isFromLogin) {
-        userCredential = await _auth.signInWithCredential(credential);
-      } else {
-        userCredential =
-            await _auth.currentUser!.linkWithCredential(credential);
-      }
-
-      UserModel userModel;
-
-      if (userCredential.additionalUserInfo!.isNewUser) {
-        userModel = UserModel(
-            name: userCredential.user!.displayName ?? 'No Name',
-            profilePic:
-                userCredential.user!.photoURL ?? Constants.avatarDefault,
-            banner: Constants.bannerDefault,
-            uid: userCredential.user!.uid,
-            preferences: {},
-            savedPosts: {},
-            bio: '');
-        await _users.doc(userCredential.user!.uid).set(userModel.toMap());
-      } else {
-        userModel = await getUserData(userCredential.user!.uid).first;
-      }
-      return right(userModel);
-    } on FirebaseException catch (e) {
-      throw e.message!;
+      var user = await Amplify.Auth.getCurrentUser();
+      return user.userId;
     } catch (e) {
-      return left(Failure(e.toString()));
+      return null;
     }
   }
 
-  FutureEither<UserModel> signInWithEmailAndPassword(
-      {required String email, required String password}) async {
+  FutureEither<User> signInAsGuest() async {
     try {
-      final userCredential = await _auth.signInWithEmailAndPassword(
-        email: email,
+      final username = 'guest_user';
+      final password = 'guest_placeholder_password';
+
+      SignInResult signInResult = await Amplify.Auth.signIn(
+        username: username,
         password: password,
       );
 
-      UserModel userModel = await getUserData(userCredential.user!.uid).first;
+      if (signInResult.isSignedIn) {
+        User userModel = User(
+            name: 'Guest',
+            profilePic: Constants.avatarDefault,
+            banner: Constants.bannerDefault,
+            uid: username,
+            preferences: [],
+            savedPosts: [],
+            postsCount: 0,
+            dailyIntake: 0,
+            followers: [],
+            following: [],
+            isVerified: false,
+            bio: '',
+            email: 'Guest email placeholder');
 
-      return right(userModel);
-    } on FirebaseException catch (e) {
-      throw e.message!;
+        return right(userModel);
+      } else {
+        return left(Failure("Sign in not complete"));
+      }
     } catch (e) {
       return left(Failure(e.toString()));
     }
   }
 
-  FutureEither<UserModel> registerWithEmailAndPassword({
+  FutureEither<User> signInWithEmailAndPassword({
+    required String email,
+    required String password,
+  }) async {
+    try {
+      final result = await Amplify.Auth.signIn(
+        username: email,
+        password: password,
+      );
+      debugPrint(result.toString());
+
+      if (result.isSignedIn) {
+        final userId = (await Amplify.Auth.getCurrentUser()).userId;
+        User? userModel = await getUserData(userId);
+
+        if (userModel == null) {
+          return left(Failure("User data not found."));
+        }
+
+        return right(userModel);
+      } else {
+        return left(Failure("Sign-in failed"));
+      }
+    } on AuthException catch (e) {
+      return left(Failure(e.message));
+    } catch (e) {
+      return left(Failure(e.toString()));
+    }
+  }
+
+  FutureEither<User> registerWithEmailAndPassword({
     required String email,
     required String password,
     required String name,
   }) async {
     try {
-      final userCredential = await _auth.createUserWithEmailAndPassword(
-        email: email,
+      final signUpResult = await Amplify.Auth.signUp(
+        username: email,
         password: password,
+        options: SignUpOptions(
+          userAttributes: {
+            AuthUserAttributeKey.email: email,
+            AuthUserAttributeKey.name: name,
+          },
+        ),
+      );
+      debugPrint(signUpResult.toString());
+      final userId = (await Amplify.Auth.getCurrentUser()).userId;
+
+      final userModel = User(
+        name: name,
+        email: email,
+        profilePic: Constants.avatarDefault,
+        banner: Constants.bannerDefault,
+        uid: userId,
+        preferences: [],
+        savedPosts: [],
+        postsCount: 0,
+        dailyIntake: 0,
+        followers: [],
+        following: [],
+        isVerified: false,
+        bio: '',
       );
 
-      await userCredential.user!.sendEmailVerification();
+      await saveUserData(userModel);
 
-      final userModel = UserModel(
-          name: name,
-          profilePic: userCredential.user!.photoURL ?? Constants.avatarDefault,
-          banner: Constants.bannerDefault,
-          uid: userCredential.user!.uid,
-          preferences: {},
-          savedPosts: {},
-          bio: '');
-
-      await _firestore
-          .collection('users')
-          .doc(userCredential.user!.uid)
-          .set(userModel.toMap());
-
-      debugPrint("repository");
       return right(userModel);
-    } on FirebaseException catch (e) {
-      return left(Failure(e.message ?? 'Registration failed'));
+    } on AuthException catch (e) {
+      return left(Failure(e.message));
     } catch (e) {
       return left(Failure(e.toString()));
     }
   }
 
-  FutureEither<UserModel> signInAsGuest() async {
+  Future<void> saveUserData(User user) async {
     try {
-      var userCredential = await _auth.signInAnonymously();
+      String graphQLDocument = '''
+      mutation CreateUser(\$input: CreateUserInput!) {
+        createUser(input: \$input) {
+          id
+        }
+      }
+    ''';
 
-      UserModel userModel = UserModel(
-          name: 'Guest',
-          profilePic: Constants.avatarDefault,
-          banner: Constants.bannerDefault,
-          uid: userCredential.user!.uid,
-          preferences: {},
-          savedPosts: {},
-          bio: '');
+      Map<String, dynamic> variables = {
+        "input": {
+          "id": user.uid,
+          "name": user.name,
+          "email": user.email,
+          "profilePic": user.profilePic,
+          "banner": user.banner,
+          "preferences": user.preferences,
+          "savedPosts": user.savedPosts,
+          "postsCount": user.postsCount,
+          "dailyIntake": user.dailyIntake,
+          "followers": user.followers,
+          "following": user.following,
+          "isVerified": user.isVerified,
+          "bio": user.bio,
+        }
+      };
 
-      await _users.doc(userCredential.user!.uid).set(userModel.toMap());
+      var operation = Amplify.API.mutate(
+        request: GraphQLRequest<String>(
+          document: graphQLDocument,
+          variables: variables,
+        ),
+      );
 
-      return right(userModel);
-    } on FirebaseException catch (e) {
-      throw e.message!;
+      final response = await operation.response;
+      if (response.errors.isNotEmpty) {
+        throw Exception(response.errors.first.message);
+      }
     } catch (e) {
-      return left(Failure(e.toString()));
+      print("Error saving user: $e");
     }
   }
 
-  Stream<UserModel> getUserData(String uid) {
-    return _users.doc(uid).snapshots().map((event) {
-      final data = event.data();
-      return UserModel.fromMap(data as Map<String, dynamic>);
-    });
+  Future<User?> getUserData(String userId) async {
+    try {
+      String graphQLDocument = '''
+      query GetUser {
+        getUser(id: "$userId") {
+          id
+          name
+          email
+          profilePic
+          banner
+          preferences
+          savedPosts
+          postsCount
+          dailyIntake
+          followers
+          following
+          isVerified
+          bio
+        }
+      }
+    ''';
+
+      var operation = Amplify.API.query(
+        request: GraphQLRequest<String>(document: graphQLDocument),
+      );
+
+      var response = await operation.response;
+      var data = response.data;
+
+      if (data == null) {
+        return null;
+      }
+
+      var json = jsonDecode(data);
+      return User.fromJson(json);
+    } catch (e) {
+      print("Error fetching user: $e");
+      return null;
+    }
+  }
+
+  Future<bool> isUserSignedIn() async {
+    try {
+      final userId = await getCurrentUserId();
+      return userId != null;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  Future<void> signOut() async {
+    try {
+      await Amplify.Auth.signOut();
+    } catch (e) {
+      print('Error signing out: $e');
+    }
   }
 }
