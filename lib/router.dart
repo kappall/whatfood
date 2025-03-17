@@ -13,7 +13,7 @@ import 'package:whatfood/features/recipes/views/add_recipe_view.dart';
 import 'package:whatfood/features/recipes/views/edit_recipe_view.dart';
 import 'package:whatfood/pages/start_page.dart';
 
-final loggedInRoute = RouteMap(
+final loggedInRoutes = RouteMap(
   onUnknownRoute: (_) => MaterialPage(
       child: MainPage(
     isGuest: false,
@@ -63,14 +63,13 @@ final loggedInRoute = RouteMap(
   },
 );
 
-final loggedOutRoute = RouteMap(routes: {
+final loggedOutRoutes = RouteMap(routes: {
   '/': (_) => const MaterialPage(child: LoginView()),
   '/login': (_) => const MaterialPage(child: LoginView()),
   '/preferences': (route) => const MaterialPage(
           child: PreferencesView(
         isFromProfile: false,
       )),
-  '/verify-email': (_) => const MaterialPage(child: VerifyEmailView()),
   '/register': (_) => const MaterialPage(child: RegisterView()),
   '/main_guest': (_) => const MaterialPage(child: MainPage(isGuest: true)),
 });

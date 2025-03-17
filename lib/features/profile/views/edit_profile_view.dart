@@ -103,10 +103,21 @@ class _EditProfileViewState extends ConsumerState<EditProfileView> {
   @override
   Widget build(BuildContext context) {
     return SafeArea(
-      child: GestureDetector(
-        onTap: () => FocusScope.of(context).unfocus(),
-        child: ref.watch(getUserDataProvider).when(
-              data: (user) => Scaffold(
+      child: FutureBuilder<Map<String, dynamic>>(
+        future: getUserData(),
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return Center(child: CircularProgressIndicator());
+          }
+          // Stato di errore
+          if (snapshot.hasError) {
+            return Center(child: Text("Error: ${snapshot.error}"));
+          }
+          if (snapshot.hasData) {
+            final userData = snapshot.data!;
+            GestureDetector(
+              onTap: () => FocusScope.of(context).unfocus(),
+              child: Scaffold(
                 appBar: AppBar(
                   title: const Text('Edit Profile'),
                   centerTitle: true,
@@ -146,7 +157,7 @@ class _EditProfileViewState extends ConsumerState<EditProfileView> {
                                         fit: BoxFit.cover,
                                       )
                                     : Image.network(
-                                        user!.profilePic,
+                                        userData['profilePic'],
                                         fit: BoxFit.cover,
                                       ),
                               ),
@@ -250,11 +261,10 @@ class _EditProfileViewState extends ConsumerState<EditProfileView> {
                   ),
                 ),
               ),
-              loading: () => const Loader(),
-              error: (error, stackTrace) => ErrorText(
-                error: error.toString(),
-              ),
-            ),
+            );
+          }
+          return Container();
+        },
       ),
     );
   }

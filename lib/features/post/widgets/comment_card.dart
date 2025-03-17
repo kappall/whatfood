@@ -12,10 +12,12 @@ class CommentCard extends ConsumerWidget {
   }
 
   final Comment comment;
+  final PostController controller;
   final String postOwnerUid;
 
   const CommentCard({
     super.key,
+    required this.controller,
     required this.comment,
     required this.postOwnerUid,
   });
@@ -63,12 +65,10 @@ class CommentCard extends ConsumerWidget {
                             icon: Icon(Icons.delete, color: Colors.red),
                             onPressed: () {
                               FocusScope.of(context).unfocus();
-                              ref
-                                  .read(postControllerProvider.notifier)
-                                  .deleteComment(
-                                      commentId: comment.id,
-                                      postId: comment.postID,
-                                      context: context);
+                              controller.deleteComment(
+                                  commentId: comment.id,
+                                  postId: comment.postID,
+                                  context: context);
                             },
                           )
                         : null,

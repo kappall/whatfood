@@ -57,6 +57,8 @@ dependencies:
   amplify_flutter: ^2.6.1
   amplify_auth_cognito: ^2.6.1
   amplify_storage_s3: ^2.6.1
+  amplify_analytics_pinpoint: ^2.6.1
+  amplify_datastore: ^2.6.1
   amplify_api: ^2.6.1
 
 

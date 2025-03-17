@@ -1,0 +1,21 @@
+{
+    "appName": "whatfood",
+    "roleName": "pinpointLambdaRole1d2b4aa6",
+    "cloudformationPolicyName": "cloudformationPolicy1d2b4aa6",
+    "cloudWatchPolicyName": "cloudWatchPolicy1d2b4aa6",
+    "pinpointPolicyName": "pinpointPolicy1d2b4aa6",
+    "authPolicyName": "pinpoint_amplify_1d2b4aa6",
+    "unauthPolicyName": "pinpoint_amplify_1d2b4aa6",
+    "authRoleName": {
+        "Ref": "AuthRoleName"
+    },
+    "unauthRoleName": {
+        "Ref": "UnauthRoleName"
+    },
+    "authRoleArn": {
+        "Fn::GetAtt": [
+            "AuthRole",
+            "Arn"
+        ]
+    }
+}

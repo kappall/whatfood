@@ -1,51 +1,81 @@
+import 'package:amplify_flutter/amplify_flutter.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:routemaster/routemaster.dart';
 import 'package:whatfood/core/common/loader.dart';
-import 'package:whatfood/features/auth/controller/auth_controller.dart';
 import 'package:whatfood/features/preferences/widgets/intollerances_list.dart';
 import 'package:whatfood/features/preferences/controller/preferences_controller.dart';
 import 'package:whatfood/models/User.dart';
 
-class PreferencesView extends ConsumerWidget {
+class PreferencesView extends ConsumerStatefulWidget {
   const PreferencesView(
       {super.key, required this.isFromProfile, this.userModel});
   final bool isFromProfile;
   final User? userModel;
 
-  void navigateToVerify(BuildContext context) {
-    Routemaster.of(context).replace('/verify-email');
+  @override
+  ConsumerState<PreferencesView> createState() => _PreferencesViewState();
+}
+
+class _PreferencesViewState extends ConsumerState<PreferencesView> {
+  // Funzione per ottenere i dati utente
+  Future<Map<String, dynamic>> getUserData() async {
+    final attributes = await Amplify.Auth.fetchUserAttributes();
+    return Map.fromEntries(
+      attributes.map((attr) => MapEntry(attr.userAttributeKey.key, attr.value)),
+    );
   }
 
+  // Metodo per salvare le preferenze, utilizzando il provider PreferencesController
   Future<void> savePreferences(
-      BuildContext context, WidgetRef ref, List<String> preferences) async {
-    if (!isFromProfile) {
-      await ref.read(preferencesControllerProvider.notifier).savePreferences(
-            context: context,
-            preferences: preferences,
-          );
-
-      // ignore: use_build_context_synchronously
-      await Routemaster.of(context).push('/verify-email').result;
-    } else {
-      await ref.read(preferencesControllerProvider.notifier).savePreferences(
-            context: context,
-            preferences: preferences,
-          );
-    }
+      BuildContext context, List<String> preferences) async {
+    await ref.read(preferencesControllerProvider.notifier).savePreferences(
+          context: context,
+          preferences: preferences,
+        );
   }
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final user = ref.watch(userProvider);
-    if (user == null && isFromProfile) {
-      return const Scaffold(
-        body: Center(child: Loader()),
+  Widget build(BuildContext context) {
+    // Se la pagina proviene dal profilo e non è stato passato un userModel, si deve caricare l'utente
+    if (widget.isFromProfile && widget.userModel == null) {
+      return FutureBuilder<Map<String, dynamic>>(
+        future: getUserData(),
+        builder: (context, snapshot) {
+          // Stato di caricamento
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Scaffold(
+              body: Center(child: Loader()),
+            );
+          }
+          // Gestione errori
+          if (snapshot.hasError) {
+            return Scaffold(
+              body: Center(child: Text("Error: ${snapshot.error}")),
+            );
+          }
+          // Dati disponibili: creazione dell'oggetto User e UI
+          if (snapshot.hasData) {
+            final user = User.fromJson(snapshot.data!);
+            final intolerances = user.preferences ?? [];
+            return _buildPreferencesScaffold(context, intolerances);
+          }
+          return const Scaffold(
+            body: Center(child: Loader()),
+          );
+        },
       );
+    } else {
+      // Se si tratta di un flusso non proveniente dal profilo, oppure se è stato passato un userModel,
+      // si utilizzano i dati già disponibili (o una lista vuota)
+      final intolerances = widget.userModel?.preferences ?? [];
+      return _buildPreferencesScaffold(context, intolerances);
     }
+  }
 
-    List<String> intolerances = isFromProfile ? user?.preferences ?? [] : [];
-
+  // Metodo ausiliario per costruire la Scaffold principale
+  Widget _buildPreferencesScaffold(
+      BuildContext context, List<String> intolerances) {
     return SafeArea(
       child: Scaffold(
         appBar: AppBar(
@@ -55,9 +85,9 @@ class PreferencesView extends ConsumerWidget {
             style: TextStyle(color: Colors.white),
           ),
           actions: [
-            if (!isFromProfile)
+            if (!widget.isFromProfile)
               TextButton(
-                onPressed: () => navigateToVerify(context),
+                onPressed: () => Routemaster.of(context).replace('/'),
                 child: const Text(
                   'Skip',
                   style: TextStyle(color: Colors.white, fontSize: 15),
@@ -74,8 +104,8 @@ class PreferencesView extends ConsumerWidget {
             children: [
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const Text(
+                children: const [
+                  Text(
                     'What foods can\'t you eat?',
                     style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
                     textAlign: TextAlign.center,
@@ -86,7 +116,7 @@ class PreferencesView extends ConsumerWidget {
               Container(
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  color: Colors.grey[100], // Optional: adds a subtle background
+                  color: Colors.grey[100],
                   border: Border.all(
                     color: Colors.green,
                     width: 2,
@@ -113,7 +143,7 @@ class PreferencesView extends ConsumerWidget {
             height: 50,
             child: FilledButton(
               onPressed: () async {
-                await savePreferences(context, ref, intolerances);
+                await savePreferences(context, intolerances);
                 if (context.mounted) {
                   Routemaster.of(context)
                       .popUntil((route) => route.path == '/');

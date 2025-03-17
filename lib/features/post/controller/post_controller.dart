@@ -1,93 +1,34 @@
 import 'dart:io';
-
 import 'package:amplify_flutter/amplify_flutter.dart';
 import 'package:flutter/material.dart';
+import 'package:image/image.dart';
+import 'package:uuid/uuid.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image/image.dart' as img;
 import 'package:routemaster/routemaster.dart';
-import 'package:uuid/uuid.dart';
 import 'package:whatfood/core/providers/storage_repository_provider.dart';
 import 'package:whatfood/core/utils.dart';
 import 'package:whatfood/features/auth/controller/auth_controller.dart';
 import 'package:whatfood/features/post/repository/post_repository.dart';
-import 'package:whatfood/features/profile/controller/user_profile_controller.dart';
 import 'package:whatfood/models/MealType.dart';
 import 'package:whatfood/models/User.dart';
 import 'package:whatfood/models/Comment.dart';
 import 'package:whatfood/models/Post.dart';
 
-final postControllerProvider =
-    StateNotifierProvider<PostController, bool>((ref) {
-  final postRepository = ref.watch(postRepositoryProvider);
-  final storageRepository = ref.watch(storageRepositoryProvider);
-  return PostController(
-    postRepository: postRepository,
-    ref: ref,
-    storageRepository: storageRepository,
-  );
-});
-
-final mealFilterProvider = StateProvider<MealType?>((ref) => null);
-
-final postsProvider = FutureProvider((ref) {
-  final postController = ref.watch(postControllerProvider.notifier);
-
-  return postController.fetchPosts();
-});
-
-final postByIdProvider = FutureProvider.family((ref, String id) {
-  final posController = ref.watch(postControllerProvider.notifier);
-  return posController.getPostById(id);
-});
-
-final getpostCommentsProvider = FutureProvider.family((ref, String id) {
-  final posController = ref.watch(postControllerProvider.notifier);
-  return posController.fetchCommentsOfPost(id);
-});
-
-final userNameProvider =
-    StreamProvider.family<String, String>((ref, String uid) {
-  // Osserva le modifiche al modello User filtrando per l'ID utente
-  return Amplify.DataStore.observeQuery(
-    User.classType,
-    where: User.ID.eq(uid),
-  ).map((querySnapshot) {
-    // querySnapshot.items contiene la lista degli utenti che corrispondono al filtro
-    if (querySnapshot.items.isNotEmpty) {
-      return querySnapshot.items.first.name;
-    }
-    return '';
-  });
-});
-
-final userPicProvider =
-    StreamProvider.family<String, String>((ref, String uid) {
-  return Amplify.DataStore.observeQuery(
-    User.classType,
-    where: User.ID.eq(uid),
-  ).map((querySnapshot) {
-    if (querySnapshot.items.isNotEmpty) {
-      return querySnapshot.items.first.profilePic;
-    }
-    return '';
-  });
-});
-
-class PostController extends StateNotifier<bool> {
+class PostController {
   final PostRepository _postRepository;
-  final Ref _ref;
   final StorageRepository _storageRepository;
+  // If needed, inject a currentUser or a way to retrieve it.
+  User? currentUser;
 
   PostController({
     required PostRepository postRepository,
     required StorageRepository storageRepository,
-    required Ref ref,
+    this.currentUser,
   })  : _postRepository = postRepository,
-        _storageRepository = storageRepository,
-        _ref = ref,
-        super(false);
+        _storageRepository = storageRepository;
 
-  Future<List<Post>> fetchPosts() {
+  Stream<List<Post>> fetchPosts() {
     return _postRepository.fetchPosts();
   }
 
@@ -150,49 +91,32 @@ class PostController extends StateNotifier<bool> {
     return fileSize <= maxSizeInBytes;
   }
 
-  void shareimagePost({
+  Future<void> shareImagePost({
     required BuildContext context,
     required String description,
     required List<String> tags,
     required File image,
     required MealType mealType,
   }) async {
-    state = true;
-    final user = _ref.watch(userProvider);
-
-    if (user == null) {
+    if (currentUser == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('User not logged in')),
       );
-      state = false;
       return;
     }
 
-    String postId = const Uuid().v1();
-
+    final String postId = const Uuid().v1();
     try {
-      File processedFile;
-      try {
-        processedFile = await compressImage(image);
-      } catch (e) {
-        if (context.mounted) {
-          showSnackBar(context, 'Error compressing image: ${e.toString()}');
-        }
-        state = false;
-        return;
-      }
-
-      final result =
-          await _storageRepository.uploadImage(processedFile, user.uid);
-
-      final imageUrl = result;
+      File processedFile = await compressImage(image);
+      final imageUrl =
+          await _storageRepository.uploadImage(processedFile, currentUser!.uid);
 
       final Post post = Post(
         id: postId,
-        uid: user.uid,
+        uid: currentUser!.uid,
         description: description,
-        userImage: user.profilePic,
-        username: user.name,
+        userImage: currentUser!.profilePic,
+        username: currentUser!.name,
         createdAt: TemporalDateTime.now(),
         likes: [],
         tags: tags,
@@ -201,18 +125,17 @@ class PostController extends StateNotifier<bool> {
         type: 'image',
         mealType: mealType,
       );
-      final res = await _postRepository.addPost(post, user.postsCount);
-      state = false;
+
+      final res = await _postRepository.addPost(post, currentUser!.postsCount);
       res.fold(
-        (l) => ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(l.message)),
-        ),
-        (r) {
-          Routemaster.of(context).popUntil((route) => route.path == '/');
+        (failure) => ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text(failure.message))),
+        (_) {
+          // Navigate back after success.
+          Navigator.of(context).popUntil((route) => route.settings.name == '/');
         },
       );
     } catch (e) {
-      state = false;
       if (context.mounted) {
         showSnackBar(context, 'Error: ${e.toString()}');
       }
@@ -221,20 +144,19 @@ class PostController extends StateNotifier<bool> {
 
   void deletePost(Post post, BuildContext context) async {
     final res = await _postRepository.deletePost(post.id, post.uid);
-    _ref.read(userProfileControllerProvider.notifier);
     res.fold((l) => null,
         (r) => showSnackBar(context, 'Post Deleted successfully!'));
   }
 
-  void likeOrUnlike(Post post) {
-    final uid = _ref.read(userProvider)!.uid;
+  void likeOrUnlike(Post post) async {
+    final uid = User.fromJson(await getUserData()).uid;
     _postRepository.likeOrUnlike(post, uid);
   }
 
   Future<void> addOrRemoveBookmark(
     Post post,
-    User user,
   ) async {
+    final user = User.fromJson(await getUserData());
     await _postRepository.addOrRemoveBookmark(post, user);
   }
 
@@ -248,7 +170,7 @@ class PostController extends StateNotifier<bool> {
     required String postId,
     required int commentCount,
   }) async {
-    final user = _ref.read(userProvider)!;
+    final user = User.fromJson(await getUserData());
     String cId = const Uuid().v1();
     Comment comment = Comment(
       id: cId,
@@ -272,7 +194,7 @@ class PostController extends StateNotifier<bool> {
     debugPrint("comment deleted");
   }
 
-  Future<List<Comment>> fetchCommentsOfPost(String postId) {
+  Stream<List<Comment>> fetchCommentsOfPost(String postId) {
     return _postRepository.getCommentsOfPost(postId);
   }
 

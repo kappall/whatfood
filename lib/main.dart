@@ -1,70 +1,90 @@
+import 'package:amplify_analytics_pinpoint/amplify_analytics_pinpoint.dart';
 import 'package:amplify_api/amplify_api.dart';
 import 'package:amplify_auth_cognito/amplify_auth_cognito.dart';
+import 'package:amplify_datastore/amplify_datastore.dart';
 import 'package:amplify_flutter/amplify_flutter.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:whatfood/amplifyconfiguration.dart';
 import 'package:whatfood/core/common/error_text.dart';
 import 'package:whatfood/core/common/loader.dart';
+import 'package:whatfood/core/common/provider.dart';
 import 'package:whatfood/features/auth/controller/auth_controller.dart';
-import 'package:whatfood/models/User.dart';
+import 'package:whatfood/features/auth/repository/auth_repository.dart';
+import 'package:whatfood/models/ModelProvider.dart';
 import 'package:whatfood/router.dart';
 import 'package:routemaster/routemaster.dart';
 import 'package:whatfood/theme/theme.dart';
 
+Future<void> configureAmplify() async {
+  try {
+    final auth = AmplifyAuthCognito();
+    final datastore = AmplifyDataStore(modelProvider: ModelProvider.instance);
+    final api = AmplifyAPI();
+
+    await Amplify.addPlugins([
+      auth,
+      datastore,
+      api,
+    ]);
+
+    await Amplify.configure(amplifyconfig);
+    debugPrint('Successfully configured Amplify');
+  } catch (e) {
+    debugPrint('Error configuring Amplify: $e');
+  }
+}
+
+Future<bool> isUserLoggedIn() async {
+  try {
+    final session = await Amplify.Auth.fetchAuthSession();
+    return session.isSignedIn;
+  } on AuthException catch (e) {
+    debugPrint('Error checking auth session: ${e.message}');
+    return false;
+  }
+}
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await configureAmplify();
 
-  try {
-    await Amplify.addPlugins([
-      AmplifyAuthCognito(),
-      AmplifyAPI(),
-    ]);
-    await Amplify.configure(amplifyconfig);
-    debugPrint("Amplify successfully configured");
-  } catch (e) {
-    debugPrint("Error configuring Amplify: $e");
-  }
+  final bool loggedIn = await isUserLoggedIn();
+  debugPrint('User logged in: $loggedIn');
 
-  runApp(
-    ProviderScope(child: MyApp()),
-  );
+  runApp(MyApp(loggedIn: loggedIn));
 }
 
 class MyApp extends ConsumerStatefulWidget {
-  const MyApp({super.key});
+  final bool loggedIn;
+  const MyApp({super.key, required this.loggedIn});
 
   @override
   ConsumerState<ConsumerStatefulWidget> createState() => _MyAppState();
 }
 
 class _MyAppState extends ConsumerState<MyApp> {
-  User? userModel;
-
-  void getData(WidgetRef ref, User user) async {
-    userModel =
-        await ref.watch(authControllerProvider.notifier).getUserData(user.uid);
-    ref.read(userProvider.notifier).update((state) => userModel);
-  }
-
   @override
   Widget build(BuildContext context) {
-    return ref.watch(getUserDataProvider).when(
-          data: (user) => MaterialApp.router(
-            debugShowCheckedModeBanner: false,
-            title: 'Whatfood',
-            theme: darkTheme,
-            routerDelegate: RoutemasterDelegate(routesBuilder: (context) {
-              if (user == null || !user.isVerified) {
-                return loggedOutRoute;
-              }
-              getData(ref, user);
-              return loggedInRoute;
-            }),
-            routeInformationParser: const RoutemasterParser(),
-          ),
-          error: (error, stackTrace) => ErrorText(error: error.toString()),
-          loading: () => const Loader(),
-        );
+    final MyNotifier<AuthController> authControllerNotifier =
+        MyNotifier<AuthController>(
+      AuthController(
+        authRepository: AuthRepository(),
+      ),
+    );
+    return MyProvider<AuthController>(
+      notifier: authControllerNotifier,
+      child: MaterialApp.router(
+        debugShowCheckedModeBanner: false,
+        title: 'Whatfood',
+        theme: darkTheme,
+        routerDelegate: RoutemasterDelegate(routesBuilder: (context) {
+          final authController = MyProvider.of<AuthController>(context);
+          final loggedIn = authController?.isLoggedIn ?? false;
+          return loggedIn ? loggedInRoutes : loggedOutRoutes;
+        }),
+        routeInformationParser: const RoutemasterParser(),
+      ),
+    );
   }
 }

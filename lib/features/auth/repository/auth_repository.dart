@@ -5,30 +5,16 @@ import 'package:amplify_flutter/amplify_flutter.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:fpdart/fpdart.dart';
-import 'package:google_sign_in/google_sign_in.dart';
 import 'package:whatfood/core/constants/costants.dart';
-import 'package:whatfood/core/providers/aws_providers.dart';
 import 'package:whatfood/core/type_def.dart';
 import 'package:whatfood/core/failure.dart';
 import 'package:whatfood/models/User.dart';
 
 final authRepositoryProvider = Provider(
-  (ref) => AuthRepository(
-    auth: ref.read(authProvider),
-    googleSignIn: ref.read(googleSignInProvider),
-  ),
+  (ref) => AuthRepository(),
 );
 
 class AuthRepository {
-  final AmplifyAuthCognito _auth;
-  final GoogleSignIn _googleSignIn;
-
-  AuthRepository({
-    required AmplifyAuthCognito auth,
-    required GoogleSignIn googleSignIn,
-  })  : _auth = auth,
-        _googleSignIn = googleSignIn;
-
   Future<String?> getCurrentUserId() async {
     try {
       var user = await Amplify.Auth.getCurrentUser();
@@ -103,7 +89,7 @@ class AuthRepository {
     }
   }
 
-  FutureEither<User> registerWithEmailAndPassword({
+  FutureEither<SignUpResult> registerWithEmailAndPassword({
     required String email,
     required String password,
     required String name,
@@ -119,28 +105,8 @@ class AuthRepository {
           },
         ),
       );
-      debugPrint(signUpResult.toString());
-      final userId = (await Amplify.Auth.getCurrentUser()).userId;
 
-      final userModel = User(
-        name: name,
-        email: email,
-        profilePic: Constants.avatarDefault,
-        banner: Constants.bannerDefault,
-        uid: userId,
-        preferences: [],
-        savedPosts: [],
-        postsCount: 0,
-        dailyIntake: 0,
-        followers: [],
-        following: [],
-        isVerified: false,
-        bio: '',
-      );
-
-      await saveUserData(userModel);
-
-      return right(userModel);
+      return right(signUpResult);
     } on AuthException catch (e) {
       return left(Failure(e.message));
     } catch (e) {

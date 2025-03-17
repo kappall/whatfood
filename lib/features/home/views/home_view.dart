@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:whatfood/core/common/provider.dart';
 import 'package:whatfood/features/auth/controller/auth_controller.dart';
 import 'package:whatfood/features/home/views/for_you_view.dart';
 import 'package:whatfood/features/home/widgets/add_post_modal.dart';
@@ -7,19 +7,21 @@ import 'package:whatfood/features/post/controller/post_controller.dart';
 import 'package:whatfood/models/MealType.dart';
 import 'package:whatfood/models/User.dart';
 
-class HomeView extends ConsumerStatefulWidget {
-  const HomeView({super.key});
+class HomeView extends StatefulWidget {
+  const HomeView({Key? key}) : super(key: key);
 
   @override
-  ConsumerState<HomeView> createState() => _HomeViewState();
+  State<HomeView> createState() => _HomeViewState();
 }
 
-class _HomeViewState extends ConsumerState<HomeView>
+class _HomeViewState extends State<HomeView>
     with SingleTickerProviderStateMixin {
-  late User userModel;
+  User? userModel;
+  bool _loadingUser = true;
   late TabController _tabController;
   late PageController _pageController;
   bool _mounted = true;
+  MealType? _selectedMealFilter;
 
   @override
   void initState() {
@@ -27,7 +29,23 @@ class _HomeViewState extends ConsumerState<HomeView>
     _tabController = TabController(length: 2, vsync: this);
     _pageController = PageController();
     _tabController.addListener(_handleTabChange);
-    userModel = ref.read(userProvider)!;
+    _fetchUserData();
+  }
+
+  Future<void> _fetchUserData() async {
+    try {
+      final data = await getUserData();
+      if (!_mounted) return;
+      setState(() {
+        userModel = User.fromJson(data);
+        _loadingUser = false;
+      });
+    } catch (e) {
+      if (!_mounted) return;
+      setState(() {
+        _loadingUser = false;
+      });
+    }
   }
 
   void _handleTabChange() {
@@ -52,20 +70,18 @@ class _HomeViewState extends ConsumerState<HomeView>
   }
 
   void _showFilterMenu(BuildContext context) {
-    final currentFilter = ref.read(mealFilterProvider);
+    final currentFilter = _selectedMealFilter;
 
-    showMenu(
+    showMenu<MealType?>(
       context: context,
-      position: RelativeRect.fromLTRB(0, 80, 0, 0),
+      position: const RelativeRect.fromLTRB(0, 80, 0, 0),
       items: [
         PopupMenuItem<MealType?>(
           value: null,
           child: Row(
             children: [
-              Icon(
-                Icons.clear_all,
-                color: currentFilter == null ? Colors.green : null,
-              ),
+              Icon(Icons.clear_all,
+                  color: currentFilter == null ? Colors.green : null),
               const SizedBox(width: 8),
               Text(
                 'All Posts',
@@ -84,10 +100,8 @@ class _HomeViewState extends ConsumerState<HomeView>
             value: type,
             child: Row(
               children: [
-                Icon(
-                  _getMealTypeIcon(type),
-                  color: currentFilter == type ? Colors.green : null,
-                ),
+                Icon(_getMealTypeIcon(type),
+                    color: currentFilter == type ? Colors.green : null),
                 const SizedBox(width: 8),
                 Text(
                   type.name,
@@ -104,7 +118,9 @@ class _HomeViewState extends ConsumerState<HomeView>
         ),
       ],
     ).then((selectedType) {
-      ref.read(mealFilterProvider.notifier).state = selectedType;
+      setState(() {
+        _selectedMealFilter = selectedType;
+      });
     });
   }
 
@@ -123,8 +139,15 @@ class _HomeViewState extends ConsumerState<HomeView>
 
   @override
   Widget build(BuildContext context) {
-    final selectedFilter = ref.watch(mealFilterProvider);
-
+    final controller = MyProvider.of<PostController>(context)?.value;
+    if (controller == null) {
+      return Scaffold(body: Center(child: Text('Controller not found')));
+    }
+    if (_loadingUser) {
+      return const Scaffold(
+        body: Center(child: CircularProgressIndicator()),
+      );
+    }
     return Scaffold(
       appBar: PreferredSize(
         preferredSize: const Size.fromHeight(50),
@@ -146,7 +169,8 @@ class _HomeViewState extends ConsumerState<HomeView>
                       onPressed: () => _showFilterMenu(context),
                       icon: Icon(
                         Icons.filter_list,
-                        color: selectedFilter != null ? Colors.green : null,
+                        color:
+                            _selectedMealFilter != null ? Colors.green : null,
                       ),
                     ),
                     Align(
@@ -181,13 +205,7 @@ class _HomeViewState extends ConsumerState<HomeView>
                               : Colors.grey,
                         ),
                       ),
-                    ), /*
-                    IconButton(
-                      onPressed: () => themeNotifier.toggleTheme(),
-                      icon: Icon(
-                        Icons.brightness_6,
-                      ),
-                    )*/
+                    ),
                   ],
                 ),
               ),
@@ -204,20 +222,20 @@ class _HomeViewState extends ConsumerState<HomeView>
             _tabController.animateTo(index);
           }
         },
-        children: const [
-          ForYouView(),
-          Center(child: Text('Inspiration Page')),
+        children: [
+          ForYouView(selectedMealType: _selectedMealFilter),
+          const Center(child: Text('Inspiration Page')),
         ],
       ),
       floatingActionButton: FloatingActionButton(
-        shape: CircleBorder(),
+        shape: const CircleBorder(),
         onPressed: () async {
           await showModalBottomSheet(
             context: context,
             isScrollControlled: false,
             useSafeArea: true,
             backgroundColor: Colors.transparent,
-            builder: (context) => AddPostModal(),
+            builder: (context) => const AddPostModal(),
           );
         },
         backgroundColor: Colors.green,

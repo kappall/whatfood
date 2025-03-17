@@ -4,6 +4,7 @@ import 'package:routemaster/routemaster.dart';
 import 'package:whatfood/core/common/error_text.dart';
 import 'package:whatfood/core/common/loader.dart';
 import 'package:whatfood/core/common/post_card_for_comment.dart';
+import 'package:whatfood/core/common/provider.dart';
 import 'package:whatfood/features/post/controller/post_controller.dart';
 import 'package:whatfood/features/post/widgets/comment_card.dart';
 import 'package:whatfood/models/Post.dart';
@@ -29,75 +30,93 @@ class _CommentsViewState extends ConsumerState<CommentsView> {
     super.dispose();
   }
 
-  void addComment(Post post) {
-    ref.read(postControllerProvider.notifier).addComment(
-          context: context,
-          content: commentController.text.trim(),
-          postId: post.id,
-          commentCount: post.commentCount,
-        );
+  void addComment(Post post, PostController controller) {
+    controller.addComment(
+      context: context,
+      content: commentController.text.trim(),
+      postId: post.id,
+      commentCount: post.commentCount,
+    );
     commentController.clear();
   }
 
   @override
   Widget build(BuildContext context) {
-    return ref.watch(postByIdProvider(widget.postId)).when(
-          data: (post) {
-            return GestureDetector(
-              onTap: () {
-                FocusScope.of(context).unfocus();
-              },
-              child: Scaffold(
-                appBar: AppBar(
-                  leading: IconButton(
-                    onPressed: () => Routemaster.of(context).pop(),
-                    icon: Icon(Icons.arrow_back),
-                  ),
-                  title: Text('Comments'),
-                  centerTitle: true,
-                ),
-                body: SingleChildScrollView(
-                  controller: _scrollController,
-                  child: Column(
-                    children: [
-                      PostCardForComment(
-                        post: post!,
-                        isCommenting: true,
+    final controller = MyProvider.of<PostController>(context)?.value;
+    if (controller == null) {
+      return Scaffold(body: Center(child: Text('Controller not found')));
+    }
+    return StreamBuilder(
+        stream: controller.fetchCommentsOfPost(widget.postId),
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Loader();
+          }
+          if (snapshot.hasError) {
+            return ErrorText(error: snapshot.error.toString());
+          }
+          if (!snapshot.hasData) {
+            return const Loader();
+          }
+          final comments = snapshot.data!;
+          return GestureDetector(
+            onTap: () {
+              FocusScope.of(context).unfocus();
+            },
+            child: FutureBuilder(
+                future: controller.getPostById(widget.postId),
+                builder: (context, snapshot) {
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    return const Loader();
+                  }
+                  if (snapshot.hasError) {
+                    return ErrorText(error: snapshot.error.toString());
+                  }
+                  if (!snapshot.hasData) {
+                    return const Loader();
+                  }
+                  final post = snapshot.data!;
+                  return Scaffold(
+                      bottomNavigationBar: _buildCommentInput(post, controller),
+                      appBar: AppBar(
+                        leading: IconButton(
+                          onPressed: () => Routemaster.of(context).pop(),
+                          icon: Icon(Icons.arrow_back),
+                        ),
+                        title: Text('Comments'),
+                        centerTitle: true,
                       ),
-                      ref.watch(getpostCommentsProvider(widget.postId)).when(
-                            data: (comments) {
-                              return ListView.builder(
-                                shrinkWrap: true,
-                                physics: NeverScrollableScrollPhysics(),
-                                itemCount: comments.length,
-                                itemBuilder: (context, index) {
-                                  final comment = comments[index];
-                                  return CommentCard(
-                                    comment: comment,
-                                    postOwnerUid: post.uid,
-                                  );
-                                },
-                              );
-                            },
-                            error: (error, stackTrace) =>
-                                ErrorText(error: error.toString()),
-                            loading: () => Loader(),
-                          ),
-                    ],
-                  ),
-                ),
-                bottomNavigationBar: _buildCommentInput(post),
-              ),
-            );
-          },
-          error: (error, stackTrace) => Scaffold(
-            body: Center(child: ErrorText(error: error.toString())),
-          ),
-          loading: () => Scaffold(body: Center(child: Loader())),
-        );
+                      body: SingleChildScrollView(
+                        controller: _scrollController,
+                        child: Column(
+                          children: [
+                            PostCardForComment(
+                              post: post,
+                              isCommenting: true,
+                              controller: controller,
+                            ),
+                            ListView.builder(
+                              shrinkWrap: true,
+                              physics: NeverScrollableScrollPhysics(),
+                              itemCount: comments.length,
+                              itemBuilder: (context, index) {
+                                final comment = comments[index];
+                                return CommentCard(
+                                  controller: controller,
+                                  comment: comment,
+                                  postOwnerUid: post.uid,
+                                );
+                              },
+                            )
+                          ],
+                        ),
+                      ));
+                }),
+          );
+        });
   }
 
-  Widget _buildCommentInput(Post post) {
+  Widget _buildCommentInput(Post post, PostController controller) {
     return SafeArea(
       child: Container(
         padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8)
@@ -119,7 +138,6 @@ class _CommentsViewState extends ConsumerState<CommentsView> {
                 style: const TextStyle(color: Colors.black),
                 controller: commentController,
                 textCapitalization: TextCapitalization.sentences,
-                onSubmitted: (val) => addComment(post),
                 focusNode: _commentFocusNode,
                 decoration: InputDecoration(
                   hintText: "Write a comment...",
@@ -139,7 +157,7 @@ class _CommentsViewState extends ConsumerState<CommentsView> {
             SizedBox(width: 8),
             ElevatedButton(
               onPressed: () {
-                addComment(post);
+                addComment(post, controller);
                 FocusScope.of(context).unfocus();
               },
               style: ElevatedButton.styleFrom(

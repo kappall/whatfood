@@ -3,6 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:routemaster/routemaster.dart';
 import 'package:whatfood/core/common/error_text.dart';
 import 'package:whatfood/core/common/loader.dart';
+import 'package:whatfood/core/common/provider.dart';
+import 'package:whatfood/features/post/controller/post_controller.dart';
 import 'package:whatfood/features/profile/controller/user_profile_controller.dart';
 import 'package:whatfood/core/common/post_card_for_list.dart';
 
@@ -29,7 +31,13 @@ class PostList extends ConsumerWidget {
                   itemCount: data.length,
                   itemBuilder: (BuildContext content, int indez) {
                     final post = data[indez];
-                    return PostCard(post: post);
+                    final controller =
+                        MyProvider.of<PostController>(context)?.value;
+                    if (controller == null) {
+                      return Scaffold(
+                          body: Center(child: Text('Controller not found')));
+                    }
+                    return PostCard(post: post, controller: controller);
                   });
             },
             error: (error, stackTrace) {

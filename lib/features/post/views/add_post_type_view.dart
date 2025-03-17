@@ -4,6 +4,7 @@ import 'package:dotted_border/dotted_border.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:whatfood/core/common/loader.dart';
+import 'package:whatfood/core/common/provider.dart';
 import 'package:whatfood/core/utils.dart';
 import 'package:whatfood/features/post/controller/post_controller.dart';
 import 'package:whatfood/models/MealType.dart';
@@ -112,7 +113,7 @@ class _AddPostTypeViewState extends ConsumerState<AddPostTypeView> {
     );
   }
 
-  void sharePost(BuildContext context) {
+  void sharePost(BuildContext context, PostController controller) {
     if (image == null) {
       showSnackBar(context, "Image missing");
       return;
@@ -125,15 +126,14 @@ class _AddPostTypeViewState extends ConsumerState<AddPostTypeView> {
       showSnackBar(context, "Please select a meal type");
       return;
     }
-    if (ref.read(postControllerProvider)) return;
 
-    ref.read(postControllerProvider.notifier).shareimagePost(
-          context: context,
-          description: descriptionController.text.trim(),
-          tags: tags,
-          image: image!,
-          mealType: selectedMealType!,
-        );
+    controller.shareImagePost(
+      context: context,
+      description: descriptionController.text.trim(),
+      tags: tags,
+      image: image!,
+      mealType: selectedMealType!,
+    );
   }
 
   Widget _buildMealTypeSelector() {
@@ -210,8 +210,10 @@ class _AddPostTypeViewState extends ConsumerState<AddPostTypeView> {
 
   @override
   Widget build(BuildContext context) {
-    final isLoading = ref.watch(postControllerProvider);
-
+    final controller = MyProvider.of<PostController>(context)?.value;
+    if (controller == null) {
+      return Scaffold(body: Center(child: Text('Controller not found')));
+    }
     return GestureDetector(
       onTap: () {
         FocusScope.of(context).unfocus();
@@ -224,14 +226,8 @@ class _AddPostTypeViewState extends ConsumerState<AddPostTypeView> {
           titleTextStyle: Theme.of(context).textTheme.headlineMedium,
           actions: [
             TextButton(
-              onPressed: isLoading ? null : () => sharePost(context),
-              child: isLoading
-                  ? const SizedBox(
-                      height: 20,
-                      width: 20,
-                      child: Loader(),
-                    )
-                  : const Text('Share'),
+              onPressed: () => sharePost(context, controller),
+              child: const Text('Share'),
             ),
           ],
         ),

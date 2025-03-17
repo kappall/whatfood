@@ -1,47 +1,56 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:routemaster/routemaster.dart';
+import 'package:whatfood/core/common/error_text.dart';
+import 'package:whatfood/core/common/loader.dart';
 import 'package:whatfood/features/auth/controller/auth_controller.dart';
 import 'package:whatfood/features/post/controller/post_controller.dart';
 import 'package:whatfood/models/Post.dart';
+import 'package:whatfood/models/User.dart';
 
-class PostCard extends ConsumerWidget {
+class PostCard extends StatefulWidget {
   final Post post;
   final bool isCommenting;
+  final PostController controller;
   const PostCard({
     super.key,
+    required this.controller,
     this.isCommenting = false,
     required this.post,
   });
 
-  void deletePost(WidgetRef ref, BuildContext context) async {
-    ref.read(postControllerProvider.notifier).deletePost(post, context);
+  @override
+  State<StatefulWidget> createState() => _PostCardState();
+}
+
+class _PostCardState extends State<PostCard> {
+  void deletePost(BuildContext context) async {
+    widget.controller.deletePost(widget.post, context);
   }
 
-  void likeOrUnlikePost(WidgetRef ref) async {
-    ref.read(postControllerProvider.notifier).likeOrUnlike(post);
+  void likeOrUnlikePost() async {
+    widget.controller.likeOrUnlike(widget.post);
   }
 
   void navigateToComments(BuildContext context) {
-    Routemaster.of(context).push('${post.id}/comments');
+    Routemaster.of(context).push('${widget.post.id}/comments');
   }
 
   void navigateToUser(BuildContext context) {
     try {
-      Routemaster.of(context).push('user_page/${post.uid}');
+      Routemaster.of(context).push('user_page/${widget.post.uid}');
     } catch (e) {
       debugPrint(e.toString());
     }
   }
 
-  Widget popUpMenu(BuildContext context, WidgetRef ref, bool isOwner) {
+  Widget popUpMenu(BuildContext context, bool isOwner) {
     return PopupMenuButton<String>(
       icon: Icon(
         Icons.more_vert,
       ),
       onSelected: (String result) {
         if (result == 'delete') {
-          deletePost(ref, context);
+          deletePost(context);
         }
       },
       itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
@@ -97,175 +106,142 @@ class PostCard extends ConsumerWidget {
   }
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final isTypeImage = post.type == "image";
-    final isTypeText = post.type == "text";
-    final user = ref.watch(userProvider)!;
-    return Column(
-      children: [
-        Container(
-          decoration: BoxDecoration(),
-          padding: EdgeInsets.symmetric(vertical: 10),
-          child: Column(
+  Widget build(BuildContext context) {
+    return FutureBuilder(
+        future: getUserData(),
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Loader();
+          }
+          if (snapshot.hasError) {
+            return ErrorText(error: snapshot.error.toString());
+          }
+          if (!snapshot.hasData) {
+            return const Loader();
+          }
+          final user = User.fromJson(snapshot.data!);
+          return Column(
             children: [
               Container(
-                padding: EdgeInsets.symmetric(vertical: 4, horizontal: 16)
-                    .copyWith(right: 0),
+                decoration: BoxDecoration(),
+                padding: EdgeInsets.symmetric(vertical: 10),
                 child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Row(
-                          children: [
-                            OutlinedButton(
-                              style: OutlinedButton.styleFrom(
-                                  shape: CircleBorder(),
-                                  padding: EdgeInsets.only(right: 0)),
-                              onPressed: () => navigateToUser(context),
-                              child: CircleAvatar(
-                                backgroundImage: NetworkImage(post.userImage),
-                                radius: 24,
+                    Container(
+                      padding: EdgeInsets.symmetric(vertical: 4, horizontal: 16)
+                          .copyWith(right: 0),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Row(
+                                children: [
+                                  OutlinedButton(
+                                    style: OutlinedButton.styleFrom(
+                                        shape: CircleBorder(),
+                                        padding: EdgeInsets.only(right: 0)),
+                                    onPressed: () => navigateToUser(context),
+                                    child: CircleAvatar(
+                                      backgroundImage:
+                                          NetworkImage(widget.post.userImage),
+                                      radius: 24,
+                                    ),
+                                  ),
+                                  Padding(
+                                    padding: EdgeInsets.only(left: 8),
+                                    child: Text(
+                                      widget.post.username,
+                                      style: TextStyle(
+                                        fontSize: 22,
+                                        color: Colors.white,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              popUpMenu(context, widget.post.uid == user.uid)
+                            ],
+                          ),
+                          Padding(
+                            padding: EdgeInsets.only(top: 10),
+                            child: Text(
+                              widget.post.description,
+                              style: TextStyle(
+                                fontSize: 20,
                               ),
                             ),
-                            Padding(
-                              padding: EdgeInsets.only(left: 8),
-                              child: Text(
-                                post.username,
-                                style: TextStyle(
-                                  fontSize: 22,
-                                  color: Colors.white,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                        popUpMenu(context, ref, post.uid == user.uid)
-                      ],
+                          ),
+                        ],
+                      ),
                     ),
-                    Padding(
-                      padding: EdgeInsets.only(top: 10),
-                      child: Text(
-                        post.description,
-                        style: TextStyle(
-                          fontSize: 20,
+                    SizedBox(
+                      height: MediaQuery.of(context).size.height * 0.4,
+                      width: double.infinity,
+                      child: Container(
+                        decoration: BoxDecoration(
+                            color:
+                                Theme.of(context).appBarTheme.backgroundColor),
+                        child: Image.network(
+                          widget.post.imageUrl,
+                          fit: BoxFit.contain,
+                          width: double.infinity,
                         ),
                       ),
                     ),
-                  ],
-                ),
-              ),
-              if (isTypeImage)
-                SizedBox(
-                  height: MediaQuery.of(context).size.height * 0.4,
-                  width: double.infinity,
-                  child: Container(
-                    decoration: BoxDecoration(
-                        color: Theme.of(context).appBarTheme.backgroundColor),
-                    child: Image.network(
-                      post.imageUrl,
-                      fit: BoxFit.contain,
-                      width: double.infinity,
-                    ),
-                  ),
-                ),
-              if (isTypeText)
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Divider(
-                      height: 2,
-                    ),
-                    ClipRRect(
-                      borderRadius: BorderRadius.circular(12),
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 20, vertical: 12),
-                        child: Container(
-                          decoration: BoxDecoration(
-                            color:
-                                Theme.of(context).appBarTheme.backgroundColor!,
-                            borderRadius: BorderRadius.circular(12),
-                            boxShadow: [
-                              BoxShadow(
-                                color: Theme.of(context).brightness ==
-                                        Brightness.dark
-                                    ? Colors.black45
-                                    : Colors.black12,
-                                offset: Offset(0, 2),
-                                blurRadius: 10,
+                    Padding(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 14, vertical: 4),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Row(
+                            children: [
+                              IconButton(
+                                icon: Icon(
+                                  widget.post.likes.contains(user.uid)
+                                      ? Icons.favorite
+                                      : Icons.favorite_outline,
+                                  color: widget.post.likes.contains(user.uid)
+                                      ? Colors.red
+                                      : Colors.white,
+                                  size: 30,
+                                ),
+                                onPressed: () => likeOrUnlikePost(),
+                              ),
+                              Text(
+                                "${widget.post.likes.isEmpty ? 'Like' : widget.post.likes.length}",
+                                style: TextStyle(fontSize: 18),
                               ),
                             ],
                           ),
-                          child: Padding(
-                            padding: const EdgeInsets.all(16.0),
-                            child: Text(
-                              post.description,
-                              style: TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.w400,
-                                height: 1.5,
+                          Row(
+                            children: [
+                              IconButton(
+                                icon: Icon(Icons.comment),
+                                onPressed: () => !widget.isCommenting
+                                    ? navigateToComments(context)
+                                    : null,
                               ),
-                            ),
+                              Text(
+                                "${widget.post.commentCount == 0 ? 'Comment' : widget.post.commentCount}",
+                                style: TextStyle(fontSize: 18),
+                              ),
+                            ],
                           ),
-                        ),
+                        ],
                       ),
+                    ),
+                    Divider(
+                      color: Theme.of(context).primaryColor,
+                      height: 5,
                     )
                   ],
                 ),
-              Padding(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Row(
-                      children: [
-                        IconButton(
-                          icon: Icon(
-                            post.likes.contains(ref.watch(userProvider)?.uid)
-                                ? Icons.favorite
-                                : Icons.favorite_outline,
-                            color: post.likes
-                                    .contains(ref.watch(userProvider)?.uid)
-                                ? Colors.red
-                                : Colors.white,
-                            size: 30,
-                          ),
-                          onPressed: () => likeOrUnlikePost(ref),
-                        ),
-                        Text(
-                          "${post.likes.isEmpty ? 'Like' : post.likes.length}",
-                          style: TextStyle(fontSize: 18),
-                        ),
-                      ],
-                    ),
-                    Row(
-                      children: [
-                        IconButton(
-                          icon: Icon(Icons.comment),
-                          onPressed: () => !isCommenting
-                              ? navigateToComments(context)
-                              : null,
-                        ),
-                        Text(
-                          "${post.commentCount == 0 ? 'Comment' : post.commentCount}",
-                          style: TextStyle(fontSize: 18),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
               ),
-              Divider(
-                color: Theme.of(context).primaryColor,
-                height: 5,
-              )
             ],
-          ),
-        ),
-      ],
-    );
+          );
+        });
   }
 }

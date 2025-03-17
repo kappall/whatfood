@@ -1,0 +1,14 @@
+{
+  "resourceName": "whatfoodStorage",
+  "policyUUID": "b8b657ab",
+  "bucketName": "whatfooduser",
+  "storageAccess": "auth",
+  "guestAccess": [],
+  "authAccess": [
+    "CREATE_AND_UPDATE",
+    "READ",
+    "DELETE"
+  ],
+  "triggerFunction": "S3Triggerefd75989",
+  "groupAccess": {}
+}

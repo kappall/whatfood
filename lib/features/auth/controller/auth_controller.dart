@@ -1,38 +1,27 @@
 import 'dart:developer';
 
+import 'package:amplify_flutter/amplify_flutter.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:routemaster/routemaster.dart';
+import 'package:whatfood/core/constants/costants.dart';
 import 'package:whatfood/core/utils.dart';
 import 'package:whatfood/features/auth/repository/auth_repository.dart';
 import 'package:whatfood/models/User.dart';
 
 final userProvider = StateProvider<User?>((ref) => null);
 
-final authControllerProvider = StateNotifierProvider<AuthController, bool>(
-  (ref) => AuthController(
-    authRepository: ref.watch(authRepositoryProvider),
-    ref: ref,
-  ),
-);
-
-final getUserDataProvider = FutureProvider<User?>((ref) async {
-  final authRepo = ref.watch(authRepositoryProvider);
-  final userId = await authRepo.getCurrentUserId();
-
-  if (userId == null) {
-    return null;
-  }
-
-  return authRepo.getUserData(userId);
-});
+Future<Map<String, dynamic>> getUserData() async {
+  final attributes = await Amplify.Auth.fetchUserAttributes();
+  return Map.fromEntries(
+    attributes.map((attr) => MapEntry(attr.userAttributeKey.key, attr.value)),
+  );
+}
 
 class AuthController extends StateNotifier<bool> {
   final AuthRepository _authRepository;
-  final Ref _ref;
-  AuthController({required AuthRepository authRepository, required Ref ref})
+  AuthController({required AuthRepository authRepository})
       : _authRepository = authRepository,
-        _ref = ref,
         super(false);
 
   // void signInWithGoogle(BuildContext context, bool isFromLogin) async {
@@ -48,20 +37,20 @@ class AuthController extends StateNotifier<bool> {
   //   );
   // }
 
-  void signInAsGuest(BuildContext context) async {
-    state = true;
-    final user = await _authRepository.signInAsGuest();
-    state = false;
-    user.fold(
-      (l) => showSnackBar(context, l.message),
-      (userModel) {
-        _ref.read(userProvider.notifier).update((state) => userModel);
-        Routemaster.of(context).replace('/');
-      },
-    );
-  }
+  // void signInAsGuest(BuildContext context) async {
+  //   state = true;
+  //   final user = await _authRepository.signInAsGuest();
+  //   state = false;
+  //   user.fold(
+  //     (l) => showSnackBar(context, l.message),
+  //     (userModel) {
+  //       _ref.read(userProvider.notifier).update((state) => userModel);
+  //       Routemaster.of(context).replace('/');
+  //     },
+  //   );
+  // }
 
-  void signInWithEmailAndPassword({
+  Future<void> signInWithEmailAndPassword({
     required BuildContext context,
     required String email,
     required String password,
@@ -79,7 +68,6 @@ class AuthController extends StateNotifier<bool> {
           showSnackBar(context, l.message);
         },
         (userModel) {
-          Routemaster.of(context).push('/preferences');
           debugPrint("got here");
         },
       );
@@ -109,9 +97,102 @@ class AuthController extends StateNotifier<bool> {
 
     user.fold(
       (l) => showSnackBar(context, l.message),
-      (userModel) {
-        Routemaster.of(context).push('/preferences');
+      (signUpResult) {
+        try {
+          debugPrint(signUpResult.toString());
+          if (signUpResult.nextStep.signUpStep ==
+              AuthSignUpStep.confirmSignUp) {
+            debugPrint("here");
+
+            final userModel = User(
+              name: name,
+              email: email,
+              profilePic: Constants.avatarDefault,
+              banner: Constants.bannerDefault,
+              uid: signUpResult.userId!,
+              preferences: [],
+              savedPosts: [],
+              postsCount: 0,
+              dailyIntake: 0,
+              followers: [],
+              following: [],
+              isVerified: false,
+              bio: '',
+            );
+
+            _showVerificationDialog(context, userModel, password);
+          }
+        } catch (e) {
+          debugPrint(e.toString());
+        }
       },
+    );
+  }
+
+  void _showVerificationDialog(
+      BuildContext context, User user, String password) {
+    final verificationController = TextEditingController();
+
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => AlertDialog(
+        title: const Text('Email Verification'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Text('Inser the code sent to your email'),
+            TextField(
+              controller: verificationController,
+              keyboardType: TextInputType.number,
+              decoration: const InputDecoration(
+                labelText: 'Verification Code',
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () async {
+              try {
+                final confirmResult = await Amplify.Auth.confirmSignUp(
+                  username: user.email,
+                  confirmationCode: verificationController.text.trim(),
+                );
+
+                if (confirmResult.isSignUpComplete) {
+                  final email = user.email;
+                  await _authRepository.saveUserData(user);
+
+                  final signInResult = await Amplify.Auth.signIn(
+                    username: email,
+                    password: password,
+                  );
+
+                  if (signInResult.isSignedIn) {
+                    if (Navigator.of(context).canPop()) {
+                      Navigator.of(context).pop();
+                    }
+                    if (context.mounted) {
+                      Routemaster.of(context).replace('/preferences');
+                    }
+                  } else {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                          content: Text('Sign in failed after confirmation.')),
+                    );
+                  }
+                }
+              } on AuthException catch (e) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text(e.message)),
+                );
+              }
+            },
+            child: const Text('Verify'),
+          ),
+        ],
+      ),
     );
   }
 }

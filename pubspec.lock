@@ -2,7 +2,7 @@
 # See https://dart.dev/tools/pub/glossary#lockfile
 packages:
   amplify_analytics_pinpoint:
-    dependency: transitive
+    dependency: "direct main"
     description:
       name: amplify_analytics_pinpoint
       sha256: dcb64467a6548e711a4e2649ac942b288dfd4becd4ae80062b1ec7a72ca25230
@@ -54,6 +54,22 @@ packages:
     description:
       name: amplify_core
       sha256: "752b23770909b7c1c5f1113db7444b64b03e710da62df343e913935eb6c75d4e"
+      url: "https://pub.dev"
+    source: hosted
+    version: "2.6.1"
+  amplify_datastore:
+    dependency: "direct main"
+    description:
+      name: amplify_datastore
+      sha256: "8c9555e0ae12e3d1bf55cb7b248fb2dbfd3594fa19ac60a1ae88554b06709b95"
+      url: "https://pub.dev"
+    source: hosted
+    version: "2.6.1"
+  amplify_datastore_plugin_interface:
+    dependency: transitive
+    description:
+      name: amplify_datastore_plugin_interface
+      sha256: ac72a73760442198d29cf23edf853231b658866134576e1ed6e53be0d6d0f21d
       url: "https://pub.dev"
     source: hosted
     version: "2.6.1"
@@ -708,10 +724,10 @@ packages:
     dependency: transitive
     description:
       name: js
-      sha256: "53385261521cc4a0c4658fd0ad07a7d14591cf8fc33abbceae306ddb974888dc"
+      sha256: f2c445dce49627136094980615a031419f7f3eb393237e4ecd97ac15dea343f3
       url: "https://pub.dev"
     source: hosted
-    version: "0.7.2"
+    version: "0.6.7"
   json_annotation:
     dependency: transitive
     description:

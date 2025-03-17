@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'package:amplify_flutter/amplify_flutter.dart';
 import 'package:flutter/material.dart';
@@ -48,8 +49,49 @@ class PostRepository {
     }
   }
 
-  Future<List<Post>> fetchPosts() async {
-    String postsQuery = '''
+  Stream<List<Comment>> getCommentsOfPost(String postId) {
+    final controller = StreamController<List<Comment>>();
+    String query = '''
+    query GetComments {
+      listComments(filter: { postId: { eq: "$postId" } }, sortDirection: DESC, sortField: createdAt) {
+        items {
+          ${CommentGraphQLFields.graphQLFields}
+        }
+      }
+    }
+  ''';
+
+    final request = GraphQLRequest<String>(document: query);
+    Amplify.API
+        .query(request: request)
+        .response
+        .then((response) {
+          if (response.data != null) {
+            final Map<String, dynamic> decoded =
+                jsonDecode(response.data!) as Map<String, dynamic>;
+            final List<dynamic> items =
+                decoded['data']['listComments']['items'];
+            final comments =
+                items.map((data) => Comment.fromJson(data)).toList();
+            controller.add(comments);
+          } else {
+            controller.add([]);
+          }
+        })
+        .whenComplete(() => controller.close())
+        .catchError((error) {
+          controller.addError(error);
+        });
+
+    return controller.stream;
+  }
+
+  Stream<List<Post>> fetchPosts() {
+    // Create a StreamController
+    final controller = StreamController<List<Post>>();
+
+    // Define the GraphQL query to fetch posts
+    var postsQuery = '''
     query ListPosts {
       listPosts(sortDirection: DESC, sortField: createdAt) {
         items {
@@ -57,51 +99,36 @@ class PostRepository {
         }
       }
     }
-  ''';
-
-    final request = GraphQLRequest<String>(document: postsQuery);
-    final operation = Amplify.API.query(request: request);
-    final response = await operation.response;
-    final data = response.data;
-
-    if (data == null) {
-      return [];
-    }
-
-    final Map<String, dynamic> decoded = jsonDecode(data);
-    // Di solito la risposta GraphQL ha la struttura:
-    // {
-    //   "data": {
-    //     "listPosts": {
-    //       "items": [ { ... }, { ... }, ... ]
-    //     }
-    //   }
-    // }
-    final List<dynamic> items = decoded['data']['listPosts']['items'];
-    return items
-        .map((item) => Post.fromJson(item as Map<String, dynamic>))
-        .toList();
-  }
-
-  Future<Post?> fetchPostById(String postId) async {
-    String query = '''
-    query GetPost {
-      getPost(id: "$postId") {
-        ${PostGraphQLFields.graphQLFields}
-      }
-    }
     ''';
-    final request = GraphQLRequest<String>(document: query);
-    var operation = Amplify.API.query(request: request);
-    var response = await operation.response;
-    var data = response.data;
 
-    if (data == null) {
-      return null;
-    }
+    // Create a GraphQL request
+    final request = GraphQLRequest<String>(document: postsQuery);
 
-    var json = jsonDecode(data);
-    return Post.fromJson(json);
+    // Fetch posts asynchronously
+    Amplify.API.query(request: request).response.then((response) {
+      final data = response.data;
+      if (data != null) {
+        final Map<String, dynamic> decoded = jsonDecode(data);
+        final List<dynamic> items = decoded['data']['listPosts']['items'];
+        final posts = items
+            .map((item) => Post.fromJson(item as Map<String, dynamic>))
+            .toList();
+        // Add the posts to the stream
+        controller.add(posts);
+      } else {
+        // Add an empty list to the stream if no data is found
+        controller.add([]);
+      }
+    }).catchError((error) {
+      // Add an error to the stream in case of an exception
+      controller.addError(error);
+    }).whenComplete(() {
+      // Close the stream when the operation is complete
+      controller.close();
+    });
+
+    // Return the stream
+    return controller.stream;
   }
 
   FutureEither<void> addComment(Comment comment, int commentCount) async {
@@ -164,37 +191,6 @@ class PostRepository {
     } catch (e) {
       return left(Failure(e.toString()));
     }
-  }
-
-  Future<List<Comment>> getCommentsOfPost(String postId) async {
-    String query = '''
-    query GetComments {
-      listComments(filter: { postId: { eq: "$postId" } }, sortDirection: DESC, sortField: createdAt) {
-        items {
-          ${CommentGraphQLFields.graphQLFields}
-        }
-      }
-    }
-  ''';
-
-    final request = GraphQLRequest<String>(document: query);
-    final response = await Amplify.API.query(request: request).response;
-
-    if (response.data == null) {
-      return <Comment>[];
-    }
-
-    final Map<String, dynamic> decoded =
-        jsonDecode(response.data!) as Map<String, dynamic>;
-    final List<dynamic> items =
-        decoded['data']['listComments']['items'] as List<dynamic>;
-
-    List<Comment> comments = [];
-    for (var item in items) {
-      comments.add(Comment.fromJson(item as Map<String, dynamic>));
-    }
-
-    return comments;
   }
 
   FutureEither<void> deletePost(String id, String uid) async {

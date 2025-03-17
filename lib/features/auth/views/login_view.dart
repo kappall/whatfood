@@ -1,31 +1,46 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:routemaster/routemaster.dart';
+import 'package:whatfood/core/common/provider.dart';
+import 'package:whatfood/core/utils.dart';
 import 'package:whatfood/features/auth/controller/auth_controller.dart';
 
-class LoginView extends ConsumerStatefulWidget {
+class LoginView extends StatefulWidget {
   const LoginView({super.key});
 
   @override
-  ConsumerState<LoginView> createState() => _LoginViewState();
+  State<LoginView> createState() => _LoginViewState();
 }
 
-class _LoginViewState extends ConsumerState<LoginView> {
-  late final TextEditingController _email;
-  late final TextEditingController _password;
+class _LoginViewState extends State<LoginView> {
+  late final TextEditingController _emailController;
+  late final TextEditingController _passwordController;
 
   @override
   void initState() {
-    _email = TextEditingController();
-    _password = TextEditingController();
+    _emailController = TextEditingController();
+    _passwordController = TextEditingController();
     super.initState();
   }
 
   @override
   void dispose() {
-    _email.dispose();
-    _password.dispose();
+    _emailController.dispose();
+    _passwordController.dispose();
     super.dispose();
+  }
+
+  Future<void> signIn() async {
+    final notifier = MyProvider.of<AuthController>(context);
+    if (notifier != null) {
+      final authController = notifier.value;
+      await authController.signInWithEmailAndPassword(
+        context: context,
+        email: _emailController.text.trim(),
+        password: _passwordController.text.trim(),
+      );
+    } else {
+      showSnackBar(context, 'Provider not found');
+    }
   }
 
   @override
@@ -62,7 +77,7 @@ class _LoginViewState extends ConsumerState<LoginView> {
               const SizedBox(height: 20),
               TextField(
                 style: const TextStyle(color: Colors.black),
-                controller: _email,
+                controller: _emailController,
                 enableSuggestions: true,
                 autocorrect: false,
                 keyboardType: TextInputType.emailAddress,
@@ -80,7 +95,7 @@ class _LoginViewState extends ConsumerState<LoginView> {
               const SizedBox(height: 15),
               TextField(
                 style: const TextStyle(color: Colors.black),
-                controller: _password,
+                controller: _passwordController,
                 obscureText: true,
                 enableSuggestions: false,
                 autocorrect: false,
@@ -97,14 +112,7 @@ class _LoginViewState extends ConsumerState<LoginView> {
               ),
               const SizedBox(height: 30),
               FilledButton(
-                onPressed: () async {
-                  final email = _email.text.trim();
-                  final password = _password.text.trim();
-                  ref
-                      .read(authControllerProvider.notifier)
-                      .signInWithEmailAndPassword(
-                          context: context, email: email, password: password);
-                },
+                onPressed: () => signIn(),
                 style: FilledButton.styleFrom(
                   backgroundColor: Colors.lightGreen,
                   shape: RoundedRectangleBorder(
@@ -120,7 +128,7 @@ class _LoginViewState extends ConsumerState<LoginView> {
               const SizedBox(height: 15),
               TextButton(
                 onPressed: () {
-                  Routemaster.of(context).push('/register/');
+                  Routemaster.of(context).replace('/register');
                 },
                 child: const Text(
                   'Not registered yet? Register here!',
