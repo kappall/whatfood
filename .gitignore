@@ -45,3 +45,5 @@ linux/
 web/
 windows/
 .metadata
+
+amplify*

@@ -30,11 +30,13 @@ class _CommentsViewState extends ConsumerState<CommentsView> {
   }
 
   void addComment(Post post) {
-    ref.read(postControllerProvider.notifier).addComment(
-          context: context,
-          content: commentController.text.trim(),
-          postId: post.id,
-        );
+    if (commentController.text.trim().isNotEmpty) {
+      ref.read(postControllerProvider.notifier).addComment(
+            context: context,
+            content: commentController.text.trim(),
+            postId: post.id,
+          );
+    }
     commentController.clear();
   }
 
@@ -102,14 +104,7 @@ class _CommentsViewState extends ConsumerState<CommentsView> {
         padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8)
             .copyWith(bottom: MediaQuery.of(context).viewInsets.bottom + 8),
         decoration: BoxDecoration(
-          color: Theme.of(context).scaffoldBackgroundColor,
-          boxShadow: [
-            BoxShadow(
-              color: Colors.green,
-              blurRadius: 6,
-              offset: Offset(0, -2),
-            ),
-          ],
+          color: Theme.of(context).appBarTheme.backgroundColor,
         ),
         child: Row(
           children: [

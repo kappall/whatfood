@@ -184,159 +184,164 @@ class _ProfileViewState extends ConsumerState<ProfileView>
         widget.uid.isEmpty ? ref.read(userProvider)!.uid : widget.uid;
     final String currUid = ref.read(userProvider)!.uid;
     return ref.watch(getUserDataProvider(uid)).when(
-          data: (user) => Scaffold(
-            appBar: AppBar(
-              centerTitle: false,
-              title: Text(
-                user.name + (widget.public ? '\'s Page' : ''),
-                style: TextStyle(fontSize: 16),
+          data: (user) {
+            return Scaffold(
+              appBar: AppBar(
+                centerTitle: false,
+                title: Text(
+                  user.name + (widget.public ? '\'s Page' : ''),
+                  style: TextStyle(fontSize: 16),
+                ),
+                actions: [if (!widget.public) popUpMenu(context, ref)],
               ),
-              actions: [if (!widget.public) popUpMenu(context, ref)],
-            ),
-            body: Column(
-              children: [
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Padding(
-                      padding: const EdgeInsets.all(16),
-                      child: Column(
-                        children: [
-                          Row(
-                            children: [
-                              CircleAvatar(
-                                backgroundImage: NetworkImage(user.profilePic),
-                                radius: 45,
+              body: Column(
+                children: [
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Padding(
+                        padding: const EdgeInsets.all(16),
+                        child: Column(
+                          children: [
+                            Row(
+                              children: [
+                                CircleAvatar(
+                                  backgroundImage:
+                                      NetworkImage(user.profilePic),
+                                  radius: 45,
+                                ),
+                                const SizedBox(width: 32),
+                                Column(
+                                  children: [
+                                    Text((user.postsCount).toString()),
+                                    Text('posts')
+                                  ],
+                                ),
+                                const SizedBox(width: 16),
+                                Column(
+                                  children: [
+                                    Text((user.followers.length).toString()),
+                                    Text('followers')
+                                  ],
+                                ),
+                                const SizedBox(width: 16),
+                                Column(
+                                  children: [
+                                    Text((user.following.length).toString()),
+                                    Text('following')
+                                  ],
+                                )
+                              ],
+                            ),
+                            if (user.bio.isNotEmpty)
+                              Padding(
+                                padding: const EdgeInsets.only(top: 16),
+                                child: Row(
+                                  children: [
+                                    Text(
+                                      user.bio,
+                                      style: TextStyle(
+                                        fontSize: 14,
+                                        color: Colors.white70,
+                                      ),
+                                    ),
+                                  ],
+                                ),
                               ),
-                              const SizedBox(width: 32),
-                              Column(
-                                children: [
-                                  Text((user.postsCount).toString()),
-                                  Text('posts')
-                                ],
-                              ),
-                              const SizedBox(width: 16),
-                              Column(
-                                children: [
-                                  Text((user.followers.length).toString()),
-                                  Text('followers')
-                                ],
-                              ),
-                              const SizedBox(width: 16),
-                              Column(
-                                children: [
-                                  Text((user.following.length).toString()),
-                                  Text('following')
-                                ],
-                              )
-                            ],
-                          ),
-                          if (user.bio.isNotEmpty)
                             Padding(
                               padding: const EdgeInsets.only(top: 16),
                               child: Row(
                                 children: [
-                                  Text(
-                                    user.bio,
-                                    style: TextStyle(
-                                      fontSize: 14,
-                                      color: Colors.white70,
+                                  if (currUid != uid) ...[
+                                    FilledButton(
+                                      onPressed: () =>
+                                          followOrUnfollowUser(context, user),
+                                      style: FilledButton.styleFrom(
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius:
+                                              BorderRadius.circular(20),
+                                        ),
+                                        padding: const EdgeInsets.symmetric(
+                                            horizontal: 25),
+                                      ),
+                                      child: Text(
+                                        user.followers.contains(currUid)
+                                            ? 'Unfollow'
+                                            : 'Follow',
+                                      ),
                                     ),
-                                  ),
+                                    SizedBox(width: 16),
+                                  ],
+                                  if (!widget.public)
+                                    FilledButton(
+                                      onPressed: () =>
+                                          navigateToEditUser(context),
+                                      style: FilledButton.styleFrom(
+                                        backgroundColor: Colors.white,
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius:
+                                              BorderRadius.circular(20),
+                                        ),
+                                        padding: const EdgeInsets.symmetric(
+                                            horizontal: 25),
+                                      ),
+                                      child: const Text('Edit Profile'),
+                                    ),
                                 ],
                               ),
                             ),
-                          Padding(
-                            padding: const EdgeInsets.only(top: 16),
-                            child: Row(
-                              children: [
-                                if (currUid != uid) ...[
-                                  FilledButton(
-                                    onPressed: () =>
-                                        followOrUnfollowUser(context, user),
-                                    style: FilledButton.styleFrom(
-                                      shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(20),
-                                      ),
-                                      padding: const EdgeInsets.symmetric(
-                                          horizontal: 25),
-                                    ),
-                                    child: Text(
-                                      user.followers.contains(currUid)
-                                          ? 'Unfollow'
-                                          : 'Follow',
-                                    ),
-                                  ),
-                                  SizedBox(width: 16),
-                                ],
-                                if (!widget.public)
-                                  FilledButton(
-                                    onPressed: () =>
-                                        navigateToEditUser(context),
-                                    style: FilledButton.styleFrom(
-                                      backgroundColor: Colors.white,
-                                      shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(20),
-                                      ),
-                                      padding: const EdgeInsets.symmetric(
-                                          horizontal: 25),
-                                    ),
-                                    child: const Text('Edit Profile'),
-                                  ),
-                              ],
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    const Divider(thickness: 1),
-                    Container(
-                      decoration: BoxDecoration(
-                        border: Border(
-                          bottom: BorderSide(
-                            color: Theme.of(context).dividerColor,
-                            width: 1,
-                          ),
+                          ],
                         ),
                       ),
-                      child: TabBar(
-                        labelColor:
-                            Theme.of(context).textTheme.bodyLarge?.color,
-                        indicatorColor: Colors.white,
-                        unselectedLabelColor: Colors.grey,
-                        controller: _tabController,
-                        indicatorWeight: 3,
-                        indicatorSize: TabBarIndicatorSize.tab,
-                        tabs: [
-                          Tab(
-                            icon: Icon(Icons.grid_on),
-                            iconMargin: EdgeInsets.only(bottom: 4),
+                      const Divider(thickness: 1),
+                      Container(
+                        decoration: BoxDecoration(
+                          border: Border(
+                            bottom: BorderSide(
+                              color: Theme.of(context).dividerColor,
+                              width: 1,
+                            ),
                           ),
-                          if (!widget.public)
+                        ),
+                        child: TabBar(
+                          labelColor:
+                              Theme.of(context).textTheme.bodyLarge?.color,
+                          indicatorColor: Colors.white,
+                          unselectedLabelColor: Colors.grey,
+                          controller: _tabController,
+                          indicatorWeight: 3,
+                          indicatorSize: TabBarIndicatorSize.tab,
+                          tabs: [
                             Tab(
-                              icon: Icon(Icons.bookmark_outline),
+                              icon: Icon(Icons.grid_on),
                               iconMargin: EdgeInsets.only(bottom: 4),
                             ),
-                        ],
+                            if (!widget.public)
+                              Tab(
+                                icon: Icon(Icons.bookmark_outline),
+                                iconMargin: EdgeInsets.only(bottom: 4),
+                              ),
+                          ],
+                        ),
                       ),
-                    ),
-                  ],
-                ),
-                Flexible(
-                  fit: FlexFit.loose,
-                  child: TabBarView(
-                    controller: _tabController,
-                    physics:
-                        widget.public ? NeverScrollableScrollPhysics() : null,
-                    children: [
-                      UserPosts(uid: uid),
-                      if (!widget.public) UserSavedPosts(),
                     ],
                   ),
-                ),
-              ],
-            ),
-          ),
+                  Flexible(
+                    fit: FlexFit.loose,
+                    child: TabBarView(
+                      controller: _tabController,
+                      physics:
+                          widget.public ? NeverScrollableScrollPhysics() : null,
+                      children: [
+                        UserPosts(uid: uid),
+                        if (!widget.public) UserSavedPosts(),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            );
+          },
           error: (error, stackTrace) {
             debugPrint(stackTrace.toString());
             return ErrorText(error: error.toString());

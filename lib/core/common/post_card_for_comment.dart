@@ -76,52 +76,51 @@ class PostCardForComment extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final isTypeImage = post.type == "image";
-    final isTypeText = post.type == "text";
     final user = ref.watch(userProvider)!;
-    return Card(
-      margin: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      elevation: 4,
-      shape: RoundedRectangleBorder(
+    return GestureDetector(
+      onDoubleTap: () => likeOrUnlikePost(ref),
+      child: Card(
+        margin: EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+        elevation: 4,
+        shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(16),
-          side: BorderSide(color: Colors.lightGreen, width: 6)),
-      child: Padding(
-        padding: EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Row(
-                  children: [
-                    GestureDetector(
-                      onTap: () => navigateToUser(context),
-                      child: CircleAvatar(
-                        backgroundImage: NetworkImage(post.userImage),
-                        radius: 24,
+        ),
+        child: Padding(
+          padding: EdgeInsets.symmetric(vertical: 16, horizontal: 8),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Row(
+                    children: [
+                      GestureDetector(
+                        onTap: () => navigateToUser(context),
+                        child: CircleAvatar(
+                          backgroundImage: NetworkImage(post.userImage),
+                          radius: 24,
+                        ),
                       ),
-                    ),
-                    SizedBox(width: 12),
-                    Text(
-                      post.username,
-                      style: Theme.of(context).textTheme.headlineSmall,
-                    ),
-                  ],
-                ),
-                popUpMenu(context, ref, post.uid == user.uid)
-              ],
-            ),
-            SizedBox(height: 12),
-            Text(
-              post.description,
-              style: Theme.of(context)
-                  .textTheme
-                  .headlineSmall
-                  ?.copyWith(fontWeight: FontWeight.w600),
-            ),
-            SizedBox(height: 12),
-            if (isTypeImage)
+                      SizedBox(width: 12),
+                      Text(
+                        post.username,
+                        style: Theme.of(context).textTheme.headlineSmall,
+                      ),
+                    ],
+                  ),
+                  popUpMenu(context, ref, post.uid == user.uid)
+                ],
+              ),
+              SizedBox(height: 12),
+              Text(
+                post.description,
+                style: Theme.of(context)
+                    .textTheme
+                    .headlineSmall
+                    ?.copyWith(fontWeight: FontWeight.w600),
+              ),
+              SizedBox(height: 12),
               ClipRRect(
                 borderRadius: BorderRadius.circular(16),
                 child: Image.network(
@@ -131,57 +130,47 @@ class PostCardForComment extends ConsumerWidget {
                   height: MediaQuery.of(context).size.height * 0.35,
                 ),
               ),
-            if (isTypeText)
-              Container(
-                width: double.infinity,
-                margin: EdgeInsets.symmetric(vertical: 8),
-                padding: EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: Theme.of(context).cardColor,
-                  borderRadius: BorderRadius.circular(16),
-                ),
-                child: Text(
-                  post.description,
-                  style: TextStyle(fontSize: 16, height: 1.5),
-                ),
-              ),
-            SizedBox(height: 12),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Row(
-                  children: [
-                    IconButton(
-                      icon: Icon(
-                        Icons.thumb_up,
-                        color: post.likes.contains(user.uid)
-                            ? Theme.of(context).colorScheme.primary
-                            : Theme.of(context).colorScheme.secondary,
-                        size: 28,
+              SizedBox(height: 12),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Row(
+                    children: [
+                      IconButton(
+                        icon: Icon(
+                          post.likes.contains(ref.watch(userProvider)?.uid)
+                              ? Icons.favorite
+                              : Icons.favorite_outline,
+                          color:
+                              post.likes.contains(ref.watch(userProvider)?.uid)
+                                  ? Colors.red
+                                  : Colors.white,
+                          size: 30,
+                        ),
+                        onPressed: () => likeOrUnlikePost(ref),
                       ),
-                      onPressed: () => likeOrUnlikePost(ref),
-                    ),
-                    Text(
-                      post.likes.isEmpty ? 'Like' : '${post.likes.length}',
-                      style: TextStyle(fontSize: 16),
-                    ),
-                  ],
-                ),
-                Row(
-                  children: [
-                    IconButton(
-                      icon: Icon(Icons.comment, size: 28),
-                      onPressed: () {},
-                    ),
-                    Text(
-                      '${post.commentCount}',
-                      style: TextStyle(fontSize: 16),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ],
+                      Text(
+                        post.likes.isEmpty ? 'Like' : '${post.likes.length}',
+                        style: TextStyle(fontSize: 16),
+                      ),
+                    ],
+                  ),
+                  Row(
+                    children: [
+                      IconButton(
+                        icon: Icon(Icons.comment, size: 28),
+                        onPressed: () {},
+                      ),
+                      Text(
+                        '${post.commentCount}',
+                        style: TextStyle(fontSize: 16),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ],
+          ),
         ),
       ),
     );

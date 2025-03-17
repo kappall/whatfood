@@ -28,7 +28,7 @@ class _ReportCardState extends ConsumerState<ReportCard> {
   Widget build(BuildContext context) {
     return Card(
       margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
-      child: InkWell(
+      child: GestureDetector(
         onTap: () {
           if (widget.isSelectionMode) {
             widget.onSelected(widget.report);

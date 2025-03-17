@@ -224,7 +224,7 @@ class _HomeViewState extends ConsumerState<HomeView>
       body: PageView(
         controller: _pageController,
         scrollDirection: Axis.horizontal,
-        physics: const PageScrollPhysics(),
+        physics: const NeverScrollableScrollPhysics(),
         onPageChanged: (index) {
           if (_mounted) {
             _tabController.animateTo(index);
