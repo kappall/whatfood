@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'package:amplify_flutter/amplify_flutter.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:path/path.dart' as p;
 import 'package:uuid/uuid.dart';
@@ -32,9 +33,10 @@ class StorageRepository {
           print('Upload progress: ${progress.fractionCompleted}');
         },
       ).result;
-
+      debugPrint(result.uploadedItem.toString());
       return result.uploadedItem.path.toString();
     } catch (e) {
+      debugPrint(e.toString());
       throw Exception("Errore durante l'upload: $e");
     }
   }

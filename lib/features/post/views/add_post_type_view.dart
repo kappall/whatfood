@@ -2,23 +2,20 @@ import 'dart:io';
 
 import 'package:dotted_border/dotted_border.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:whatfood/core/common/loader.dart';
 import 'package:whatfood/core/common/provider.dart';
 import 'package:whatfood/core/utils.dart';
 import 'package:whatfood/features/post/controller/post_controller.dart';
 import 'package:whatfood/models/MealType.dart';
 
-class AddPostTypeView extends ConsumerStatefulWidget {
+class AddPostTypeView extends StatefulWidget {
   final String type;
   const AddPostTypeView({required this.type, super.key});
 
   @override
-  ConsumerState<ConsumerStatefulWidget> createState() =>
-      _AddPostTypeViewState();
+  State<StatefulWidget> createState() => _AddPostTypeViewState();
 }
 
-class _AddPostTypeViewState extends ConsumerState<AddPostTypeView> {
+class _AddPostTypeViewState extends State<AddPostTypeView> {
   final descriptionController = TextEditingController();
   File? image;
   final List<String> tags = [];

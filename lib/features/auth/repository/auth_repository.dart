@@ -1,10 +1,10 @@
 import 'dart:convert';
 
-import 'package:amplify_auth_cognito/amplify_auth_cognito.dart';
 import 'package:amplify_flutter/amplify_flutter.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:fpdart/fpdart.dart';
+import 'package:uuid/uuid.dart';
 import 'package:whatfood/core/constants/costants.dart';
 import 'package:whatfood/core/type_def.dart';
 import 'package:whatfood/core/failure.dart';
@@ -39,14 +39,13 @@ class AuthRepository {
             name: 'Guest',
             profilePic: Constants.avatarDefault,
             banner: Constants.bannerDefault,
-            uid: username,
+            id: Uuid().v4(),
             preferences: [],
             savedPosts: [],
             postsCount: 0,
             dailyIntake: 0,
             followers: [],
             following: [],
-            isVerified: false,
             bio: '',
             email: 'Guest email placeholder');
 
@@ -68,7 +67,6 @@ class AuthRepository {
         username: email,
         password: password,
       );
-      debugPrint(result.toString());
 
       if (result.isSignedIn) {
         final userId = (await Amplify.Auth.getCurrentUser()).userId;
@@ -105,56 +103,64 @@ class AuthRepository {
           },
         ),
       );
-
       return right(signUpResult);
     } on AuthException catch (e) {
       return left(Failure(e.message));
     } catch (e) {
+      print(e.toString());
       return left(Failure(e.toString()));
     }
   }
 
   Future<void> saveUserData(User user) async {
     try {
-      String graphQLDocument = '''
-      mutation CreateUser(\$input: CreateUserInput!) {
-        createUser(input: \$input) {
-          id
-        }
+      // Definizione della mutation con variabili GraphQL
+      const String graphQLDocument = '''
+    mutation CreateUser(\$input: CreateUserInput!) {
+      createUser(input: \$input) {
+        id
       }
+    }
     ''';
 
-      Map<String, dynamic> variables = {
+      // Costruzione dell'oggetto di variabili da passare alla mutation
+      final Map<String, dynamic> variables = {
         "input": {
-          "id": user.uid,
+          "id": user.id,
           "name": user.name,
           "email": user.email,
           "profilePic": user.profilePic,
           "banner": user.banner,
-          "preferences": user.preferences,
-          "savedPosts": user.savedPosts,
+          "preferences": user.preferences.toList(),
+          "savedPosts": user.savedPosts.toList(),
           "postsCount": user.postsCount,
           "dailyIntake": user.dailyIntake,
-          "followers": user.followers,
-          "following": user.following,
-          "isVerified": user.isVerified,
+          "followers": user.followers.toList(),
+          "following": user.following.toList(),
           "bio": user.bio,
         }
       };
 
+      // Creazione della richiesta GraphQL con variabili
       var operation = Amplify.API.mutate(
         request: GraphQLRequest<String>(
           document: graphQLDocument,
-          variables: variables,
+          variables: variables, // Passiamo le variabili separatamente
         ),
       );
 
+      // Attendi la risposta dell'API
       final response = await operation.response;
+
+      // Gestione degli errori di GraphQL
       if (response.errors.isNotEmpty) {
         throw Exception(response.errors.first.message);
       }
+
+      debugPrint("User data saved successfully!");
     } catch (e) {
-      print("Error saving user: $e");
+      debugPrint("Error saving user: $e");
+      rethrow;
     }
   }
 
@@ -174,7 +180,6 @@ class AuthRepository {
           dailyIntake
           followers
           following
-          isVerified
           bio
         }
       }
@@ -185,14 +190,15 @@ class AuthRepository {
       );
 
       var response = await operation.response;
+      //debugPrint(response.data.toString());
       var data = response.data;
 
       if (data == null) {
         return null;
       }
-
-      var json = jsonDecode(data);
-      return User.fromJson(json);
+      var json = jsonDecode(data)['getUser'];
+      final user = User.fromJson(json);
+      return user;
     } catch (e) {
       print("Error fetching user: $e");
       return null;

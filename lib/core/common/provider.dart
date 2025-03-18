@@ -1,5 +1,13 @@
 import 'package:amplify_flutter/amplify_flutter.dart';
 import 'package:flutter/widgets.dart';
+import 'package:whatfood/core/providers/aws_providers.dart';
+import 'package:whatfood/core/providers/storage_repository_provider.dart';
+import 'package:whatfood/features/auth/controller/auth_controller.dart';
+import 'package:whatfood/features/auth/repository/auth_repository.dart';
+import 'package:whatfood/features/post/controller/post_controller.dart';
+import 'package:whatfood/features/post/repository/post_repository.dart';
+import 'package:whatfood/features/recipes/controller/recipe_controller.dart';
+import 'package:whatfood/features/recipes/repository/recipe_repository.dart';
 
 class MyNotifier<T> extends ChangeNotifier {
   T _value;
@@ -45,5 +53,42 @@ class MyProvider<T> extends InheritedNotifier<MyNotifier<T>> {
     final provider =
         context.dependOnInheritedWidgetOfExactType<MyProvider<T>>();
     return provider?.notifier;
+  }
+}
+
+class ProvidersWrapper extends StatelessWidget {
+  final Widget child;
+
+  const ProvidersWrapper({
+    super.key,
+    required this.child,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return MyProvider(
+      notifier: MyNotifier<AWSServices>(AWSServices()),
+      child: MyProvider<AuthController>(
+        notifier: MyNotifier<AuthController>(
+          AuthController(authRepository: AuthRepository()),
+        ),
+        child: MyProvider<PostController>(
+          notifier: MyNotifier<PostController>(
+            PostController(
+              postRepository: PostRepository(),
+              storageRepository: StorageRepository(),
+            ),
+          ),
+          child: MyProvider<RecipeController>(
+            notifier: MyNotifier<RecipeController>(
+              RecipeController(
+                  recipeRepository: RecipeRepository(),
+                  storageRepository: StorageRepository()),
+            ),
+            child: child,
+          ),
+        ),
+      ),
+    );
   }
 }

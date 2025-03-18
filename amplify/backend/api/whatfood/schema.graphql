@@ -1,10 +1,9 @@
 
-type User @model {
-  id: ID!
+type User @model @auth(rules: [{ allow: public, operations: [read,create,delete,update] }]){
+  id: String!
   name: String!
   profilePic: String!
   banner: String!
-  uid: String!
   preferences: [String]!
   savedPosts: [String]!
   bio: String
@@ -13,7 +12,6 @@ type User @model {
   followers: [String]!
   following: [String]!
   email: String!
-  isVerified: Boolean!
 }
 
 
@@ -24,7 +22,7 @@ enum MealType {
   SNACK
 }
 
-type Post @model {
+type Post @model @auth(rules: [{ allow: public, operations: [read,create,delete,update] }]){
   id: ID!
   description: String!
   likes: [String]!
@@ -40,7 +38,7 @@ type Post @model {
 
 }
 
-type Comment @model {
+type Comment @model @auth(rules: [{ allow: public, operations: [read,create,delete,update] }]){
   id: ID!
   text: String!
   likes: [String]!
@@ -52,7 +50,7 @@ type Comment @model {
 
 }
 
-type Recipe @model {
+type Recipe @model @auth(rules: [{ allow: public, operations: [read,create,delete,update] }]){
   id: ID!
   title: String!
   coverImage: String!
@@ -68,7 +66,7 @@ type Recipe @model {
   username: String!
 }
 
-type Report @model {
+type Report @model @auth(rules: [{ allow: public, operations: [read,create,delete,update] }]){
   id: ID!
   uid: String!
   date: AWSDateTime!

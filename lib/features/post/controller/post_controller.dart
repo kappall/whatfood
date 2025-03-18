@@ -1,35 +1,56 @@
 import 'dart:io';
 import 'package:amplify_flutter/amplify_flutter.dart';
 import 'package:flutter/material.dart';
-import 'package:image/image.dart';
-import 'package:uuid/uuid.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:image/image.dart' as img;
 import 'package:routemaster/routemaster.dart';
+import 'package:flutter/foundation.dart';
+import 'package:uuid/uuid.dart';
+import 'package:image/image.dart' as img;
 import 'package:whatfood/core/providers/storage_repository_provider.dart';
 import 'package:whatfood/core/utils.dart';
 import 'package:whatfood/features/auth/controller/auth_controller.dart';
 import 'package:whatfood/features/post/repository/post_repository.dart';
 import 'package:whatfood/models/MealType.dart';
-import 'package:whatfood/models/User.dart';
 import 'package:whatfood/models/Comment.dart';
 import 'package:whatfood/models/Post.dart';
+
+get postControllerProvider {
+  return PostController(
+      postRepository: PostRepository(), storageRepository: StorageRepository());
+}
 
 class PostController {
   final PostRepository _postRepository;
   final StorageRepository _storageRepository;
-  // If needed, inject a currentUser or a way to retrieve it.
-  User? currentUser;
+  final Map<String, bool> _expandedStates = {};
+  final Set<String> _likes = {};
 
   PostController({
     required PostRepository postRepository,
     required StorageRepository storageRepository,
-    this.currentUser,
   })  : _postRepository = postRepository,
         _storageRepository = storageRepository;
 
   Stream<List<Post>> fetchPosts() {
     return _postRepository.fetchPosts();
+  }
+
+  ValueNotifier<bool> getExpandedStateNotifier(String postId) =>
+      ValueNotifier(_expandedStates[postId] ?? false);
+
+  ValueNotifier<Set<String>> get likesNotifier => ValueNotifier(_likes);
+
+  void toggleDescriptionExpansion(String postId) {
+    _expandedStates[postId] = !(_expandedStates[postId] ?? false);
+  }
+
+  void likeOrUnlike(Post post) async {
+    if (_likes.contains(post.id)) {
+      _likes.remove(post.id);
+    } else {
+      _likes.add(post.id);
+    }
+    final user = (await getUserData())!;
+    _postRepository.likeOrUnlike(post, user.id);
   }
 
   Future<File> compressImage(File file,
@@ -98,25 +119,20 @@ class PostController {
     required File image,
     required MealType mealType,
   }) async {
-    if (currentUser == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('User not logged in')),
-      );
-      return;
-    }
-
-    final String postId = const Uuid().v1();
     try {
+      final user = (await getUserData())!;
+
+      final String postId = const Uuid().v1();
       File processedFile = await compressImage(image);
       final imageUrl =
-          await _storageRepository.uploadImage(processedFile, currentUser!.uid);
+          await _storageRepository.uploadImage(processedFile, user.id);
 
       final Post post = Post(
         id: postId,
-        uid: currentUser!.uid,
+        uid: user.id,
         description: description,
-        userImage: currentUser!.profilePic,
-        username: currentUser!.name,
+        userImage: user.profilePic,
+        username: user.name,
         createdAt: TemporalDateTime.now(),
         likes: [],
         tags: tags,
@@ -126,13 +142,11 @@ class PostController {
         mealType: mealType,
       );
 
-      final res = await _postRepository.addPost(post, currentUser!.postsCount);
+      final res = await _postRepository.addPost(post, user.postsCount);
       res.fold(
-        (failure) => ScaffoldMessenger.of(context)
-            .showSnackBar(SnackBar(content: Text(failure.message))),
+        (failure) => debugPrint(failure.message),
         (_) {
-          // Navigate back after success.
-          Navigator.of(context).popUntil((route) => route.settings.name == '/');
+          Routemaster.of(context).replace('/');
         },
       );
     } catch (e) {
@@ -148,15 +162,10 @@ class PostController {
         (r) => showSnackBar(context, 'Post Deleted successfully!'));
   }
 
-  void likeOrUnlike(Post post) async {
-    final uid = User.fromJson(await getUserData()).uid;
-    _postRepository.likeOrUnlike(post, uid);
-  }
-
   Future<void> addOrRemoveBookmark(
     Post post,
   ) async {
-    final user = User.fromJson(await getUserData());
+    final user = (await getUserData())!;
     await _postRepository.addOrRemoveBookmark(post, user);
   }
 
@@ -170,7 +179,7 @@ class PostController {
     required String postId,
     required int commentCount,
   }) async {
-    final user = User.fromJson(await getUserData());
+    final user = (await getUserData())!;
     String cId = const Uuid().v1();
     Comment comment = Comment(
       id: cId,
@@ -179,7 +188,7 @@ class PostController {
       postID: postId,
       username: user.name,
       userImage: user.profilePic,
-      uid: user.uid,
+      uid: user.id,
       likes: [],
     );
     _postRepository.addComment(comment, commentCount);

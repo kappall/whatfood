@@ -3,11 +3,9 @@ import 'package:amplify_api/amplify_api.dart';
 import 'package:amplify_auth_cognito/amplify_auth_cognito.dart';
 import 'package:amplify_datastore/amplify_datastore.dart';
 import 'package:amplify_flutter/amplify_flutter.dart';
+import 'package:amplify_storage_s3/amplify_storage_s3.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:whatfood/amplifyconfiguration.dart';
-import 'package:whatfood/core/common/error_text.dart';
-import 'package:whatfood/core/common/loader.dart';
 import 'package:whatfood/core/common/provider.dart';
 import 'package:whatfood/features/auth/controller/auth_controller.dart';
 import 'package:whatfood/features/auth/repository/auth_repository.dart';
@@ -21,11 +19,13 @@ Future<void> configureAmplify() async {
     final auth = AmplifyAuthCognito();
     final datastore = AmplifyDataStore(modelProvider: ModelProvider.instance);
     final api = AmplifyAPI();
+    final storage = AmplifyStorageS3();
 
     await Amplify.addPlugins([
       auth,
       datastore,
       api,
+      storage,
     ]);
 
     await Amplify.configure(amplifyconfig);
@@ -52,18 +52,18 @@ void main() async {
   final bool loggedIn = await isUserLoggedIn();
   debugPrint('User logged in: $loggedIn');
 
-  runApp(MyApp(loggedIn: loggedIn));
+  runApp(ProvidersWrapper(child: MyApp(loggedIn: loggedIn)));
 }
 
-class MyApp extends ConsumerStatefulWidget {
+class MyApp extends StatefulWidget {
   final bool loggedIn;
   const MyApp({super.key, required this.loggedIn});
 
   @override
-  ConsumerState<ConsumerStatefulWidget> createState() => _MyAppState();
+  State<StatefulWidget> createState() => _MyAppState();
 }
 
-class _MyAppState extends ConsumerState<MyApp> {
+class _MyAppState extends State<MyApp> {
   @override
   Widget build(BuildContext context) {
     final MyNotifier<AuthController> authControllerNotifier =

@@ -115,22 +115,7 @@ class _MainPageState extends State<MainPage> {
         RecipesView(),
         HomeView(),
         ReportView(),
-        FutureBuilder<String>(
-          future: getUserId(), // asynchronous call
-          builder: (context, snapshot) {
-            if (snapshot.connectionState == ConnectionState.waiting) {
-              return const Center(child: CircularProgressIndicator());
-            } else if (snapshot.hasError) {
-              return const Center(child: Text('Error loading profile'));
-            } else {
-              // Pass uid when available
-              return ProfileView(
-                uid: snapshot.data!,
-                public: false,
-              );
-            }
-          },
-        ),
+        ProfileView()
       ];
     }
   }
@@ -193,9 +178,5 @@ class _MainPageState extends State<MainPage> {
         ),
       ),
     );
-  }
-
-  Future<String> getUserId() async {
-    return (await Amplify.Auth.getCurrentUser()).userId;
   }
 }

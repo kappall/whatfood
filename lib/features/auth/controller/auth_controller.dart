@@ -11,11 +11,8 @@ import 'package:whatfood/models/User.dart';
 
 final userProvider = StateProvider<User?>((ref) => null);
 
-Future<Map<String, dynamic>> getUserData() async {
-  final attributes = await Amplify.Auth.fetchUserAttributes();
-  return Map.fromEntries(
-    attributes.map((attr) => MapEntry(attr.userAttributeKey.key, attr.value)),
-  );
+Future<User?> getUserData() async {
+  return await AuthController(authRepository: AuthRepository()).getUserData();
 }
 
 class AuthController extends StateNotifier<bool> {
@@ -49,6 +46,11 @@ class AuthController extends StateNotifier<bool> {
   //     },
   //   );
   // }
+  Future<User?> getUserData() async {
+    final user = (await Amplify.Auth.getCurrentUser());
+    debugPrint(user.userId.toString());
+    return _authRepository.getUserData(user.userId);
+  }
 
   Future<void> signInWithEmailAndPassword({
     required BuildContext context,
@@ -68,7 +70,7 @@ class AuthController extends StateNotifier<bool> {
           showSnackBar(context, l.message);
         },
         (userModel) {
-          debugPrint("got here");
+          debugPrint("got here: ${userModel.toString()}");
         },
       );
     } catch (e) {
@@ -76,10 +78,6 @@ class AuthController extends StateNotifier<bool> {
         showSnackBar(context, e.toString());
       }
     }
-  }
-
-  Future<User?> getUserData(String uid) {
-    return _authRepository.getUserData(uid);
   }
 
   Future<void> registerWithEmailAndPassword({
@@ -102,28 +100,27 @@ class AuthController extends StateNotifier<bool> {
           debugPrint(signUpResult.toString());
           if (signUpResult.nextStep.signUpStep ==
               AuthSignUpStep.confirmSignUp) {
-            debugPrint("here");
+            print("here");
 
             final userModel = User(
               name: name,
               email: email,
               profilePic: Constants.avatarDefault,
               banner: Constants.bannerDefault,
-              uid: signUpResult.userId!,
+              id: signUpResult.userId!,
               preferences: [],
               savedPosts: [],
               postsCount: 0,
               dailyIntake: 0,
               followers: [],
               following: [],
-              isVerified: false,
               bio: '',
             );
 
             _showVerificationDialog(context, userModel, password);
           }
         } catch (e) {
-          debugPrint(e.toString());
+          print(e.toString());
         }
       },
     );
@@ -162,17 +159,18 @@ class AuthController extends StateNotifier<bool> {
 
                 if (confirmResult.isSignUpComplete) {
                   final email = user.email;
+                  print("tryng to save:\n$user");
                   await _authRepository.saveUserData(user);
+                  print("user data saved");
 
                   final signInResult = await Amplify.Auth.signIn(
                     username: email,
                     password: password,
                   );
-
+                  print("login done");
                   if (signInResult.isSignedIn) {
-                    if (Navigator.of(context).canPop()) {
-                      Navigator.of(context).pop();
-                    }
+                    Navigator.of(context).pop();
+                    print("navigating to preferences");
                     if (context.mounted) {
                       Routemaster.of(context).replace('/preferences');
                     }
@@ -187,6 +185,9 @@ class AuthController extends StateNotifier<bool> {
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(content: Text(e.message)),
                 );
+              } catch (e) {
+                Amplify.Auth.deleteUser();
+                debugPrint("Exeption: ${e.toString()}");
               }
             },
             child: const Text('Verify'),

@@ -19,26 +19,54 @@ final postRepositoryProvider = Provider((ref) {
 class PostRepository {
   FutureEither<void> addPost(Post post, int postsCount) async {
     try {
-      // Create the post in the backend
-      String createPostMutation = '''
-      mutation CreatePost {
-        createPost(input: ${jsonEncode(post.toMap())}) {
-          id
+      Map<String, Object?> postMap = {
+        "input": {
+          "id": post.id,
+          "description": post.description,
+          "likes": post.likes,
+          "username": post.username,
+          "uid": post.uid,
+          "userImage": post.userImage,
+          "type": post.type,
+          "createdAt": post.createdAt.toString(),
+          "commentCount": post.commentCount,
+          "imageUrl": post.imageUrl,
+          "tags": post.tags,
+          "mealType": post.mealType.name,
         }
-      }
-      ''';
-      final createRequest =
-          GraphQLRequest<String>(document: createPostMutation);
-      await Amplify.API.mutate(request: createRequest).response;
+      };
 
-      // Update the user's postsCount
-      String updateUserMutation = '''
-      mutation UpdateUser {
-        updateUser(input: { uid: "${post.uid}", postsCount: ${postsCount + 1} }) {
-          uid
-        }
+      print(postMap);
+
+      String graphQLDocument = '''
+    mutation CreatePost(\$input: CreatePostInput!) {
+      createPost(input: \$input) {
+        id
       }
-      ''';
+    }
+    ''';
+
+      var operation = Amplify.API.mutate(
+        request: GraphQLRequest<String>(
+          document: graphQLDocument,
+          variables: postMap,
+        ),
+      );
+
+      final response = await operation.response;
+
+      if (response.errors.isNotEmpty) {
+        throw Exception(response.errors.first.message);
+      }
+
+      String updateUserMutation = '''
+    mutation UpdateUser {
+      updateUser(input: { uid: "${post.uid}", postsCount: ${postsCount + 1} }) {
+        uid
+      }
+    }
+    ''';
+
       final updateRequest =
           GraphQLRequest<String>(document: updateUserMutation);
       await Amplify.API.mutate(request: updateRequest).response;
@@ -87,47 +115,63 @@ class PostRepository {
   }
 
   Stream<List<Post>> fetchPosts() {
-    // Create a StreamController
     final controller = StreamController<List<Post>>();
 
-    // Define the GraphQL query to fetch posts
-    var postsQuery = '''
-    query ListPosts {
-      listPosts(sortDirection: DESC, sortField: createdAt) {
-        items {
-          ${PostGraphQLFields.graphQLFields}
+    try {
+      var postsQuery = '''
+        query ListPosts {
+          listPosts(limit: 100) {
+            items {
+              ${PostGraphQLFields.graphQLFields}
+            }
+          }
         }
-      }
+      ''';
+
+      final request = GraphQLRequest<String>(document: postsQuery);
+
+      Amplify.API.query(request: request).response.then((response) {
+        if (response.errors.isNotEmpty) {
+          debugPrint("GraphQL Errors: ${response.errors}");
+          controller.addError(response.errors.first.message);
+          return;
+        }
+
+        if (response.data == null) {
+          controller.add([]);
+          return;
+        }
+
+        try {
+          final Map<String, dynamic> jsonResponse = jsonDecode(response.data!);
+
+          if (jsonResponse['listPosts'] == null ||
+              jsonResponse['listPosts']['items'] == null) {
+            controller.add([]);
+            return;
+          }
+
+          final List<dynamic> items = jsonResponse['listPosts']['items'];
+          final posts = items.map((item) => Post.fromJson(item)).toList();
+
+          // Sort by creation date, newest first
+          posts.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+
+          controller.add(posts);
+        } catch (e, stackTrace) {
+          debugPrint("Parse error: $e");
+          debugPrint("Stack trace: $stackTrace");
+          controller.addError('Error parsing posts: $e');
+        }
+      }).catchError((error) {
+        debugPrint("Query error: $error");
+        controller.addError(error);
+      });
+    } catch (e) {
+      debugPrint("General error: $e");
+      controller.addError(e);
     }
-    ''';
 
-    // Create a GraphQL request
-    final request = GraphQLRequest<String>(document: postsQuery);
-
-    // Fetch posts asynchronously
-    Amplify.API.query(request: request).response.then((response) {
-      final data = response.data;
-      if (data != null) {
-        final Map<String, dynamic> decoded = jsonDecode(data);
-        final List<dynamic> items = decoded['data']['listPosts']['items'];
-        final posts = items
-            .map((item) => Post.fromJson(item as Map<String, dynamic>))
-            .toList();
-        // Add the posts to the stream
-        controller.add(posts);
-      } else {
-        // Add an empty list to the stream if no data is found
-        controller.add([]);
-      }
-    }).catchError((error) {
-      // Add an error to the stream in case of an exception
-      controller.addError(error);
-    }).whenComplete(() {
-      // Close the stream when the operation is complete
-      controller.close();
-    });
-
-    // Return the stream
     return controller.stream;
   }
 
@@ -259,7 +303,7 @@ class PostRepository {
       }
       String updateUserMutation = '''
       mutation UpdateUser {
-        updateUser(input: { uid: "${user.uid}", savedPosts: ${jsonEncode(updatedBookmarks)} }) {
+        updateUser(input: { uid: "${user.id}", savedPosts: ${jsonEncode(updatedBookmarks)} }) {
           uid
         }
       }

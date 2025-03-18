@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:routemaster/routemaster.dart';
 import 'package:whatfood/features/auth/views/login_view.dart';
 import 'package:whatfood/features/auth/views/register_view.dart';
-import 'package:whatfood/features/auth/views/verify_email_view.dart';
 import 'package:whatfood/features/post/views/add_post_type_view.dart';
 import 'package:whatfood/features/post/views/comment_view.dart';
 import 'package:whatfood/features/preferences/views/preferences_view.dart';
