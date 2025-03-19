@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:developer';
 
 import 'package:amplify_flutter/amplify_flutter.dart';
@@ -11,48 +12,74 @@ import 'package:whatfood/models/User.dart';
 
 final userProvider = StateProvider<User?>((ref) => null);
 
-Future<User?> getUserData() async {
-  return await AuthController(authRepository: AuthRepository()).getUserData();
-}
+final authControllerProvider = StateNotifierProvider<AuthController, bool>(
+  (ref) => AuthController(
+    authRepository: ref.watch(authRepositoryProvider),
+    ref: ref,
+  ),
+);
+
+final authStateChangeProvider = StreamProvider.autoDispose((ref) {
+  final authController = ref.watch(authControllerProvider.notifier);
+  return authController.authStateChange.map((user) {
+    if (user != null) {
+      ref.read(userProvider.notifier).update((_) => user);
+    }
+    return user;
+  });
+});
+
+final getUserDataProvider = StreamProvider.family((ref, String uid) {
+  final authController = ref.watch(authControllerProvider.notifier);
+  return authController.getUserData(uid);
+});
 
 class AuthController extends StateNotifier<bool> {
   final AuthRepository _authRepository;
-  AuthController({required AuthRepository authRepository})
+  final Ref _ref;
+  StreamSubscription? _authSubscription;
+
+  AuthController({required AuthRepository authRepository, required Ref ref})
       : _authRepository = authRepository,
-        super(false);
-
-  // void signInWithGoogle(BuildContext context, bool isFromLogin) async {
-  //   state = true;
-  //   final user = await _authRepository.signInWithGoogle(isFromLogin);
-  //   state = false;
-  //   user.fold(
-  //     (l) => showSnackBar(context, l.message),
-  //     (userModel) {
-  //       _ref.read(userProvider.notifier).update((state) => userModel);
-  //       Routemaster.of(context).push('preferences');
-  //     },
-  //   );
-  // }
-
-  // void signInAsGuest(BuildContext context) async {
-  //   state = true;
-  //   final user = await _authRepository.signInAsGuest();
-  //   state = false;
-  //   user.fold(
-  //     (l) => showSnackBar(context, l.message),
-  //     (userModel) {
-  //       _ref.read(userProvider.notifier).update((state) => userModel);
-  //       Routemaster.of(context).replace('/');
-  //     },
-  //   );
-  // }
-  Future<User?> getUserData() async {
-    final user = (await Amplify.Auth.getCurrentUser());
-    debugPrint(user.userId.toString());
-    return _authRepository.getUserData(user.userId);
+        _ref = ref,
+        super(false) {
+    _initializeAuthState();
   }
 
-  Future<void> signInWithEmailAndPassword({
+  void _initializeAuthState() {
+    _authSubscription = _authRepository.authStateChange.listen(
+      (user) {
+        _ref.read(userProvider.notifier).update((_) => user);
+      },
+      onError: (error) {
+        debugPrint('Auth state error: $error');
+        _ref.read(userProvider.notifier).update((_) => null);
+      },
+    );
+  }
+
+  @override
+  void dispose() {
+    _authSubscription?.cancel();
+    super.dispose();
+  }
+
+  Stream<User?> get authStateChange => _authRepository.authStateChange;
+
+  void signInAsGuest(BuildContext context) async {
+    state = true;
+    final user = await _authRepository.signInAsGuest();
+    state = false;
+    user.fold(
+      (l) => showSnackBar(context, l.message),
+      (userModel) {
+        _ref.read(userProvider.notifier).update((state) => userModel);
+        Routemaster.of(context).replace('/');
+      },
+    );
+  }
+
+  void signInWithEmailAndPassword({
     required BuildContext context,
     required String email,
     required String password,
@@ -70,7 +97,8 @@ class AuthController extends StateNotifier<bool> {
           showSnackBar(context, l.message);
         },
         (userModel) {
-          debugPrint("got here: ${userModel.toString()}");
+          Routemaster.of(context).push('/preferences');
+          debugPrint("got here");
         },
       );
     } catch (e) {
@@ -78,6 +106,10 @@ class AuthController extends StateNotifier<bool> {
         showSnackBar(context, e.toString());
       }
     }
+  }
+
+  Stream<User> getUserData(String uid) {
+    return _authRepository.getUserData(uid).map((userdata) => userdata);
   }
 
   Future<void> registerWithEmailAndPassword({

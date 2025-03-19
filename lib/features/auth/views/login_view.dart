@@ -1,17 +1,16 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:routemaster/routemaster.dart';
-import 'package:whatfood/core/common/provider.dart';
-import 'package:whatfood/core/utils.dart';
 import 'package:whatfood/features/auth/controller/auth_controller.dart';
 
-class LoginView extends StatefulWidget {
+class LoginView extends ConsumerStatefulWidget {
   const LoginView({super.key});
 
   @override
-  State<LoginView> createState() => _LoginViewState();
+  ConsumerState<LoginView> createState() => _LoginViewState();
 }
 
-class _LoginViewState extends State<LoginView> {
+class _LoginViewState extends ConsumerState<LoginView> {
   late final TextEditingController _emailController;
   late final TextEditingController _passwordController;
 
@@ -27,20 +26,6 @@ class _LoginViewState extends State<LoginView> {
     _emailController.dispose();
     _passwordController.dispose();
     super.dispose();
-  }
-
-  Future<void> signIn() async {
-    final notifier = MyProvider.of<AuthController>(context);
-    if (notifier != null) {
-      final authController = notifier.value;
-      await authController.signInWithEmailAndPassword(
-        context: context,
-        email: _emailController.text.trim(),
-        password: _passwordController.text.trim(),
-      );
-    } else {
-      showSnackBar(context, 'Provider not found');
-    }
   }
 
   @override
@@ -112,7 +97,14 @@ class _LoginViewState extends State<LoginView> {
               ),
               const SizedBox(height: 30),
               FilledButton(
-                onPressed: () => signIn(),
+                onPressed: () async {
+                  final email = _emailController.text.trim();
+                  final password = _passwordController.text.trim();
+                  ref
+                      .read(authControllerProvider.notifier)
+                      .signInWithEmailAndPassword(
+                          context: context, email: email, password: password);
+                },
                 style: FilledButton.styleFrom(
                   backgroundColor: Colors.lightGreen,
                   shape: RoundedRectangleBorder(
@@ -128,7 +120,7 @@ class _LoginViewState extends State<LoginView> {
               const SizedBox(height: 15),
               TextButton(
                 onPressed: () {
-                  Routemaster.of(context).replace('/register');
+                  Routemaster.of(context).push('/register/');
                 },
                 child: const Text(
                   'Not registered yet? Register here!',

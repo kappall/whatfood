@@ -1,17 +1,18 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:routemaster/routemaster.dart';
 import 'package:whatfood/core/common/provider.dart';
 import 'package:whatfood/core/utils.dart';
 import 'package:whatfood/features/auth/controller/auth_controller.dart';
 
-class RegisterView extends StatefulWidget {
+class RegisterView extends ConsumerStatefulWidget {
   const RegisterView({super.key});
 
   @override
-  State<RegisterView> createState() => _RegisterViewState();
+  ConsumerState<RegisterView> createState() => _RegisterViewState();
 }
 
-class _RegisterViewState extends State<RegisterView> {
+class _RegisterViewState extends ConsumerState<RegisterView> {
   late final TextEditingController _emailController;
   late final TextEditingController _passwordController;
   late final TextEditingController _nameController;
@@ -30,21 +31,6 @@ class _RegisterViewState extends State<RegisterView> {
     _passwordController.dispose();
     _nameController.dispose();
     super.dispose();
-  }
-
-  Future<void> register() async {
-    final notifier = MyProvider.of<AuthController>(context);
-    if (notifier != null) {
-      final authController = notifier.value;
-      await authController.registerWithEmailAndPassword(
-        context: context,
-        email: _emailController.text.trim(),
-        password: _passwordController.text.trim(),
-        name: _nameController.text.trim(),
-      );
-    } else {
-      showSnackBar(context, 'Provider not found');
-    }
   }
 
   @override
@@ -131,7 +117,26 @@ class _RegisterViewState extends State<RegisterView> {
                   ),
                   const SizedBox(height: 30),
                   FilledButton(
-                    onPressed: () => register(),
+                    onPressed: () async {
+                      final email = _emailController.text.trim();
+                      final password = _passwordController.text.trim();
+                      final name = _nameController.text.trim();
+                      try {
+                        await ref
+                            .read(authControllerProvider.notifier)
+                            .registerWithEmailAndPassword(
+                              context: context,
+                              email: email,
+                              password: password,
+                              name: name,
+                            );
+
+                        if (!context.mounted) return;
+                      } catch (e) {
+                        showSnackBar(
+                            context, "Registration failed: ${e.toString()}");
+                      }
+                    },
                     style: FilledButton.styleFrom(
                       backgroundColor: Colors.lightGreen,
                       shape: RoundedRectangleBorder(

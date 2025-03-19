@@ -4,10 +4,8 @@ import 'package:amplify_flutter/amplify_flutter.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:whatfood/models/ModelProvider.dart';
 
-class AWSServices {
-  final api = Amplify.API;
-  final auth = AmplifyAuthCognito();
-  final storage = Amplify.Storage;
-  final datastore = AmplifyDataStore(modelProvider: ModelProvider.instance);
-  final googleSignIn = GoogleSignIn();
-}
+final api = Amplify.API;
+final auth = AmplifyAuthCognito();
+final storage = Amplify.Storage;
+final datastore = AmplifyDataStore(modelProvider: ModelProvider.instance);
+final googleSignIn = GoogleSignIn();

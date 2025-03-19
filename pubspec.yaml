@@ -60,6 +60,7 @@ dependencies:
   amplify_analytics_pinpoint: ^2.6.1
   amplify_datastore: ^2.6.1
   amplify_api: ^2.6.1
+  dotenv: ^4.2.0
 
 
 

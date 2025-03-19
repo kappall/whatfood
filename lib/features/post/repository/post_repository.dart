@@ -274,6 +274,7 @@ class PostRepository {
   Future<void> likeOrUnlike(Post post, String uid) async {
     try {
       List<String> updatedLikes = List.from(post.likes);
+      debugPrint(updatedLikes.toString());
       if (post.likes.contains(uid)) {
         updatedLikes.remove(uid);
       } else {
@@ -287,7 +288,9 @@ class PostRepository {
       }
       ''';
       final request = GraphQLRequest<String>(document: updateLikesMutation);
-      await Amplify.API.mutate(request: request).response;
+      debugPrint(updatedLikes.toString());
+      final ret = await Amplify.API.mutate(request: request).response;
+      print(ret.toString());
     } catch (e) {
       debugPrint(e.toString());
     }
@@ -303,37 +306,56 @@ class PostRepository {
       }
       String updateUserMutation = '''
       mutation UpdateUser {
-        updateUser(input: { uid: "${user.id}", savedPosts: ${jsonEncode(updatedBookmarks)} }) {
-          uid
+        updateUser(input: { id: "${user.id}", savedPosts: ${jsonEncode(updatedBookmarks)} }) {
+          id
         }
       }
       ''';
       final request = GraphQLRequest<String>(document: updateUserMutation);
-      await Amplify.API.mutate(request: request).response;
+      final res = await Amplify.API.mutate(request: request).response;
+      print(res.toString());
     } catch (e) {
       debugPrint(e.toString());
     }
   }
 
-  Future<Post?> getPostById(String id) async {
-    String query = '''
+  Stream<Post> getPostById(String id) {
+    final controller = StreamController<Post>();
+    try {
+      String query = '''
     query GetPost {
       getPost(id: "$id") {
         ${PostGraphQLFields.graphQLFields}
       }
     }
     ''';
-    final request = GraphQLRequest<String>(document: query);
-    var operation = Amplify.API.query(request: request);
-    var response = await operation.response;
-    var data = response.data;
-
-    if (data == null) {
-      return null;
+      final request = GraphQLRequest<String>(document: query);
+      Amplify.API.query(request: request).response.then((response) {
+        if (response.data == null) {
+          return;
+        }
+        try {
+          debugPrint(response.data);
+          var json = jsonDecode(response.data!)['getPost'];
+          final post = Post.fromJson(json);
+          controller.add(post);
+        } catch (e) {
+          debugPrint("Error parsing post data: $e");
+          controller.addError(e);
+        }
+      }).catchError((error) {
+        debugPrint("Error fetching user: $error");
+        controller.addError(error);
+      }).whenComplete(() {
+        controller.close();
+      });
+      ;
+    } catch (e) {
+      controller.addError(e);
+      controller.close();
     }
 
-    var json = jsonDecode(data);
-    return Post.fromJson(json);
+    return controller.stream;
   }
 
   Future<String> getUserName(String uid) async {

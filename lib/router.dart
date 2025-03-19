@@ -65,10 +65,6 @@ final loggedInRoutes = RouteMap(
 final loggedOutRoutes = RouteMap(routes: {
   '/': (_) => const MaterialPage(child: LoginView()),
   '/login': (_) => const MaterialPage(child: LoginView()),
-  '/preferences': (route) => const MaterialPage(
-          child: PreferencesView(
-        isFromProfile: false,
-      )),
   '/register': (_) => const MaterialPage(child: RegisterView()),
   '/main_guest': (_) => const MaterialPage(child: MainPage(isGuest: true)),
 });

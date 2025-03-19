@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-class BounceIconButton extends ConsumerStatefulWidget {
+class BounceIconButton extends StatefulWidget {
   final IconData activeIcon;
   final IconData inactiveIcon;
   final bool isActive;
@@ -20,10 +19,10 @@ class BounceIconButton extends ConsumerStatefulWidget {
   });
 
   @override
-  ConsumerState<BounceIconButton> createState() => BounceIconButtonState();
+  State<BounceIconButton> createState() => BounceIconButtonState();
 }
 
-class BounceIconButtonState extends ConsumerState<BounceIconButton> {
+class BounceIconButtonState extends State<BounceIconButton> {
   double _scale = 1.0;
 
   void _animate() async {

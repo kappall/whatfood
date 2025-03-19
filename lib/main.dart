@@ -5,7 +5,10 @@ import 'package:amplify_datastore/amplify_datastore.dart';
 import 'package:amplify_flutter/amplify_flutter.dart';
 import 'package:amplify_storage_s3/amplify_storage_s3.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:whatfood/amplifyconfiguration.dart';
+import 'package:whatfood/core/common/error_text.dart';
+import 'package:whatfood/core/common/loader.dart';
 import 'package:whatfood/core/common/provider.dart';
 import 'package:whatfood/features/auth/controller/auth_controller.dart';
 import 'package:whatfood/features/auth/repository/auth_repository.dart';
@@ -52,39 +55,47 @@ void main() async {
   final bool loggedIn = await isUserLoggedIn();
   debugPrint('User logged in: $loggedIn');
 
-  runApp(ProvidersWrapper(child: MyApp(loggedIn: loggedIn)));
+  runApp(ProviderScope(child: MyApp(loggedIn: loggedIn)));
 }
 
-class MyApp extends StatefulWidget {
+class MyApp extends ConsumerStatefulWidget {
   final bool loggedIn;
   const MyApp({super.key, required this.loggedIn});
 
   @override
-  State<StatefulWidget> createState() => _MyAppState();
+  ConsumerState<ConsumerStatefulWidget> createState() => _MyAppState();
 }
 
-class _MyAppState extends State<MyApp> {
+class _MyAppState extends ConsumerState<MyApp> {
   @override
   Widget build(BuildContext context) {
-    final MyNotifier<AuthController> authControllerNotifier =
-        MyNotifier<AuthController>(
-      AuthController(
-        authRepository: AuthRepository(),
-      ),
-    );
-    return MyProvider<AuthController>(
-      notifier: authControllerNotifier,
-      child: MaterialApp.router(
-        debugShowCheckedModeBanner: false,
-        title: 'Whatfood',
-        theme: darkTheme,
-        routerDelegate: RoutemasterDelegate(routesBuilder: (context) {
-          final authController = MyProvider.of<AuthController>(context);
-          final loggedIn = authController?.isLoggedIn ?? false;
-          return loggedIn ? loggedInRoutes : loggedOutRoutes;
-        }),
-        routeInformationParser: const RoutemasterParser(),
-      ),
-    );
+    return ref.watch(authStateChangeProvider).when(
+          data: (user) => MaterialApp.router(
+            debugShowCheckedModeBanner: false,
+            title: 'Whatfood',
+            theme: darkTheme,
+            routerDelegate: RoutemasterDelegate(
+              routesBuilder: (context) {
+                if (user != null) {
+                  return loggedInRoutes;
+                }
+                return loggedOutRoutes;
+              },
+            ),
+            routeInformationParser: const RoutemasterParser(),
+          ),
+          error: (error, stackTrace) => MaterialApp(
+            home: Scaffold(
+              body: ErrorText(
+                error: error.toString(),
+              ),
+            ),
+          ),
+          loading: () => const MaterialApp(
+            home: Scaffold(
+              body: Loader(),
+            ),
+          ),
+        );
   }
 }

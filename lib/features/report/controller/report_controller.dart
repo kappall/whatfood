@@ -51,7 +51,7 @@ class ReportController extends StateNotifier<bool> {
           nutritionalValues: nutritionalValues,
           description: description,
           category: category,
-          uid: user.uid);
+          uid: user.id);
 
       final res = await _reportRepository.addFoodReport(report);
 
@@ -73,7 +73,7 @@ class ReportController extends StateNotifier<bool> {
     required BuildContext context,
     required String reportId,
   }) async {
-    final uid = _ref.read(userProvider)?.uid ?? '';
+    final uid = _ref.read(userProvider)?.id ?? '';
     if (uid.isEmpty) return;
 
     final res = await _reportRepository.deleteReport(reportId);

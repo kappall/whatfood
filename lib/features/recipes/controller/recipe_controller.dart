@@ -10,7 +10,7 @@ import 'package:whatfood/core/utils.dart';
 import 'package:whatfood/features/auth/controller/auth_controller.dart';
 import 'package:whatfood/features/recipes/repository/recipe_repository.dart';
 import 'package:whatfood/models/Recipe.dart';
-import 'package:whatfood/features/profile/controller/user_profile_controller.dart';
+import 'package:whatfood/models/User.dart';
 
 final recipeControllerProvider =
     StateNotifierProvider<RecipeController, bool>((ref) {
@@ -23,7 +23,7 @@ final recipeControllerProvider =
   );
 });
 
-final recpiesProvider = FutureProvider((ref) {
+final recpiesProvider = StreamProvider((ref) {
   final recipeController = ref.watch(recipeControllerProvider.notifier);
 
   return recipeController.fetchRecipes();
@@ -42,7 +42,7 @@ class RecipeController extends StateNotifier<bool> {
         _storageRepository = storageRepository,
         _ref = ref,
         super(false);
-  Future<List<Recipe>> fetchRecipes() {
+  Stream<List<Recipe>> fetchRecipes() {
     return _recipeRepository.fetchRecipes();
   }
 
@@ -57,22 +57,12 @@ class RecipeController extends StateNotifier<bool> {
     required File image,
   }) async {
     state = true;
-    final user = _ref.watch(userProvider);
-
-    if (user == null) {
-      showSnackBar(
-        context,
-        'User not logged in',
-      );
-      state = false;
-      return;
-    }
+    final user = _ref.watch(userProvider)!;
 
     String recipeId = const Uuid().v4();
     String coverImageUrl = '';
 
     try {
-      final imageId = const Uuid().v4();
       final result = await _storageRepository.uploadImage(
         image,
         recipeId,
@@ -85,7 +75,7 @@ class RecipeController extends StateNotifier<bool> {
       final Recipe recipe = Recipe(
           id: recipeId,
           title: title,
-          uid: user.uid,
+          uid: user.id,
           coverImage: coverImageUrl,
           createdAt: TemporalDateTime.now(),
           likes: [],
@@ -121,7 +111,6 @@ class RecipeController extends StateNotifier<bool> {
 
   void deleteRecipe(String id, BuildContext context) async {
     final res = await _recipeRepository.deleteRecipe(id);
-    _ref.read(userProfileControllerProvider.notifier);
     res.fold((l) => null,
         (r) => showSnackBar(context, 'Recipe Deleted successfully!'));
   }
@@ -165,7 +154,7 @@ class RecipeController extends StateNotifier<bool> {
 
         imageUrl = res;
       }
-      final user = _ref.read(userProvider)!;
+      final user = _ref.watch(userProvider)!;
 
       final recipe = Recipe(
         id: recipeId,
@@ -178,7 +167,7 @@ class RecipeController extends StateNotifier<bool> {
         servings: servings,
         cookTimeMinutes: cookTimeMinutes,
         coverImage: imageUrl,
-        uid: _ref.read(userProvider)!.uid,
+        uid: user.id,
         createdAt: TemporalDateTime.now(),
         likes: likes,
       );

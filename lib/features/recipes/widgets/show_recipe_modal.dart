@@ -5,7 +5,6 @@ import 'package:whatfood/button_styles.dart';
 import 'package:whatfood/features/auth/controller/auth_controller.dart';
 import 'package:whatfood/features/scanner/utils/ingridients_processor.dart';
 import 'package:whatfood/models/Recipe.dart';
-import 'package:whatfood/features/recipes/controller/recipe_controller.dart';
 
 class RecipeModal extends ConsumerWidget {
   final Recipe recipe;
@@ -16,11 +15,6 @@ class RecipeModal extends ConsumerWidget {
     final lowerIngredient = ingredient.toLowerCase();
     return intolerances.any(
         (intolerance) => lowerIngredient.contains(intolerance.toLowerCase()));
-  }
-
-  void _editRecipe(BuildContext context, WidgetRef ref) {
-    Navigator.of(context).pop();
-    Routemaster.of(context).push('edit-recipe/${recipe.id}');
   }
 
   Widget _buildIngredientsList(List<String> intolerances, BuildContext context,
@@ -75,7 +69,7 @@ class RecipeModal extends ConsumerWidget {
                   children: [
                     Padding(
                       padding:
-                          EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                          EdgeInsets.symmetric(horizontal: 8, vertical: 12),
                       child: Text(
                         'Ingredient',
                         style: TextStyle(
@@ -85,7 +79,9 @@ class RecipeModal extends ConsumerWidget {
                         ),
                       ),
                     ),
-                    Center(
+                    Padding(
+                      padding:
+                          EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                       child: Text(
                         'Status',
                         style: TextStyle(
@@ -107,10 +103,9 @@ class RecipeModal extends ConsumerWidget {
                     return TableRow(
                       children: [
                         Padding(
-                          padding: const EdgeInsets.only(
-                            left: 8,
-                            right: 0,
-                            top: 12,
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 12,
                           ),
                           child: Text(
                             trimmedIngredient,
@@ -122,36 +117,34 @@ class RecipeModal extends ConsumerWidget {
                         ),
                         Padding(
                           padding: const EdgeInsets.symmetric(
-                            horizontal: 8,
+                            horizontal: 16,
                             vertical: 12,
                           ),
-                          child: Center(
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Container(
-                                  width: 8,
-                                  height: 8,
-                                  decoration: BoxDecoration(
-                                    shape: BoxShape.circle,
-                                    color: hasIntolerance
-                                        ? Colors.red
-                                        : Colors.green,
-                                  ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Container(
+                                width: 8,
+                                height: 8,
+                                decoration: BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  color: hasIntolerance
+                                      ? Colors.red
+                                      : Colors.green,
                                 ),
-                                const SizedBox(width: 8),
-                                Text(
-                                  hasIntolerance ? 'Warning' : 'Safe',
-                                  style: TextStyle(
-                                    color: hasIntolerance
-                                        ? Colors.red
-                                        : Colors.green,
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 14,
-                                  ),
+                              ),
+                              const SizedBox(width: 8),
+                              Text(
+                                hasIntolerance ? 'Warning' : 'Safe',
+                                style: TextStyle(
+                                  color: hasIntolerance
+                                      ? Colors.red
+                                      : Colors.green,
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 14,
                                 ),
-                              ],
-                            ),
+                              ),
+                            ],
                           ),
                         ),
                       ],
@@ -166,49 +159,12 @@ class RecipeModal extends ConsumerWidget {
     );
   }
 
-  void _showDeleteConfirmation(BuildContext context, WidgetRef ref) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        backgroundColor: Colors.grey[900],
-        title: const Text(
-          'Delete Recipe',
-          style: TextStyle(color: Colors.white),
-        ),
-        content: const Text(
-          'Are you sure you want to delete this recipe?',
-          style: TextStyle(color: Colors.white70),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
-          ),
-          TextButton(
-            onPressed: () {
-              ref
-                  .read(recipeControllerProvider.notifier)
-                  .deleteRecipe(recipe.id, context);
-              Navigator.pop(context);
-              Routemaster.of(context).pop();
-            },
-            child: const Text(
-              'Delete',
-              style: TextStyle(color: Colors.red),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final user = ref.watch(userProvider)!;
     final userIntolerances = user.preferences;
     final hasIntolerances = recipe.ingredients
         .any((ingredient) => _hasIntolerance(ingredient, userIntolerances));
-    final isOwner = recipe.uid == user.uid;
 
     return Material(
       color: const Color.fromARGB(255, 30, 30, 30),
@@ -230,6 +186,7 @@ class RecipeModal extends ConsumerWidget {
               controller: scrollController,
               child: Column(
                 children: [
+                  // Header Image with Gradient Overlay
                   Stack(
                     children: [
                       Image.network(
@@ -285,40 +242,9 @@ class RecipeModal extends ConsumerWidget {
                           ],
                         ),
                       ),
-                      if (isOwner)
-                        Positioned(
-                          bottom: 16,
-                          right: 16,
-                          child: Container(
-                            decoration: BoxDecoration(
-                              color: Colors.black45,
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                IconButton(
-                                  icon: const Icon(
-                                    Icons.edit,
-                                    color: Colors.white,
-                                  ),
-                                  onPressed: () => _editRecipe(context, ref),
-                                ),
-                                IconButton(
-                                  icon: const Icon(
-                                    Icons.delete,
-                                    color: Colors.red,
-                                  ),
-                                  onPressed: () {
-                                    _showDeleteConfirmation(context, ref);
-                                  },
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
                     ],
                   ),
+
                   Padding(
                     padding: const EdgeInsets.all(16),
                     child: Column(

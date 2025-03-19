@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:routemaster/routemaster.dart';
 import 'package:whatfood/models/Post.dart';
 
-class PostCard extends ConsumerWidget {
+class PostCard extends StatelessWidget {
   final Post post;
   final bool isCommenting;
   const PostCard({
@@ -17,7 +16,7 @@ class PostCard extends ConsumerWidget {
   }
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
     final bool isTypeImage = post.type == "image";
     return LayoutBuilder(
       builder: (context, constraints) {

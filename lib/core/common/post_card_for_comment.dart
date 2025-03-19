@@ -1,46 +1,37 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:routemaster/routemaster.dart';
 import 'package:whatfood/button_styles.dart';
-import 'package:whatfood/core/common/error_text.dart';
-import 'package:whatfood/core/common/loader.dart';
 import 'package:whatfood/features/auth/controller/auth_controller.dart';
 import 'package:whatfood/features/post/controller/post_controller.dart';
 import 'package:whatfood/models/Post.dart';
-import 'package:whatfood/models/User.dart';
 
-class PostCardForComment extends StatefulWidget {
+class PostCardForComment extends ConsumerWidget {
   final Post post;
   final bool isCommenting;
-  final PostController controller;
   const PostCardForComment({
     super.key,
-    required this.controller,
     required this.post,
     this.isCommenting = false,
   });
 
-  @override
-  State<StatefulWidget> createState() => _PostCardForComemntState();
-}
-
-class _PostCardForComemntState extends State<PostCardForComment> {
-  void deletePost(BuildContext context) async {
-    widget.controller.deletePost(widget.post, context);
+  void deletePost(WidgetRef ref, BuildContext context) async {
+    ref.read(postControllerProvider.notifier).deletePost(post, context);
   }
 
-  void likeOrUnlikePost() async {
-    widget.controller.likeOrUnlike(widget.post);
+  void likeOrUnlikePost(WidgetRef ref) async {
+    ref.read(postControllerProvider.notifier).likeOrUnlike(post);
   }
 
   void navigateToUser(BuildContext context) {
     try {
-      Routemaster.of(context).push('/user_page/${widget.post.uid}');
+      Routemaster.of(context).push('/user_page/${post.uid}');
     } catch (e) {
       debugPrint(e.toString());
     }
   }
 
-  Widget popUpMenu(BuildContext context, bool isOwner) {
+  Widget popUpMenu(BuildContext context, WidgetRef ref, bool isOwner) {
     return PopupMenuButton<String>(
       icon: Icon(Icons.more_vert),
       onSelected: (String result) {},
@@ -51,7 +42,7 @@ class _PostCardForComemntState extends State<PostCardForComment> {
               style: ButtonStyles.textButtonStyle(textColor: Colors.red),
               onPressed: () {
                 FocusScope.of(context).unfocus();
-                deletePost(context);
+                deletePost(ref, context);
               },
               icon: Icon(Icons.delete, color: Colors.red),
               label: Text("Delete"),
@@ -84,114 +75,115 @@ class _PostCardForComemntState extends State<PostCardForComment> {
   }
 
   @override
-  Widget build(BuildContext context) {
-    return FutureBuilder(
-        future: getUserData(),
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Loader();
-          }
-          if (snapshot.hasError) {
-            return ErrorText(error: snapshot.error.toString());
-          }
-          if (!snapshot.hasData) {
-            return const Loader();
-          }
-          final user = User.fromJson(snapshot.data!);
-          return Card(
-            margin: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-            elevation: 4,
-            shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(16),
-                side: BorderSide(color: Colors.lightGreen, width: 6)),
-            child: Padding(
-              padding: EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Row(
-                        children: [
-                          GestureDetector(
-                            onTap: () => navigateToUser(context),
-                            child: CircleAvatar(
-                              backgroundImage:
-                                  NetworkImage(widget.post.userImage),
-                              radius: 24,
-                            ),
-                          ),
-                          SizedBox(width: 12),
-                          Text(
-                            widget.post.username,
-                            style: Theme.of(context).textTheme.headlineSmall,
-                          ),
-                        ],
+  Widget build(BuildContext context, WidgetRef ref) {
+    final isTypeImage = post.type == "image";
+    final isTypeText = post.type == "text";
+    final user = ref.watch(userProvider)!;
+    return Card(
+      margin: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      elevation: 4,
+      shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+          side: BorderSide(color: Colors.lightGreen, width: 6)),
+      child: Padding(
+        padding: EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Row(
+                  children: [
+                    GestureDetector(
+                      onTap: () => navigateToUser(context),
+                      child: CircleAvatar(
+                        backgroundImage: NetworkImage(post.userImage),
+                        radius: 24,
                       ),
-                      popUpMenu(context, widget.post.uid == user.uid)
-                    ],
-                  ),
-                  SizedBox(height: 12),
-                  Text(
-                    widget.post.description,
-                    style: Theme.of(context)
-                        .textTheme
-                        .headlineSmall
-                        ?.copyWith(fontWeight: FontWeight.w600),
-                  ),
-                  SizedBox(height: 12),
-                  ClipRRect(
-                    borderRadius: BorderRadius.circular(16),
-                    child: Image.network(
-                      widget.post.imageUrl,
-                      fit: BoxFit.cover,
-                      width: double.infinity,
-                      height: MediaQuery.of(context).size.height * 0.35,
                     ),
-                  ),
-                  SizedBox(height: 12),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Row(
-                        children: [
-                          IconButton(
-                            icon: Icon(
-                              Icons.thumb_up,
-                              color: widget.post.likes.contains(user.uid)
-                                  ? Theme.of(context).colorScheme.primary
-                                  : Theme.of(context).colorScheme.secondary,
-                              size: 28,
-                            ),
-                            onPressed: () => likeOrUnlikePost(),
-                          ),
-                          Text(
-                            widget.post.likes.isEmpty
-                                ? 'Like'
-                                : '${widget.post.likes.length}',
-                            style: TextStyle(fontSize: 16),
-                          ),
-                        ],
-                      ),
-                      Row(
-                        children: [
-                          IconButton(
-                            icon: Icon(Icons.comment, size: 28),
-                            onPressed: () {},
-                          ),
-                          Text(
-                            '${widget.post.commentCount}',
-                            style: TextStyle(fontSize: 16),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                ],
-              ),
+                    SizedBox(width: 12),
+                    Text(
+                      post.username,
+                      style: Theme.of(context).textTheme.headlineSmall,
+                    ),
+                  ],
+                ),
+                popUpMenu(context, ref, post.uid == user.id)
+              ],
             ),
-          );
-        });
+            SizedBox(height: 12),
+            Text(
+              post.description,
+              style: Theme.of(context)
+                  .textTheme
+                  .headlineSmall
+                  ?.copyWith(fontWeight: FontWeight.w600),
+            ),
+            SizedBox(height: 12),
+            if (isTypeImage)
+              ClipRRect(
+                borderRadius: BorderRadius.circular(16),
+                child: Image.network(
+                  post.imageUrl,
+                  fit: BoxFit.cover,
+                  width: double.infinity,
+                  height: MediaQuery.of(context).size.height * 0.35,
+                ),
+              ),
+            if (isTypeText)
+              Container(
+                width: double.infinity,
+                margin: EdgeInsets.symmetric(vertical: 8),
+                padding: EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: Theme.of(context).cardColor,
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                child: Text(
+                  post.description,
+                  style: TextStyle(fontSize: 16, height: 1.5),
+                ),
+              ),
+            SizedBox(height: 12),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Row(
+                  children: [
+                    IconButton(
+                      icon: Icon(
+                        Icons.thumb_up,
+                        color: post.likes.contains(user.id)
+                            ? Theme.of(context).colorScheme.primary
+                            : Theme.of(context).colorScheme.secondary,
+                        size: 28,
+                      ),
+                      onPressed: () => likeOrUnlikePost(ref),
+                    ),
+                    Text(
+                      post.likes.isEmpty ? 'Like' : '${post.likes.length}',
+                      style: TextStyle(fontSize: 16),
+                    ),
+                  ],
+                ),
+                Row(
+                  children: [
+                    IconButton(
+                      icon: Icon(Icons.comment, size: 28),
+                      onPressed: () {},
+                    ),
+                    Text(
+                      '${post.commentCount}',
+                      style: TextStyle(fontSize: 16),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }

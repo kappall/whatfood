@@ -1,4 +1,6 @@
+import 'package:amplify_flutter/amplify_flutter.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:routemaster/routemaster.dart';
 import 'package:whatfood/core/common/bounce_icon.dart';
@@ -9,39 +11,271 @@ import 'package:whatfood/features/post/controller/post_controller.dart';
 import 'package:whatfood/models/Post.dart';
 import 'package:whatfood/models/User.dart';
 
-class HomePostCard extends StatefulWidget {
+class HomePostCard extends ConsumerStatefulWidget {
   final Post post;
-  final PostController controller;
+  final bool isCommenting;
+  final String imageUrl;
   const HomePostCard({
+    required this.imageUrl,
     super.key,
-    required this.controller,
     required this.post,
+    this.isCommenting = false,
   });
 
   @override
-  State<StatefulWidget> createState() => _HomePostCardState();
+  ConsumerState<HomePostCard> createState() => _HomePostCardState();
 }
 
-class _HomePostCardState extends State<HomePostCard> {
+class _HomePostCardState extends ConsumerState<HomePostCard> {
+  late Post _post;
+  bool _isExpanded = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _post = widget.post;
+  }
+
   void deletePost(BuildContext context) {
-    widget.controller.deletePost(widget.post, context);
+    ref.read(postControllerProvider.notifier).deletePost(_post, context);
   }
 
   void likeOrUnlikePost() {
-    widget.controller.likeOrUnlike(widget.post);
+    final user = ref.read(userProvider)!;
+    setState(() {
+      if (_post.likes.contains(user.id)) {
+        _post = _post.copyWith(
+          likes: List<String>.from(_post.likes)..remove(user.id),
+        );
+      } else {
+        _post = _post.copyWith(
+          likes: List<String>.from(_post.likes)..add(user.id),
+        );
+      }
+    });
+    // Update backend
+    ref.read(postControllerProvider.notifier).likeOrUnlike(_post);
   }
 
   void navigateToComments(BuildContext context) {
     debugPrint('Here');
-    Routemaster.of(context).push('/${widget.post.id}/comments');
+    Routemaster.of(context).push('/${_post.id}/comments');
   }
 
   void navigateToUser(BuildContext context) {
     try {
-      Routemaster.of(context).push('user_page/${widget.post.uid}');
+      Routemaster.of(context).push('user_page/${_post.uid}');
     } catch (e) {
       debugPrint(e.toString());
     }
+  }
+
+  void addOrRemoveBookmark() async {
+    final user = ref.read(userProvider);
+    if (user == null) return;
+
+    final isSaved = user.savedPosts.contains(_post.id);
+    final updatedSavedPosts = List<String>.from(user.savedPosts);
+
+    setState(() {
+      if (isSaved) {
+        updatedSavedPosts.remove(_post.id);
+      } else {
+        updatedSavedPosts.add(_post.id);
+      }
+    });
+
+    // Update user state
+    final updatedUser = user.copyWith(savedPosts: updatedSavedPosts);
+    ref.read(userProvider.notifier).state = updatedUser;
+
+    // Update backend
+    await ref
+        .read(postControllerProvider.notifier)
+        .addOrRemoveBookmark(_post, user);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final user = ref.read(userProvider)!;
+
+    return GestureDetector(
+      onDoubleTap: likeOrUnlikePost,
+      child: Stack(
+        children: [
+          Positioned.fill(
+            child: Image.network(
+              widget.imageUrl!,
+              fit: BoxFit.contain,
+              width: double.infinity,
+            ),
+          ),
+          Positioned.fill(
+            child: Container(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [
+                    Colors.black87,
+                    Colors.black12,
+                    Colors.transparent,
+                  ],
+                  begin: Alignment.bottomCenter,
+                  end: Alignment.center,
+                ),
+              ),
+            ),
+          ),
+          PostContentOverlay(
+            post: _post,
+            user: user,
+            isExpanded: _isExpanded,
+            onExpandToggle: () => setState(() => _isExpanded = !_isExpanded),
+            onLike: likeOrUnlikePost,
+            onComment: () => navigateToComments(context),
+            onBookmark: addOrRemoveBookmark,
+            onUserTap: () => navigateToUser(context),
+            onDeletePost: () => deletePost(context),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class PostContentOverlay extends StatelessWidget {
+  final Post post;
+  final User user;
+  final bool isExpanded;
+  final VoidCallback onExpandToggle;
+  final VoidCallback onLike;
+  final VoidCallback onComment;
+  final VoidCallback onBookmark;
+  final VoidCallback onUserTap;
+  final VoidCallback onDeletePost;
+
+  const PostContentOverlay({
+    super.key,
+    required this.post,
+    required this.user,
+    required this.isExpanded,
+    required this.onExpandToggle,
+    required this.onLike,
+    required this.onComment,
+    required this.onBookmark,
+    required this.onUserTap,
+    required this.onDeletePost,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Positioned(
+      bottom: 20,
+      left: 20,
+      right: 20,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Row(
+                children: [
+                  GestureDetector(
+                    onTap: () => onUserTap,
+                    child: CircleAvatar(
+                      backgroundImage: NetworkImage(user.profilePic),
+                      radius: 24,
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Text(
+                    user.name,
+                    style: const TextStyle(
+                      fontSize: 20,
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ],
+              ),
+              popUpMenu(context, post.uid == user.id),
+            ],
+          ),
+          const SizedBox(height: 10),
+          StatefulBuilder(
+            builder: (context, setState) => Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  post.description,
+                  maxLines: isExpanded ? null : 1,
+                  overflow:
+                      isExpanded ? TextOverflow.visible : TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    fontSize: 18,
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                if (post.description.length > 50)
+                  GestureDetector(
+                    onTap: onExpandToggle,
+                    child: Padding(
+                      padding: const EdgeInsets.only(top: 4.0),
+                      child: Text(
+                        isExpanded ? 'Show less' : 'Show more',
+                        style: TextStyle(
+                          color: Colors.white.withValues(alpha: 0.7),
+                          fontSize: 14,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 20),
+          Row(
+            children: [
+              IconButton(
+                icon: Icon(
+                  post.likes.contains(user.id)
+                      ? Icons.favorite
+                      : Icons.favorite_outline,
+                  color:
+                      post.likes.contains(user.id) ? Colors.red : Colors.white,
+                  size: 30,
+                ),
+                onPressed: onLike,
+              ),
+              Text(
+                "${post.likes.length}",
+                style: const TextStyle(fontSize: 18, color: Colors.white),
+              ),
+              const SizedBox(width: 20),
+              IconButton(
+                  icon: FaIcon(
+                    FontAwesomeIcons.commentDots,
+                    color: Colors.white,
+                  ),
+                  onPressed: () => onComment),
+              Text(
+                "${post.commentCount}",
+                style: const TextStyle(fontSize: 18, color: Colors.white),
+              ),
+              const SizedBox(width: 20),
+              BounceIconButton(
+                activeIcon: Icons.bookmark,
+                inactiveIcon: Icons.bookmark_outline,
+                isActive: user.savedPosts.contains(post.id),
+                onPressed: onBookmark,
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
   }
 
   Widget popUpMenu(BuildContext context, bool isOwner) {
@@ -51,7 +285,7 @@ class _HomePostCardState extends State<HomePostCard> {
       iconSize: 32,
       onSelected: (String value) async {
         if (value == 'delete') {
-          deletePost(context);
+          onDeletePost;
         } else if (value == 'share') {
           debugPrint('Share');
         }
@@ -86,173 +320,5 @@ class _HomePostCardState extends State<HomePostCard> {
         ),
       ],
     );
-  }
-
-  void addOrRemoveBookmark() async {
-    await widget.controller.addOrRemoveBookmark(widget.post);
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    bool isExpanded = false;
-
-    return FutureBuilder(
-        future: getUserData(),
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Loader();
-          }
-          if (snapshot.hasError) {
-            return ErrorText(error: snapshot.error.toString());
-          }
-          if (!snapshot.hasData) {
-            return const Loader();
-          }
-          final user = User.fromJson(snapshot.data!);
-          return GestureDetector(
-            onDoubleTap: () => likeOrUnlikePost(),
-            child: Stack(
-              children: [
-                Positioned.fill(
-                    child: Image.network(
-                  widget.post.imageUrl,
-                  fit: BoxFit.contain,
-                  width: double.infinity,
-                )),
-                Positioned.fill(
-                  child: Container(
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        colors: [
-                          Colors.black87,
-                          Colors.black12,
-                          Colors.transparent,
-                        ],
-                        begin: Alignment.bottomCenter,
-                        end: Alignment.center,
-                      ),
-                    ),
-                  ),
-                ),
-                Positioned(
-                  bottom: 20,
-                  left: 20,
-                  right: 20,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Row(
-                            children: [
-                              GestureDetector(
-                                onTap: () => navigateToUser(context),
-                                child: CircleAvatar(
-                                  backgroundImage:
-                                      NetworkImage(user.profilePic),
-                                  radius: 24,
-                                ),
-                              ),
-                              const SizedBox(width: 10),
-                              Text(
-                                user.name,
-                                style: const TextStyle(
-                                  fontSize: 20,
-                                  color: Colors.white,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                            ],
-                          ),
-                          popUpMenu(context, widget.post.uid == user.uid),
-                        ],
-                      ),
-                      const SizedBox(height: 10),
-                      StatefulBuilder(
-                        builder: (context, setState) => Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              widget.post.description,
-                              maxLines: isExpanded ? null : 1,
-                              overflow: isExpanded
-                                  ? TextOverflow.visible
-                                  : TextOverflow.ellipsis,
-                              style: const TextStyle(
-                                fontSize: 18,
-                                color: Colors.white,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                            if (widget.post.description.length > 30)
-                              GestureDetector(
-                                onTap: () =>
-                                    setState(() => isExpanded = !isExpanded),
-                                child: Padding(
-                                  padding: const EdgeInsets.only(top: 4.0),
-                                  child: Text(
-                                    isExpanded ? 'Show less' : 'Show more',
-                                    style: TextStyle(
-                                      color: Colors.white
-                                        ..withValues(alpha: 0.7),
-                                      fontSize: 14,
-                                      fontWeight: FontWeight.w500,
-                                    ),
-                                  ),
-                                ),
-                              ),
-                          ],
-                        ),
-                      ),
-                      const SizedBox(height: 20),
-                      Row(
-                        children: [
-                          IconButton(
-                            icon: Icon(
-                              widget.post.likes.contains(user.uid)
-                                  ? Icons.favorite
-                                  : Icons.favorite_outline,
-                              color: widget.post.likes.contains(user.uid)
-                                  ? Colors.red
-                                  : Colors.white,
-                              size: 30,
-                            ),
-                            onPressed: () => likeOrUnlikePost(),
-                          ),
-                          Text(
-                            "${widget.post.likes.length}",
-                            style: const TextStyle(
-                                fontSize: 18, color: Colors.white),
-                          ),
-                          const SizedBox(width: 20),
-                          IconButton(
-                            icon: FaIcon(
-                              FontAwesomeIcons.commentDots,
-                              color: Colors.white,
-                            ),
-                            onPressed: () => navigateToComments(context),
-                          ),
-                          Text(
-                            "${widget.post.commentCount}",
-                            style: const TextStyle(
-                                fontSize: 18, color: Colors.white),
-                          ),
-                          const SizedBox(width: 20),
-                          BounceIconButton(
-                            activeIcon: Icons.bookmark,
-                            inactiveIcon: Icons.bookmark_outline,
-                            isActive: user.savedPosts.contains(widget.post.id),
-                            onPressed: () => addOrRemoveBookmark(),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          );
-        });
   }
 }

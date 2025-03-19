@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:amplify_flutter/amplify_flutter.dart';
@@ -22,6 +23,51 @@ class AuthRepository {
     } catch (e) {
       return null;
     }
+  }
+
+  Stream<User?> get authStateChange {
+    final controller = StreamController<User?>();
+
+    // Initial check
+    isUserSignedIn().then((isSignedIn) async {
+      if (isSignedIn) {
+        final userId = await getCurrentUserId();
+        if (userId != null) {
+          final user = await getUserData(userId).first;
+          controller.add(user);
+        } else {
+          controller.add(null);
+        }
+      } else {
+        controller.add(null);
+      }
+    });
+
+    // Listen to Amplify Hub events for auth state changes
+    final subscription = Amplify.Hub.listen(HubChannel.Auth, (event) async {
+      switch (event.type) {
+        case AuthHubEventType.signedIn:
+          final userId = await getCurrentUserId();
+          if (userId != null) {
+            final user = await getUserData(userId).first;
+            controller.add(user);
+          }
+          break;
+        case AuthHubEventType.signedOut:
+          controller.add(null);
+          break;
+        default:
+          break;
+      }
+    });
+
+    // Clean up when the stream is cancelled
+    controller.onCancel = () {
+      subscription.cancel();
+      controller.close();
+    };
+
+    return controller.stream;
   }
 
   FutureEither<User> signInAsGuest() async {
@@ -70,7 +116,7 @@ class AuthRepository {
 
       if (result.isSignedIn) {
         final userId = (await Amplify.Auth.getCurrentUser()).userId;
-        User? userModel = await getUserData(userId);
+        User? userModel = await getUserData(userId).first;
 
         if (userModel == null) {
           return left(Failure("User data not found."));
@@ -164,7 +210,9 @@ class AuthRepository {
     }
   }
 
-  Future<User?> getUserData(String userId) async {
+  Stream<User> getUserData(String userId) {
+    final controller = StreamController<User>();
+
     try {
       String graphQLDocument = '''
       query GetUser {
@@ -189,20 +237,31 @@ class AuthRepository {
         request: GraphQLRequest<String>(document: graphQLDocument),
       );
 
-      var response = await operation.response;
-      //debugPrint(response.data.toString());
-      var data = response.data;
+      operation.response.then((response) {
+        if (response.data == null) {
+          return;
+        }
 
-      if (data == null) {
-        return null;
-      }
-      var json = jsonDecode(data)['getUser'];
-      final user = User.fromJson(json);
-      return user;
+        try {
+          var json = jsonDecode(response.data!)['getUser'];
+          final user = User.fromJson(json);
+          controller.add(user);
+        } catch (e) {
+          debugPrint("Error parsing user data: $e");
+          controller.addError(e);
+        }
+      }).catchError((error) {
+        debugPrint("Error fetching user: $error");
+        controller.addError(error);
+      }).whenComplete(() {
+        controller.close();
+      });
     } catch (e) {
-      print("Error fetching user: $e");
-      return null;
+      controller.addError(e);
+      controller.close();
     }
+
+    return controller.stream;
   }
 
   Future<bool> isUserSignedIn() async {

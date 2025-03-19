@@ -12,12 +12,10 @@ class CommentCard extends ConsumerWidget {
   }
 
   final Comment comment;
-  final PostController controller;
   final String postOwnerUid;
 
   const CommentCard({
     super.key,
-    required this.controller,
     required this.comment,
     required this.postOwnerUid,
   });
@@ -25,7 +23,7 @@ class CommentCard extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final user = ref.watch(userProvider)!;
-    final canDelete = (user.uid == comment.uid || user.uid == postOwnerUid);
+    final canDelete = (user.id == comment.uid || user.id == postOwnerUid);
 
     return Container(
       padding: EdgeInsets.symmetric(horizontal: 10, vertical: 4),
@@ -65,10 +63,12 @@ class CommentCard extends ConsumerWidget {
                             icon: Icon(Icons.delete, color: Colors.red),
                             onPressed: () {
                               FocusScope.of(context).unfocus();
-                              controller.deleteComment(
-                                  commentId: comment.id,
-                                  postId: comment.postID,
-                                  context: context);
+                              ref
+                                  .read(postControllerProvider.notifier)
+                                  .deleteComment(
+                                      commentId: comment.id,
+                                      postId: comment.id,
+                                      context: context);
                             },
                           )
                         : null,

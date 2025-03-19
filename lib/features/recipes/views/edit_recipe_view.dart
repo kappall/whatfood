@@ -6,7 +6,6 @@ import 'package:routemaster/routemaster.dart';
 import 'package:whatfood/core/common/loader.dart';
 
 import 'package:whatfood/features/recipes/controller/recipe_controller.dart';
-import 'package:whatfood/models/Recipe.dart';
 
 class EditRecipeView extends ConsumerStatefulWidget {
   final String recipeId;
@@ -23,7 +22,6 @@ class _EditRecipeViewState extends ConsumerState<EditRecipeView> {
   final _servingsController = TextEditingController();
   final _cookTimeController = TextEditingController();
 
-  late Recipe recipe;
   File? _image;
   String? _existingImageUrl;
   List<String> _ingredients = [''];
@@ -37,20 +35,22 @@ class _EditRecipeViewState extends ConsumerState<EditRecipeView> {
   }
 
   Future<void> _loadRecipeData() async {
-    recipe = (await ref
+    final recipe = await ref
         .read(recipeControllerProvider.notifier)
-        .getRecipeById(widget.recipeId))!;
+        .getRecipeById(widget.recipeId);
 
-    setState(() {
-      _titleController.text = recipe.title;
-      _descriptionController.text = recipe.description;
-      _servingsController.text = recipe.servings.toString();
-      _cookTimeController.text = recipe.cookTimeMinutes.toString();
-      _ingredients = List.from(recipe.ingredients);
-      _instructions = List.from(recipe.instructions);
-      _existingImageUrl = recipe.coverImage;
-      _isLoading = false;
-    });
+    if (recipe != null) {
+      setState(() {
+        _titleController.text = recipe.title;
+        _descriptionController.text = recipe.description;
+        _servingsController.text = recipe.servings.toString();
+        _cookTimeController.text = recipe.cookTimeMinutes.toString();
+        _ingredients = List.from(recipe.ingredients);
+        _instructions = List.from(recipe.instructions);
+        _existingImageUrl = recipe.coverImage;
+        _isLoading = false;
+      });
+    }
   }
 
   Future<void> _pickImage() async {
@@ -108,18 +108,18 @@ class _EditRecipeViewState extends ConsumerState<EditRecipeView> {
     if (!_formKey.currentState!.validate()) return;
 
     ref.read(recipeControllerProvider.notifier).updateRecipe(
-          context: context,
-          recipeId: widget.recipeId,
-          title: _titleController.text.trim(),
-          description: _descriptionController.text.trim(),
-          instructions: _instructions,
-          ingredients: _ingredients,
-          servings: _servingsController.text.trim(),
-          cookTimeMinutes: _cookTimeController.text.trim(),
-          newImage: _image,
-          existingImageUrl: _existingImageUrl,
-          likes: recipe.likes,
-        );
+      context: context,
+      recipeId: widget.recipeId,
+      title: _titleController.text.trim(),
+      description: _descriptionController.text.trim(),
+      instructions: _instructions,
+      ingredients: _ingredients,
+      servings: _servingsController.text.trim(),
+      cookTimeMinutes: _cookTimeController.text.trim(),
+      newImage: _image,
+      existingImageUrl: _existingImageUrl,
+      likes: [],
+    );
   }
 
   @override

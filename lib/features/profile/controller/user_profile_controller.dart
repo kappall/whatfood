@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:routemaster/routemaster.dart';
+import 'package:whatfood/core/providers/aws_providers.dart';
 import 'package:whatfood/core/providers/storage_repository_provider.dart';
 import 'package:whatfood/core/utils.dart';
 import 'package:whatfood/features/auth/controller/auth_controller.dart';
@@ -12,7 +13,7 @@ import 'package:whatfood/models/User.dart';
 
 final userProfileControllerProvider =
     StateNotifierProvider<UserProfileController, bool>((ref) {
-  final userProfileRepository = ref.watch(userProfileRepositoryProvider);
+  final userProfileRepository = UserProfileRepository(auth: auth);
   final storageRepository = ref.watch(storageRepositoryProvider);
   return UserProfileController(
     userProfileRepository: userProfileRepository,
@@ -59,7 +60,7 @@ class UserProfileController extends StateNotifier<bool> {
     if (profileFile != null) {
       final ris = await _storageRepository.uploadImage(
         profileFile,
-        user.uid,
+        user.id,
       );
       user = user.copyWith(profilePic: ris);
     }
@@ -101,7 +102,7 @@ class UserProfileController extends StateNotifier<bool> {
   }
 
   void followOrUnfollowUser(BuildContext context, User user) {
-    final uid = _ref.read(userProvider)!.uid;
+    final uid = _ref.read(userProvider)!.id;
     _userProfileRepository.followOrUnfollowUser(uid, user);
   }
 }

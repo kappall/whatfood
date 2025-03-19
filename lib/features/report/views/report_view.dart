@@ -149,7 +149,7 @@ class _ReportViewState extends ConsumerState<ReportView> {
           ],
         ],
       ),
-      body: ref.watch(userReportsProvider(user.uid)).when(
+      body: ref.watch(userReportsProvider(user.id)).when(
             data: (reports) {
               if (reports.isNotEmpty) {
                 final aggregatedData = aggregateNutritionalValues(reports);

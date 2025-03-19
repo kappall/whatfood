@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:routemaster/routemaster.dart';
 import 'package:whatfood/core/common/error_text.dart';
 import 'package:whatfood/core/common/loader.dart';
@@ -7,7 +8,7 @@ import 'package:whatfood/features/post/controller/post_controller.dart';
 import 'package:whatfood/models/Post.dart';
 import 'package:whatfood/models/User.dart';
 
-class PostCard extends StatefulWidget {
+class PostCard extends ConsumerWidget {
   final Post post;
   final bool isCommenting;
   final PostController controller;
@@ -18,39 +19,34 @@ class PostCard extends StatefulWidget {
     required this.post,
   });
 
-  @override
-  State<StatefulWidget> createState() => _PostCardState();
-}
-
-class _PostCardState extends State<PostCard> {
-  void deletePost(BuildContext context) async {
-    widget.controller.deletePost(widget.post, context);
+  void deletePost(WidgetRef ref, BuildContext context) async {
+    ref.read(postControllerProvider.notifier).deletePost(post, context);
   }
 
-  void likeOrUnlikePost() async {
-    widget.controller.likeOrUnlike(widget.post);
+  void likeOrUnlikePost(WidgetRef ref) async {
+    ref.read(postControllerProvider.notifier).likeOrUnlike(post);
   }
 
   void navigateToComments(BuildContext context) {
-    Routemaster.of(context).push('${widget.post.id}/comments');
+    Routemaster.of(context).push('${post.id}/comments');
   }
 
   void navigateToUser(BuildContext context) {
     try {
-      Routemaster.of(context).push('user_page/${widget.post.uid}');
+      Routemaster.of(context).push('user_page/${post.uid}');
     } catch (e) {
       debugPrint(e.toString());
     }
   }
 
-  Widget popUpMenu(BuildContext context, bool isOwner) {
+  Widget popUpMenu(BuildContext context, WidgetRef ref, bool isOwner) {
     return PopupMenuButton<String>(
       icon: Icon(
         Icons.more_vert,
       ),
       onSelected: (String result) {
         if (result == 'delete') {
-          deletePost(context);
+          deletePost(ref, context);
         }
       },
       itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
@@ -106,142 +102,128 @@ class _PostCardState extends State<PostCard> {
   }
 
   @override
-  Widget build(BuildContext context) {
-    return FutureBuilder(
-        future: getUserData(),
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Loader();
-          }
-          if (snapshot.hasError) {
-            return ErrorText(error: snapshot.error.toString());
-          }
-          if (!snapshot.hasData) {
-            return const Loader();
-          }
-          final user = User.fromJson(snapshot.data!);
-          return Column(
+  Widget build(BuildContext context, WidgetRef ref) {
+    final user = ref.watch(userProvider)!;
+    return Column(
+      children: [
+        Container(
+          decoration: BoxDecoration(),
+          padding: EdgeInsets.symmetric(vertical: 10),
+          child: Column(
             children: [
               Container(
-                decoration: BoxDecoration(),
-                padding: EdgeInsets.symmetric(vertical: 10),
+                padding: EdgeInsets.symmetric(vertical: 4, horizontal: 16)
+                    .copyWith(right: 0),
                 child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Container(
-                      padding: EdgeInsets.symmetric(vertical: 4, horizontal: 16)
-                          .copyWith(right: 0),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Row(
-                                children: [
-                                  OutlinedButton(
-                                    style: OutlinedButton.styleFrom(
-                                        shape: CircleBorder(),
-                                        padding: EdgeInsets.only(right: 0)),
-                                    onPressed: () => navigateToUser(context),
-                                    child: CircleAvatar(
-                                      backgroundImage:
-                                          NetworkImage(widget.post.userImage),
-                                      radius: 24,
-                                    ),
-                                  ),
-                                  Padding(
-                                    padding: EdgeInsets.only(left: 8),
-                                    child: Text(
-                                      widget.post.username,
-                                      style: TextStyle(
-                                        fontSize: 22,
-                                        color: Colors.white,
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                              popUpMenu(context, widget.post.uid == user.uid)
-                            ],
-                          ),
-                          Padding(
-                            padding: EdgeInsets.only(top: 10),
-                            child: Text(
-                              widget.post.description,
-                              style: TextStyle(
-                                fontSize: 20,
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Row(
+                          children: [
+                            OutlinedButton(
+                              style: OutlinedButton.styleFrom(
+                                  shape: CircleBorder(),
+                                  padding: EdgeInsets.only(right: 0)),
+                              onPressed: () => navigateToUser(context),
+                              child: CircleAvatar(
+                                backgroundImage: NetworkImage(post.userImage),
+                                radius: 24,
                               ),
                             ),
-                          ),
-                        ],
-                      ),
+                            Padding(
+                              padding: EdgeInsets.only(left: 8),
+                              child: Text(
+                                post.username,
+                                style: TextStyle(
+                                  fontSize: 22,
+                                  color: Colors.white,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                        popUpMenu(context, ref, post.uid == user.id)
+                      ],
                     ),
-                    SizedBox(
-                      height: MediaQuery.of(context).size.height * 0.4,
-                      width: double.infinity,
-                      child: Container(
-                        decoration: BoxDecoration(
-                            color:
-                                Theme.of(context).appBarTheme.backgroundColor),
-                        child: Image.network(
-                          widget.post.imageUrl,
-                          fit: BoxFit.contain,
-                          width: double.infinity,
+                    Padding(
+                      padding: EdgeInsets.only(top: 10),
+                      child: Text(
+                        post.description,
+                        style: TextStyle(
+                          fontSize: 20,
                         ),
                       ),
                     ),
-                    Padding(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 14, vertical: 4),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Row(
-                            children: [
-                              IconButton(
-                                icon: Icon(
-                                  widget.post.likes.contains(user.uid)
-                                      ? Icons.favorite
-                                      : Icons.favorite_outline,
-                                  color: widget.post.likes.contains(user.uid)
-                                      ? Colors.red
-                                      : Colors.white,
-                                  size: 30,
-                                ),
-                                onPressed: () => likeOrUnlikePost(),
-                              ),
-                              Text(
-                                "${widget.post.likes.isEmpty ? 'Like' : widget.post.likes.length}",
-                                style: TextStyle(fontSize: 18),
-                              ),
-                            ],
-                          ),
-                          Row(
-                            children: [
-                              IconButton(
-                                icon: Icon(Icons.comment),
-                                onPressed: () => !widget.isCommenting
-                                    ? navigateToComments(context)
-                                    : null,
-                              ),
-                              Text(
-                                "${widget.post.commentCount == 0 ? 'Comment' : widget.post.commentCount}",
-                                style: TextStyle(fontSize: 18),
-                              ),
-                            ],
-                          ),
-                        ],
-                      ),
-                    ),
-                    Divider(
-                      color: Theme.of(context).primaryColor,
-                      height: 5,
-                    )
                   ],
                 ),
               ),
+              SizedBox(
+                height: MediaQuery.of(context).size.height * 0.4,
+                width: double.infinity,
+                child: Container(
+                  decoration: BoxDecoration(
+                      color: Theme.of(context).appBarTheme.backgroundColor),
+                  child: Image.network(
+                    post.imageUrl,
+                    fit: BoxFit.contain,
+                    width: double.infinity,
+                  ),
+                ),
+              ),
+              Padding(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Row(
+                      children: [
+                        IconButton(
+                          icon: Icon(
+                            post.likes.contains(ref.watch(userProvider)?.id)
+                                ? Icons.favorite
+                                : Icons.favorite_outline,
+                            color:
+                                post.likes.contains(ref.watch(userProvider)?.id)
+                                    ? Colors.red
+                                    : Colors.white,
+                            size: 30,
+                          ),
+                          onPressed: () => likeOrUnlikePost(ref),
+                        ),
+                        Text(
+                          "${post.likes.isEmpty ? 'Like' : post.likes.length}",
+                          style: TextStyle(fontSize: 18),
+                        ),
+                      ],
+                    ),
+                    Row(
+                      children: [
+                        IconButton(
+                          icon: Icon(Icons.comment),
+                          onPressed: () => !isCommenting
+                              ? navigateToComments(context)
+                              : null,
+                        ),
+                        Text(
+                          "${post.commentCount == 0 ? 'Comment' : post.commentCount}",
+                          style: TextStyle(fontSize: 18),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+              Divider(
+                color: Theme.of(context).primaryColor,
+                height: 5,
+              )
             ],
-          );
-        });
+          ),
+        ),
+      ],
+    );
   }
 }

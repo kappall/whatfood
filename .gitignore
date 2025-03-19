@@ -45,6 +45,7 @@ linux/
 web/
 windows/
 .metadata
+.env
 
 amplify-dev_accessKeys*
 amplifyconfiguration.dart

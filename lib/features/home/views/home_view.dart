@@ -1,14 +1,12 @@
+import 'package:amplify_flutter/amplify_flutter.dart';
 import 'package:flutter/material.dart';
-import 'package:whatfood/core/common/provider.dart';
-import 'package:whatfood/features/auth/controller/auth_controller.dart';
 import 'package:whatfood/features/home/views/for_you_view.dart';
+import 'package:whatfood/features/home/views/inspiration_view.dart';
 import 'package:whatfood/features/home/widgets/add_post_modal.dart';
-import 'package:whatfood/features/post/controller/post_controller.dart';
 import 'package:whatfood/models/MealType.dart';
-import 'package:whatfood/models/User.dart';
 
 class HomeView extends StatefulWidget {
-  const HomeView({Key? key}) : super(key: key);
+  const HomeView({super.key});
 
   @override
   State<HomeView> createState() => _HomeViewState();
@@ -16,8 +14,6 @@ class HomeView extends StatefulWidget {
 
 class _HomeViewState extends State<HomeView>
     with SingleTickerProviderStateMixin {
-  User? userModel;
-  bool _loadingUser = true;
   late TabController _tabController;
   late PageController _pageController;
   bool _mounted = true;
@@ -29,23 +25,6 @@ class _HomeViewState extends State<HomeView>
     _tabController = TabController(length: 2, vsync: this);
     _pageController = PageController();
     _tabController.addListener(_handleTabChange);
-    _fetchUserData();
-  }
-
-  Future<void> _fetchUserData() async {
-    try {
-      final data = await getUserData();
-      if (!_mounted) return;
-      setState(() {
-        userModel = User.fromJson(data);
-        _loadingUser = false;
-      });
-    } catch (e) {
-      if (!_mounted) return;
-      setState(() {
-        _loadingUser = false;
-      });
-    }
   }
 
   void _handleTabChange() {
@@ -139,15 +118,7 @@ class _HomeViewState extends State<HomeView>
 
   @override
   Widget build(BuildContext context) {
-    final controller = MyProvider.of<PostController>(context)?.value;
-    if (controller == null) {
-      return Scaffold(body: Center(child: Text('Controller not found')));
-    }
-    if (_loadingUser) {
-      return const Scaffold(
-        body: Center(child: CircularProgressIndicator()),
-      );
-    }
+    //Amplify.Auth.signOut();
     return Scaffold(
       appBar: PreferredSize(
         preferredSize: const Size.fromHeight(50),
@@ -216,15 +187,19 @@ class _HomeViewState extends State<HomeView>
       body: PageView(
         controller: _pageController,
         scrollDirection: Axis.horizontal,
-        physics: const PageScrollPhysics(),
+        physics: const NeverScrollableScrollPhysics(),
         onPageChanged: (index) {
+          print("Page changed: $index, Tab index: ${_tabController.index}");
+
           if (_mounted) {
-            _tabController.animateTo(index);
+            setState(() {
+              _tabController.animateTo(index);
+            });
           }
         },
         children: [
-          ForYouView(selectedMealType: _selectedMealFilter),
-          const Center(child: Text('Inspiration Page')),
+          ForYouView(),
+          const InspirationView(),
         ],
       ),
       floatingActionButton: FloatingActionButton(

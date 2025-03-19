@@ -10,10 +10,6 @@ import 'package:whatfood/models/Post.dart';
 import 'package:whatfood/models/User.dart';
 import 'package:whatfood/models/post_extensions.dart';
 
-final userProfileRepositoryProvider = Provider((ref) {
-  return UserProfileRepository(auth: ref.read(authProvider));
-});
-
 class UserProfileRepository {
   final AmplifyAuthCognito _auth;
   UserProfileRepository({required AmplifyAuthCognito auth}) : _auth = auth;
@@ -33,7 +29,7 @@ class UserProfileRepository {
       final request = GraphQLRequest<String>(
         document: updateMutation,
         variables: {
-          'id': user.uid,
+          'id': user.id,
           // Assicurati che user.toMap() restituisca una mappa conforme al tipo UserInput definito nello schema
           'data': user.toMap(),
         },
@@ -235,7 +231,7 @@ class UserProfileRepository {
       ''';
       final requestUnfollow = GraphQLRequest<String>(
         document: unfollowMutation,
-        variables: {'followerId': uid, 'followeeId': userToFollow.uid},
+        variables: {'followerId': uid, 'followeeId': userToFollow.id},
       );
       await Amplify.API.mutate(request: requestUnfollow).response;
     } else {
@@ -249,7 +245,7 @@ class UserProfileRepository {
       ''';
       final requestFollow = GraphQLRequest<String>(
         document: followMutation,
-        variables: {'followerId': uid, 'followeeId': userToFollow.uid},
+        variables: {'followerId': uid, 'followeeId': userToFollow.id},
       );
       await Amplify.API.mutate(request: requestFollow).response;
     }

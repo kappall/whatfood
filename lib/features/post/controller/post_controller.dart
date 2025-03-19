@@ -1,56 +1,144 @@
+import 'dart:async';
+import 'dart:convert';
 import 'dart:io';
+
+import 'package:amplify_datastore/amplify_datastore.dart';
 import 'package:amplify_flutter/amplify_flutter.dart';
 import 'package:flutter/material.dart';
-import 'package:routemaster/routemaster.dart';
-import 'package:flutter/foundation.dart';
-import 'package:uuid/uuid.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image/image.dart' as img;
+import 'package:routemaster/routemaster.dart';
+import 'package:uuid/uuid.dart';
 import 'package:whatfood/core/providers/storage_repository_provider.dart';
 import 'package:whatfood/core/utils.dart';
 import 'package:whatfood/features/auth/controller/auth_controller.dart';
 import 'package:whatfood/features/post/repository/post_repository.dart';
-import 'package:whatfood/models/MealType.dart';
+import 'package:whatfood/features/profile/controller/user_profile_controller.dart';
 import 'package:whatfood/models/Comment.dart';
+import 'package:whatfood/models/MealType.dart';
 import 'package:whatfood/models/Post.dart';
+import 'package:whatfood/models/User.dart';
 
-get postControllerProvider {
+final postControllerProvider =
+    StateNotifierProvider<PostController, bool>((ref) {
+  final postRepository = ref.watch(postRepositoryProvider);
+  final storageRepository = ref.watch(storageRepositoryProvider);
   return PostController(
-      postRepository: PostRepository(), storageRepository: StorageRepository());
-}
+    postRepository: postRepository,
+    ref: ref,
+    storageRepository: storageRepository,
+  );
+});
 
-class PostController {
+final mealFilterProvider = StateProvider<MealType?>((ref) => null);
+
+final postsProvider = StreamProvider((ref) {
+  final postController = ref.watch(postControllerProvider.notifier);
+
+  return postController.fetchPosts();
+});
+
+final postByIdProvider = StreamProvider.family((ref, String id) {
+  final posController = ref.watch(postControllerProvider.notifier);
+  return posController.getPostById(id);
+});
+
+final getpostCommentsProvider = StreamProvider.family((ref, String id) {
+  final posController = ref.watch(postControllerProvider.notifier);
+  return posController.fetchCommentsOfPost(id);
+});
+
+final userNameProvider =
+    StreamProvider.family<String, String>((ref, String uid) {
+  final controller = StreamController<String>();
+
+  try {
+    String graphQLDocument = '''
+      query GetUser {
+        getUser(id: "$uid") {
+          name
+        }
+      }
+    ''';
+
+    Amplify.API
+        .query(
+          request: GraphQLRequest<String>(document: graphQLDocument),
+        )
+        .response
+        .then((response) {
+      if (response.data != null) {
+        final data = jsonDecode(response.data!)['getUser'];
+        final name = data['name'] as String;
+        controller.add(name);
+      }
+    }).catchError((error) {
+      debugPrint('Error fetching username: $error');
+      controller.addError(error);
+    }).whenComplete(() {
+      controller.close();
+    });
+  } catch (e) {
+    controller.addError(e);
+    controller.close();
+  }
+
+  return controller.stream;
+});
+final userPicProvider =
+    StreamProvider.family<String, String>((ref, String uid) {
+  final controller = StreamController<String>();
+
+  try {
+    String graphQLDocument = '''
+      query GetUser {
+        getUser(id: "$uid") {
+          profilePic
+        }
+      }
+    ''';
+
+    Amplify.API
+        .query(
+          request: GraphQLRequest<String>(document: graphQLDocument),
+        )
+        .response
+        .then((response) {
+      if (response.data != null) {
+        final data = jsonDecode(response.data!)['getUser'];
+        final profilePic = data['profilePic'] as String;
+        controller.add(profilePic);
+      }
+    }).catchError((error) {
+      debugPrint('Error fetching profile pic: $error');
+      controller.addError(error);
+    }).whenComplete(() {
+      controller.close();
+    });
+  } catch (e) {
+    controller.addError(e);
+    controller.close();
+  }
+
+  return controller.stream;
+});
+
+class PostController extends StateNotifier<bool> {
   final PostRepository _postRepository;
+  final Ref _ref;
   final StorageRepository _storageRepository;
-  final Map<String, bool> _expandedStates = {};
-  final Set<String> _likes = {};
 
   PostController({
     required PostRepository postRepository,
     required StorageRepository storageRepository,
+    required Ref ref,
   })  : _postRepository = postRepository,
-        _storageRepository = storageRepository;
+        _storageRepository = storageRepository,
+        _ref = ref,
+        super(false);
 
   Stream<List<Post>> fetchPosts() {
     return _postRepository.fetchPosts();
-  }
-
-  ValueNotifier<bool> getExpandedStateNotifier(String postId) =>
-      ValueNotifier(_expandedStates[postId] ?? false);
-
-  ValueNotifier<Set<String>> get likesNotifier => ValueNotifier(_likes);
-
-  void toggleDescriptionExpansion(String postId) {
-    _expandedStates[postId] = !(_expandedStates[postId] ?? false);
-  }
-
-  void likeOrUnlike(Post post) async {
-    if (_likes.contains(post.id)) {
-      _likes.remove(post.id);
-    } else {
-      _likes.add(post.id);
-    }
-    final user = (await getUserData())!;
-    _postRepository.likeOrUnlike(post, user.id);
   }
 
   Future<File> compressImage(File file,
@@ -112,20 +200,44 @@ class PostController {
     return fileSize <= maxSizeInBytes;
   }
 
-  Future<void> shareImagePost({
+  void shareimagePost({
     required BuildContext context,
     required String description,
     required List<String> tags,
     required File image,
     required MealType mealType,
   }) async {
-    try {
-      final user = (await getUserData())!;
+    state = true;
+    final user = _ref.watch(userProvider);
 
-      final String postId = const Uuid().v1();
-      File processedFile = await compressImage(image);
-      final imageUrl =
-          await _storageRepository.uploadImage(processedFile, user.id);
+    if (user == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('User not logged in')),
+      );
+      state = false;
+      return;
+    }
+
+    String postId = const Uuid().v1();
+
+    try {
+      File processedFile;
+      try {
+        processedFile = await compressImage(image);
+      } catch (e) {
+        if (context.mounted) {
+          showSnackBar(context, 'Error compressing image: ${e.toString()}');
+        }
+        state = false;
+        return;
+      }
+
+      final result = await _storageRepository.uploadImage(
+        processedFile,
+        postId,
+      );
+
+      final imageUrl = result;
 
       final Post post = Post(
         id: postId,
@@ -143,13 +255,17 @@ class PostController {
       );
 
       final res = await _postRepository.addPost(post, user.postsCount);
+      state = false;
       res.fold(
-        (failure) => debugPrint(failure.message),
-        (_) {
-          Routemaster.of(context).replace('/');
+        (l) => ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(l.message)),
+        ),
+        (r) {
+          Routemaster.of(context).popUntil((route) => route.path == '/');
         },
       );
     } catch (e) {
+      state = false;
       if (context.mounted) {
         showSnackBar(context, 'Error: ${e.toString()}');
       }
@@ -158,28 +274,34 @@ class PostController {
 
   void deletePost(Post post, BuildContext context) async {
     final res = await _postRepository.deletePost(post.id, post.uid);
+    _ref.read(userProfileControllerProvider.notifier);
     res.fold((l) => null,
         (r) => showSnackBar(context, 'Post Deleted successfully!'));
   }
 
+  void likeOrUnlike(Post post) {
+    final uid = _ref.read(userProvider)!.id;
+    _postRepository.likeOrUnlike(post, uid);
+  }
+
   Future<void> addOrRemoveBookmark(
     Post post,
+    User user,
   ) async {
-    final user = (await getUserData())!;
     await _postRepository.addOrRemoveBookmark(post, user);
   }
 
-  Future<Post?> getPostById(String id) {
+  Stream<Post> getPostById(String id) {
     return _postRepository.getPostById(id);
   }
 
   void addComment({
     required BuildContext context,
     required String content,
-    required String postId,
     required int commentCount,
+    required String postId,
   }) async {
-    final user = (await getUserData())!;
+    final user = _ref.read(userProvider)!;
     String cId = const Uuid().v1();
     Comment comment = Comment(
       id: cId,
@@ -191,7 +313,10 @@ class PostController {
       uid: user.id,
       likes: [],
     );
-    _postRepository.addComment(comment, commentCount);
+    _postRepository.addComment(
+      comment,
+      commentCount,
+    );
   }
 
   void deleteComment({

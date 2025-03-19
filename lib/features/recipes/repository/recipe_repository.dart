@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'package:amplify_flutter/amplify_flutter.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -32,7 +33,8 @@ class RecipeRepository {
   }
 
   // Recupera le ricette tramite una query GraphQL
-  Future<List<Recipe>> fetchRecipes() async {
+  Stream<List<Recipe>> fetchRecipes() {
+    final controller = StreamController<List<Recipe>>();
     final request = GraphQLRequest<String>(
       document: '''
         query ListRecipes {
@@ -44,15 +46,26 @@ class RecipeRepository {
         }
       ''',
     );
-    final response = await Amplify.API.query(request: request).response;
-    if (response.data == null) return [];
-    final Map<String, dynamic> decoded =
-        jsonDecode(response.data!) as Map<String, dynamic>;
-    final List<dynamic> items =
-        decoded['data']['listRecipes']['items'] as List<dynamic>;
-    return items
-        .map((item) => Recipe.fromJson(item as Map<String, dynamic>))
-        .toList();
+    Amplify.API
+        .query(request: request)
+        .response
+        .then((response) {
+          if (response.data != null) {
+            final Map<String, dynamic> decoded =
+                jsonDecode(response.data!) as Map<String, dynamic>;
+            final List<dynamic> items =
+                decoded['data']['listRecipes']['items'] as List<dynamic>;
+            final recipes = items.map((data) => Recipe.fromJson(data)).toList();
+            controller.add(recipes);
+          } else {
+            controller.add([]);
+          }
+        })
+        .whenComplete(() => controller.close())
+        .catchError((error) {
+          controller.addError(error);
+        });
+    return controller.stream;
   }
 
   // Elimina una ricetta tramite mutation GraphQL
