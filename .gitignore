@@ -47,3 +47,4 @@ windows/
 .metadata
 
 amplify*
+.env
