@@ -41,9 +41,6 @@ class _AddProductDialogState extends ConsumerState<AddProductDialog> {
       }),
     );
 
-    final now = DateTime.now();
-    final date = DateTime(now.year, now.month, now.day);
-
     ref.read(reportControllerProvider.notifier).addFoodReport(
           context: context,
           nutritionalValues: jsonEncode(filteredNutritionalValues),

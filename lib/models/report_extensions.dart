@@ -4,7 +4,7 @@ extension ReportGraphQLFields on Report {
   static String get graphQLFields => '''
     id
     uid
-    date
+    createdAt
     nutritionalValues
     description
     category

@@ -1,6 +1,8 @@
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:amplify_flutter/amplify_flutter.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:fpdart/fpdart.dart';
 import 'package:whatfood/core/failure.dart';
@@ -12,20 +14,39 @@ final reportRepositoryProvider = Provider((ref) {
 });
 
 class ReportRepository {
-  // Aggiunge un report tramite una mutation GraphQL
   Future<Either<Failure, void>> addFoodReport(Report report) async {
     try {
-      final request = GraphQLRequest<String>(
-        document: '''
+      Map<String, dynamic> reportMap = {
+        "input": {
+          "id": report.id,
+          "uid": report.uid,
+          "nutritionalValues": report.nutritionalValues,
+          "description": report.description,
+          "category": report.category,
+          "createdAt": report.createdAt.toString(),
+        }
+      };
+
+      String graphQLDocument = '''
           mutation CreateReport(\$input: CreateReportInput!) {
             createReport(input: \$input) {
-              ${ReportGraphQLFields.graphQLFields}
+              id
             }
           }
-        ''',
-        variables: {'input': report.toJson()},
+        ''';
+
+      var operation = Amplify.API.mutate(
+        request: GraphQLRequest<String>(
+          document: graphQLDocument,
+          variables: reportMap,
+        ),
       );
-      await Amplify.API.mutate(request: request).response;
+
+      final response = await operation.response;
+
+      if (response.errors.isNotEmpty) {
+        throw Exception(response.errors.first.message);
+      }
       return right(null);
     } catch (e) {
       return left(Failure(e.toString()));
@@ -33,32 +54,62 @@ class ReportRepository {
   }
 
   // Recupera i report dell'utente tramite una query GraphQL
-  Future<List<Report>> getUserReports(String uid) async {
+  Stream<List<Report>> getUserReports(String uid) {
+    final controller = StreamController<List<Report>>();
     try {
-      final request = GraphQLRequest<String>(
-        document: '''
-          query ListReports(\$uid: ID!) {
-            listReports(filter: { uid: { eq: \$uid } }, sortDirection: DESC, sortField: date) {
+      var reportQuery = '''
+          query ListReports {
+            listReports(filter: {uid: {eq: "$uid"}}) {
               items {
                 ${ReportGraphQLFields.graphQLFields}
               }
             }
           }
-        ''',
-        variables: {'uid': uid},
-      );
-      final response = await Amplify.API.query(request: request).response;
-      if (response.data == null) return [];
-      final Map<String, dynamic> decoded =
-          jsonDecode(response.data!) as Map<String, dynamic>;
-      final List<dynamic> items =
-          decoded['data']['listReports']['items'] as List<dynamic>;
-      return items
-          .map((item) => Report.fromJson(item as Map<String, dynamic>))
-          .toList();
+        ''';
+
+      final request = GraphQLRequest<String>(document: reportQuery);
+
+      Amplify.API.query(request: request).response.then((response) {
+        if (response.errors.isNotEmpty) {
+          debugPrint("GraphQL Errors: ${response.errors}");
+          controller.addError(response.errors.first.message);
+          return;
+        }
+
+        if (response.data == null) {
+          controller.add([]);
+          return;
+        }
+
+        try {
+          final Map<String, dynamic> jsonResponse = jsonDecode(response.data!);
+          print(jsonResponse);
+          if (jsonResponse['listReports'] == null ||
+              jsonResponse['listReports']['items'] == null) {
+            controller.add([]);
+            return;
+          }
+
+          final List<dynamic> items = jsonResponse['listReports']['items'];
+          final posts = items.map((item) => Report.fromJson(item)).toList();
+
+          // Sort by creation date, newest first
+          posts.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+
+          controller.add(posts);
+        } catch (e, stackTrace) {
+          debugPrint("Parse error: $e");
+          debugPrint("Stack trace: $stackTrace");
+          controller.addError('Error parsing posts: $e');
+        }
+      }).catchError((error) {
+        debugPrint("Query error: $error");
+        controller.addError(error);
+      });
     } catch (e) {
       throw Exception('Errore nel recupero dei report: $e');
     }
+    return controller.stream;
   }
 
   // Elimina un report tramite mutation GraphQL

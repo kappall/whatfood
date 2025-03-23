@@ -15,7 +15,7 @@ final reportControllerProvider =
   );
 });
 
-final userReportsProvider = FutureProvider.family((ref, String uid) {
+final userReportsProvider = StreamProvider.family((ref, String uid) {
   final reportController = ref.watch(reportControllerProvider.notifier);
   return reportController.getUserReports(uid);
 });
@@ -46,12 +46,13 @@ class ReportController extends StateNotifier<bool> {
 
       String reportId = const Uuid().v1();
       Report report = Report(
-          id: reportId,
-          date: TemporalDateTime.now(),
-          nutritionalValues: nutritionalValues,
-          description: description,
-          category: category,
-          uid: user.id);
+        id: reportId,
+        createdAt: TemporalDateTime.now(),
+        nutritionalValues: nutritionalValues,
+        description: description,
+        category: category,
+        uid: user.id,
+      );
 
       final res = await _reportRepository.addFoodReport(report);
 
@@ -83,7 +84,7 @@ class ReportController extends StateNotifier<bool> {
     );
   }
 
-  Future<List<Report>> getUserReports(String uid) {
+  Stream<List<Report>> getUserReports(String uid) {
     return _reportRepository.getUserReports(uid);
   }
 }

@@ -69,8 +69,8 @@ type Recipe @model @auth(rules: [{ allow: public, operations: [read,create,delet
 type Report @model @auth(rules: [{ allow: public, operations: [read,create,delete,update] }]){
   id: ID!
   uid: String!
-  date: AWSDateTime!
   nutritionalValues: AWSJSON!
   description: String!
   category: String!
+  createdAt: AWSDateTime!
 }

@@ -36,8 +36,6 @@ class PostRepository {
         }
       };
 
-      print(postMap);
-
       String graphQLDocument = '''
     mutation CreatePost(\$input: CreatePostInput!) {
       createPost(input: \$input) {
@@ -144,7 +142,7 @@ class PostRepository {
 
         try {
           final Map<String, dynamic> jsonResponse = jsonDecode(response.data!);
-
+          print(jsonResponse);
           if (jsonResponse['listPosts'] == null ||
               jsonResponse['listPosts']['items'] == null) {
             controller.add([]);
@@ -349,7 +347,6 @@ class PostRepository {
       }).whenComplete(() {
         controller.close();
       });
-      ;
     } catch (e) {
       controller.addError(e);
       controller.close();

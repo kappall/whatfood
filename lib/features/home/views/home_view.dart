@@ -1,4 +1,3 @@
-import 'package:amplify_flutter/amplify_flutter.dart';
 import 'package:flutter/material.dart';
 import 'package:whatfood/features/home/views/for_you_view.dart';
 import 'package:whatfood/features/home/views/inspiration_view.dart';

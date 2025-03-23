@@ -10,7 +10,6 @@ import 'package:whatfood/core/utils.dart';
 import 'package:whatfood/features/auth/controller/auth_controller.dart';
 import 'package:whatfood/features/recipes/repository/recipe_repository.dart';
 import 'package:whatfood/models/Recipe.dart';
-import 'package:whatfood/models/User.dart';
 
 final recipeControllerProvider =
     StateNotifierProvider<RecipeController, bool>((ref) {
@@ -23,10 +22,15 @@ final recipeControllerProvider =
   );
 });
 
-final recpiesProvider = StreamProvider((ref) {
+final recipesProvider = StreamProvider((ref) {
   final recipeController = ref.watch(recipeControllerProvider.notifier);
 
   return recipeController.fetchRecipes();
+});
+
+final recipeByIdProvider = StreamProvider.family((ref, String id) {
+  final posController = ref.watch(recipeControllerProvider.notifier);
+  return posController.getRecipeById(id);
 });
 
 class RecipeController extends StateNotifier<bool> {
@@ -120,9 +124,8 @@ class RecipeController extends StateNotifier<bool> {
     _recipeRepository.likeOrUnlike(recipe, uid);
   }*/
 
-  Future<Recipe?> getRecipeById(String id) async {
-    final res = await _recipeRepository.getRecipeById(id);
-    return res;
+  Stream<Recipe> getRecipeById(String id) {
+    return _recipeRepository.getRecipeById(id);
   }
 
   void updateRecipe({
@@ -180,7 +183,7 @@ class RecipeController extends StateNotifier<bool> {
         (failure) => showSnackBar(context, failure.message),
         (_) {
           showSnackBar(context, 'Recipe updated successfully!');
-          Routemaster.of(context).pop();
+          Routemaster.of(context).popUntil((route) => route.path == '/');
         },
       );
     } catch (e) {

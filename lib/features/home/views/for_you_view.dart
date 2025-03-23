@@ -41,14 +41,9 @@ class ForYouView extends ConsumerWidget {
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Icon(
-                      _getMealTypeIcon(selectedMealType!),
-                      size: 48,
-                      color: Colors.grey,
-                    ),
                     const SizedBox(height: 16),
                     Text(
-                      'No ${selectedMealType.name} posts found',
+                      'No posts found',
                       style: const TextStyle(
                         fontSize: 18,
                         color: Colors.grey,

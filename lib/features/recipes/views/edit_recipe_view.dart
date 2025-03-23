@@ -1,15 +1,19 @@
+import 'dart:convert';
 import 'dart:io';
+import 'package:amplify_flutter/amplify_flutter.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:routemaster/routemaster.dart';
+import 'package:whatfood/core/common/error_text.dart';
 import 'package:whatfood/core/common/loader.dart';
 
 import 'package:whatfood/features/recipes/controller/recipe_controller.dart';
+import 'package:whatfood/models/Recipe.dart';
 
 class EditRecipeView extends ConsumerStatefulWidget {
-  final String recipeId;
-  const EditRecipeView({super.key, required this.recipeId});
+  final String encodedRecipe;
+  const EditRecipeView({super.key, required this.encodedRecipe});
 
   @override
   ConsumerState<EditRecipeView> createState() => _EditRecipeViewState();
@@ -27,6 +31,7 @@ class _EditRecipeViewState extends ConsumerState<EditRecipeView> {
   List<String> _ingredients = [''];
   List<String> _instructions = [''];
   bool _isLoading = true;
+  late Recipe recipe;
 
   @override
   void initState() {
@@ -35,22 +40,20 @@ class _EditRecipeViewState extends ConsumerState<EditRecipeView> {
   }
 
   Future<void> _loadRecipeData() async {
-    final recipe = await ref
-        .read(recipeControllerProvider.notifier)
-        .getRecipeById(widget.recipeId);
+    final decodedString = Uri.decodeComponent(widget.encodedRecipe);
+    final jsonMap = jsonDecode(decodedString);
+    recipe = Recipe.fromJson(jsonMap as Map<String, dynamic>);
 
-    if (recipe != null) {
-      setState(() {
-        _titleController.text = recipe.title;
-        _descriptionController.text = recipe.description;
-        _servingsController.text = recipe.servings.toString();
-        _cookTimeController.text = recipe.cookTimeMinutes.toString();
-        _ingredients = List.from(recipe.ingredients);
-        _instructions = List.from(recipe.instructions);
-        _existingImageUrl = recipe.coverImage;
-        _isLoading = false;
-      });
-    }
+    setState(() {
+      _titleController.text = recipe.title;
+      _descriptionController.text = recipe.description;
+      _servingsController.text = recipe.servings.toString();
+      _cookTimeController.text = recipe.cookTimeMinutes.toString();
+      _ingredients = List.from(recipe.ingredients);
+      _instructions = List.from(recipe.instructions);
+      _existingImageUrl = recipe.coverImage;
+      _isLoading = false;
+    });
   }
 
   Future<void> _pickImage() async {
@@ -109,7 +112,7 @@ class _EditRecipeViewState extends ConsumerState<EditRecipeView> {
 
     ref.read(recipeControllerProvider.notifier).updateRecipe(
       context: context,
-      recipeId: widget.recipeId,
+      recipeId: recipe.id,
       title: _titleController.text.trim(),
       description: _descriptionController.text.trim(),
       instructions: _instructions,
@@ -120,6 +123,7 @@ class _EditRecipeViewState extends ConsumerState<EditRecipeView> {
       existingImageUrl: _existingImageUrl,
       likes: [],
     );
+    ref.refresh(recipesProvider);
   }
 
   @override
@@ -170,7 +174,28 @@ class _EditRecipeViewState extends ConsumerState<EditRecipeView> {
                   child: _image != null
                       ? Image.file(_image!, fit: BoxFit.cover)
                       : _existingImageUrl != null
-                          ? Image.network(_existingImageUrl!, fit: BoxFit.cover)
+                          ? FutureBuilder(
+                              future: Amplify.Storage.getUrl(
+                                path:
+                                    StoragePath.fromString(_existingImageUrl!),
+                              ).result,
+                              builder: (context, snapshot) {
+                                if (snapshot.connectionState ==
+                                    ConnectionState.waiting) {
+                                  return const Loader();
+                                }
+                                if (snapshot.hasError) {
+                                  return ErrorText(
+                                      error: snapshot.error.toString());
+                                }
+                                if (!snapshot.hasData) {
+                                  return const Loader();
+                                }
+                                String imageUrl = snapshot.data!.url.toString();
+                                return Image.network(imageUrl,
+                                    fit: BoxFit.cover);
+                              },
+                            )
                           : const Icon(Icons.add_photo_alternate, size: 50),
                 ),
               ),

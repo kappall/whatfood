@@ -1,3 +1,4 @@
+import 'package:amplify_flutter/amplify_flutter.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:routemaster/routemaster.dart';
@@ -68,7 +69,7 @@ class RecipesViewState extends ConsumerState<RecipesView> {
             ),
           ),
         ),
-        body: ref.watch(recpiesProvider).when(
+        body: ref.watch(recipesProvider).when(
               data: (data) {
                 return GridView.builder(
                   gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
@@ -77,7 +78,24 @@ class RecipesViewState extends ConsumerState<RecipesView> {
                   itemCount: data.length,
                   itemBuilder: (BuildContext context, int index) {
                     final recipe = data[index];
-                    return RecipeCard(recipe: recipe);
+                    return FutureBuilder(
+                        future: Amplify.Storage.getUrl(
+                          path: StoragePath.fromString(recipe.coverImage),
+                        ).result,
+                        builder: (context, snapshot) {
+                          if (snapshot.connectionState ==
+                              ConnectionState.waiting) {
+                            return const Loader();
+                          }
+                          if (snapshot.hasError) {
+                            return ErrorText(error: snapshot.error.toString());
+                          }
+                          if (!snapshot.hasData) {
+                            return const Loader();
+                          }
+                          String imageUrl = snapshot.data!.url.toString();
+                          return RecipeCard(recipe: recipe, imageUrl: imageUrl);
+                        });
                   },
                 );
               },

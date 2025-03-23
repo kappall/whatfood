@@ -28,7 +28,6 @@ class Report extends amplify_core.Model {
   static const classType = const _ReportModelType();
   final String id;
   final String? _uid;
-  final amplify_core.TemporalDateTime? _date;
   final String? _nutritionalValues;
   final String? _description;
   final String? _category;
@@ -51,19 +50,6 @@ class Report extends amplify_core.Model {
   String get uid {
     try {
       return _uid!;
-    } catch(e) {
-      throw amplify_core.AmplifyCodeGenModelException(
-          amplify_core.AmplifyExceptionMessages.codeGenRequiredFieldForceCastExceptionMessage,
-          recoverySuggestion:
-            amplify_core.AmplifyExceptionMessages.codeGenRequiredFieldForceCastRecoverySuggestion,
-          underlyingException: e.toString()
-          );
-    }
-  }
-  
-  amplify_core.TemporalDateTime get date {
-    try {
-      return _date!;
     } catch(e) {
       throw amplify_core.AmplifyCodeGenModelException(
           amplify_core.AmplifyExceptionMessages.codeGenRequiredFieldForceCastExceptionMessage,
@@ -113,24 +99,33 @@ class Report extends amplify_core.Model {
     }
   }
   
-  amplify_core.TemporalDateTime? get createdAt {
-    return _createdAt;
+  amplify_core.TemporalDateTime get createdAt {
+    try {
+      return _createdAt!;
+    } catch(e) {
+      throw amplify_core.AmplifyCodeGenModelException(
+          amplify_core.AmplifyExceptionMessages.codeGenRequiredFieldForceCastExceptionMessage,
+          recoverySuggestion:
+            amplify_core.AmplifyExceptionMessages.codeGenRequiredFieldForceCastRecoverySuggestion,
+          underlyingException: e.toString()
+          );
+    }
   }
   
   amplify_core.TemporalDateTime? get updatedAt {
     return _updatedAt;
   }
   
-  const Report._internal({required this.id, required uid, required date, required nutritionalValues, required description, required category, createdAt, updatedAt}): _uid = uid, _date = date, _nutritionalValues = nutritionalValues, _description = description, _category = category, _createdAt = createdAt, _updatedAt = updatedAt;
+  const Report._internal({required this.id, required uid, required nutritionalValues, required description, required category, required createdAt, updatedAt}): _uid = uid, _nutritionalValues = nutritionalValues, _description = description, _category = category, _createdAt = createdAt, _updatedAt = updatedAt;
   
-  factory Report({String? id, required String uid, required amplify_core.TemporalDateTime date, required String nutritionalValues, required String description, required String category}) {
+  factory Report({String? id, required String uid, required String nutritionalValues, required String description, required String category, required amplify_core.TemporalDateTime createdAt}) {
     return Report._internal(
       id: id == null ? amplify_core.UUID.getUUID() : id,
       uid: uid,
-      date: date,
       nutritionalValues: nutritionalValues,
       description: description,
-      category: category);
+      category: category,
+      createdAt: createdAt);
   }
   
   bool equals(Object other) {
@@ -143,10 +138,10 @@ class Report extends amplify_core.Model {
     return other is Report &&
       id == other.id &&
       _uid == other._uid &&
-      _date == other._date &&
       _nutritionalValues == other._nutritionalValues &&
       _description == other._description &&
-      _category == other._category;
+      _category == other._category &&
+      _createdAt == other._createdAt;
   }
   
   @override
@@ -159,7 +154,6 @@ class Report extends amplify_core.Model {
     buffer.write("Report {");
     buffer.write("id=" + "$id" + ", ");
     buffer.write("uid=" + "$_uid" + ", ");
-    buffer.write("date=" + (_date != null ? _date!.format() : "null") + ", ");
     buffer.write("nutritionalValues=" + "$_nutritionalValues" + ", ");
     buffer.write("description=" + "$_description" + ", ");
     buffer.write("category=" + "$_category" + ", ");
@@ -170,37 +164,36 @@ class Report extends amplify_core.Model {
     return buffer.toString();
   }
   
-  Report copyWith({String? uid, amplify_core.TemporalDateTime? date, String? nutritionalValues, String? description, String? category}) {
+  Report copyWith({String? uid, String? nutritionalValues, String? description, String? category, amplify_core.TemporalDateTime? createdAt}) {
     return Report._internal(
       id: id,
       uid: uid ?? this.uid,
-      date: date ?? this.date,
       nutritionalValues: nutritionalValues ?? this.nutritionalValues,
       description: description ?? this.description,
-      category: category ?? this.category);
+      category: category ?? this.category,
+      createdAt: createdAt ?? this.createdAt);
   }
   
   Report copyWithModelFieldValues({
     ModelFieldValue<String>? uid,
-    ModelFieldValue<amplify_core.TemporalDateTime>? date,
     ModelFieldValue<String>? nutritionalValues,
     ModelFieldValue<String>? description,
-    ModelFieldValue<String>? category
+    ModelFieldValue<String>? category,
+    ModelFieldValue<amplify_core.TemporalDateTime>? createdAt
   }) {
     return Report._internal(
       id: id,
       uid: uid == null ? this.uid : uid.value,
-      date: date == null ? this.date : date.value,
       nutritionalValues: nutritionalValues == null ? this.nutritionalValues : nutritionalValues.value,
       description: description == null ? this.description : description.value,
-      category: category == null ? this.category : category.value
+      category: category == null ? this.category : category.value,
+      createdAt: createdAt == null ? this.createdAt : createdAt.value
     );
   }
   
   Report.fromJson(Map<String, dynamic> json)  
     : id = json['id'],
       _uid = json['uid'],
-      _date = json['date'] != null ? amplify_core.TemporalDateTime.fromString(json['date']) : null,
       _nutritionalValues = json['nutritionalValues'],
       _description = json['description'],
       _category = json['category'],
@@ -208,13 +201,12 @@ class Report extends amplify_core.Model {
       _updatedAt = json['updatedAt'] != null ? amplify_core.TemporalDateTime.fromString(json['updatedAt']) : null;
   
   Map<String, dynamic> toJson() => {
-    'id': id, 'uid': _uid, 'date': _date?.format(), 'nutritionalValues': _nutritionalValues, 'description': _description, 'category': _category, 'createdAt': _createdAt?.format(), 'updatedAt': _updatedAt?.format()
+    'id': id, 'uid': _uid, 'nutritionalValues': _nutritionalValues, 'description': _description, 'category': _category, 'createdAt': _createdAt?.format(), 'updatedAt': _updatedAt?.format()
   };
   
   Map<String, Object?> toMap() => {
     'id': id,
     'uid': _uid,
-    'date': _date,
     'nutritionalValues': _nutritionalValues,
     'description': _description,
     'category': _category,
@@ -225,10 +217,10 @@ class Report extends amplify_core.Model {
   static final amplify_core.QueryModelIdentifier<ReportModelIdentifier> MODEL_IDENTIFIER = amplify_core.QueryModelIdentifier<ReportModelIdentifier>();
   static final ID = amplify_core.QueryField(fieldName: "id");
   static final UID = amplify_core.QueryField(fieldName: "uid");
-  static final DATE = amplify_core.QueryField(fieldName: "date");
   static final NUTRITIONALVALUES = amplify_core.QueryField(fieldName: "nutritionalValues");
   static final DESCRIPTION = amplify_core.QueryField(fieldName: "description");
   static final CATEGORY = amplify_core.QueryField(fieldName: "category");
+  static final CREATEDAT = amplify_core.QueryField(fieldName: "createdAt");
   static var schema = amplify_core.Model.defineSchema(define: (amplify_core.ModelSchemaDefinition modelSchemaDefinition) {
     modelSchemaDefinition.name = "Report";
     modelSchemaDefinition.pluralName = "Reports";
@@ -253,12 +245,6 @@ class Report extends amplify_core.Model {
     ));
     
     modelSchemaDefinition.addField(amplify_core.ModelFieldDefinition.field(
-      key: Report.DATE,
-      isRequired: true,
-      ofType: amplify_core.ModelFieldType(amplify_core.ModelFieldTypeEnum.dateTime)
-    ));
-    
-    modelSchemaDefinition.addField(amplify_core.ModelFieldDefinition.field(
       key: Report.NUTRITIONALVALUES,
       isRequired: true,
       ofType: amplify_core.ModelFieldType(amplify_core.ModelFieldTypeEnum.string)
@@ -276,10 +262,9 @@ class Report extends amplify_core.Model {
       ofType: amplify_core.ModelFieldType(amplify_core.ModelFieldTypeEnum.string)
     ));
     
-    modelSchemaDefinition.addField(amplify_core.ModelFieldDefinition.nonQueryField(
-      fieldName: 'createdAt',
-      isRequired: false,
-      isReadOnly: true,
+    modelSchemaDefinition.addField(amplify_core.ModelFieldDefinition.field(
+      key: Report.CREATEDAT,
+      isRequired: true,
       ofType: amplify_core.ModelFieldType(amplify_core.ModelFieldTypeEnum.dateTime)
     ));
     

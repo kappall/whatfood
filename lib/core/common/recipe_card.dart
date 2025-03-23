@@ -8,7 +8,8 @@ import 'package:whatfood/models/Recipe.dart';
 
 class RecipeCard extends StatelessWidget {
   final Recipe recipe;
-  const RecipeCard({super.key, required this.recipe});
+  final String imageUrl;
+  const RecipeCard({super.key, required this.recipe, required this.imageUrl});
 
   void deleteRecipe(BuildContext context, RecipeController controller) async {
     controller.deleteRecipe(recipe.id, context);
@@ -74,6 +75,7 @@ class RecipeCard extends StatelessWidget {
       backgroundColor: Colors.transparent,
       builder: (context) => RecipeModal(
         recipe: recipe,
+        imageUrl: imageUrl,
       ),
     );
   }
@@ -96,7 +98,7 @@ class RecipeCard extends StatelessWidget {
                   child: ClipRRect(
                     borderRadius: BorderRadius.circular(16),
                     child: Image.network(
-                      recipe.coverImage,
+                      imageUrl,
                       fit: BoxFit.cover,
                     ),
                   ),

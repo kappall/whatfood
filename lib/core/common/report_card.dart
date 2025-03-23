@@ -77,7 +77,7 @@ class _ReportCardState extends ConsumerState<ReportCard> {
                   if (_isExpanded && !widget.isSelectionMode) ...[
                     const SizedBox(height: 16),
                     Text(
-                      '${widget.report.date.getDateTimeInUtc().day}/${widget.report.date.getDateTimeInUtc().month}/${widget.report.date.getDateTimeInUtc().year}',
+                      '${widget.report.createdAt.getDateTimeInUtc().day}/${widget.report.createdAt.getDateTimeInUtc().month}/${widget.report.createdAt.getDateTimeInUtc().year}',
                       style: const TextStyle(color: Colors.grey),
                     ),
                     const SizedBox(height: 8),
@@ -86,7 +86,7 @@ class _ReportCardState extends ConsumerState<ReportCard> {
                       style: const TextStyle(color: Colors.grey),
                     ),
                     const SizedBox(height: 8),
-                    ...(jsonEncode(widget.report.nutritionalValues)
+                    ...(jsonDecode(widget.report.nutritionalValues)
                             as Map<String, dynamic>)
                         .entries
                         .map(

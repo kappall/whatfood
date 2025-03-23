@@ -1,11 +1,8 @@
-import 'package:amplify_flutter/amplify_flutter.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:routemaster/routemaster.dart';
 import 'package:whatfood/core/common/bounce_icon.dart';
-import 'package:whatfood/core/common/error_text.dart';
-import 'package:whatfood/core/common/loader.dart';
 import 'package:whatfood/features/auth/controller/auth_controller.dart';
 import 'package:whatfood/features/post/controller/post_controller.dart';
 import 'package:whatfood/models/Post.dart';
@@ -85,11 +82,9 @@ class _HomePostCardState extends ConsumerState<HomePostCard> {
       }
     });
 
-    // Update user state
     final updatedUser = user.copyWith(savedPosts: updatedSavedPosts);
     ref.read(userProvider.notifier).state = updatedUser;
 
-    // Update backend
     await ref
         .read(postControllerProvider.notifier)
         .addOrRemoveBookmark(_post, user);
@@ -105,7 +100,7 @@ class _HomePostCardState extends ConsumerState<HomePostCard> {
         children: [
           Positioned.fill(
             child: Image.network(
-              widget.imageUrl!,
+              widget.imageUrl,
               fit: BoxFit.contain,
               width: double.infinity,
             ),

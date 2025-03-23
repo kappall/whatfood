@@ -31,5 +31,38 @@
         "whatfoodStorage": {}
       }
     }
+  },
+  "appenv": {
+    "awscloudformation": {
+      "AuthRoleName": "amplify-whatfood-appenv-5bd74-authRole",
+      "UnauthRoleArn": "arn:aws:iam::699475918328:role/amplify-whatfood-appenv-5bd74-unauthRole",
+      "AuthRoleArn": "arn:aws:iam::699475918328:role/amplify-whatfood-appenv-5bd74-authRole",
+      "Region": "eu-north-1",
+      "DeploymentBucketName": "amplify-whatfood-appenv-5bd74-deployment",
+      "UnauthRoleName": "amplify-whatfood-appenv-5bd74-unauthRole",
+      "StackName": "amplify-whatfood-appenv-5bd74",
+      "StackId": "arn:aws:cloudformation:eu-north-1:699475918328:stack/amplify-whatfood-appenv-5bd74/f77e4510-080d-11f0-bea9-0e667f60eb0d",
+      "AmplifyAppId": "d3ugob67htrv7d"
+    },
+    "categories": {
+      "auth": {
+        "whatfood47c8adf9": {}
+      },
+      "function": {
+        "S3Triggerefd75989": {
+          "deploymentBucketName": "amplify-whatfood-appenv-5bd74-deployment",
+          "s3Key": "amplify-builds/S3Triggerefd75989-546b396f432f41554365-build.zip"
+        }
+      },
+      "analytics": {
+        "whatfood": {}
+      },
+      "api": {
+        "whatfood": {}
+      },
+      "storage": {
+        "whatfoodStorage": {}
+      }
+    }
   }
 }

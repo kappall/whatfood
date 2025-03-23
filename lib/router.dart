@@ -33,8 +33,12 @@ final loggedInRoutes = RouteMap(
               )
             : AddRecipeView()),
     '/add-recipe': (_) => const MaterialPage(child: AddRecipeView()),
-    '/edit-recipe/:id': (route) => MaterialPage(
-        child: EditRecipeView(recipeId: route.pathParameters['id']!)),
+    '/edit-recipe/:recipe': (route) {
+      debugPrint(route.pathParameters['recipe']!);
+      return MaterialPage(
+          child:
+              EditRecipeView(encodedRecipe: route.pathParameters['recipe']!));
+    },
     '/edit_profile/:uid': (route) => MaterialPage(
             child: EditProfileView(
           uid: route.pathParameters['uid']!,
