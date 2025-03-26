@@ -53,9 +53,9 @@ class UserProfileController extends StateNotifier<bool> {
     required String bio,
     required int dailyIntake,
     required File? profileFile,
+    required User user,
   }) async {
     state = true;
-    User user = _ref.read(userProvider)!;
 
     if (profileFile != null) {
       final ris = await _storageRepository.uploadImage(

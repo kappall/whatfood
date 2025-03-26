@@ -129,6 +129,13 @@ class PostCardForComment extends ConsumerWidget {
                   fit: BoxFit.cover,
                   width: double.infinity,
                   height: MediaQuery.of(context).size.height * 0.35,
+                  errorBuilder: (BuildContext context, Object exception,
+                      StackTrace? stackTrace) {
+                    return Container(
+                      color: Colors.grey[300],
+                      child: const Icon(Icons.broken_image, size: 50),
+                    );
+                  },
                 ),
               ),
             if (isTypeText)

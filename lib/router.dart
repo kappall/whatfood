@@ -39,9 +39,9 @@ final loggedInRoutes = RouteMap(
           child:
               EditRecipeView(encodedRecipe: route.pathParameters['recipe']!));
     },
-    '/edit_profile/:uid': (route) => MaterialPage(
+    '/edit_profile/:user': (route) => MaterialPage(
             child: EditProfileView(
-          uid: route.pathParameters['uid']!,
+          encodedUser: route.pathParameters['user']!,
         )),
     '/:id/comments': (route) => MaterialPage(
             child: CommentsView(

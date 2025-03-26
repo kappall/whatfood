@@ -76,36 +76,43 @@ class _AddRecipeViewState extends ConsumerState<AddRecipeView> {
     }
   }
 
-  bool shareRecipe(BuildContext context) {
+  void shareRecipe(BuildContext context) {
     if (_ingredients.isEmpty || _ingredients[0].isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('At least one ingredient is required.')),
       );
-      return false;
+      return;
     }
 
     if (_instructions.isEmpty || _instructions[0].isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('At least one instruction is required.')),
       );
-      return false;
+      return;
     }
 
     if (_image != null) {
-      ref.read(recipeControllerProvider.notifier).shareRecipe(
-          context: context,
-          title: _titleController.text.trim(),
-          description: _descriptionController.text.trim(),
-          instructions: _instructions,
-          ingredients: _ingredients,
-          servings: _servingsController.text.trim(),
-          cookTimeMinutes: _cookTimeController.text.trim(),
-          image: _image!);
+      ref
+          .read(recipeControllerProvider.notifier)
+          .shareRecipe(
+              context: context,
+              title: _titleController.text.trim(),
+              description: _descriptionController.text.trim(),
+              instructions: _instructions,
+              ingredients: _ingredients,
+              servings: _servingsController.text.trim(),
+              cookTimeMinutes: _cookTimeController.text.trim(),
+              image: _image!)
+          .then((_) {
+        if (mounted) {
+          // Check if widget is still mounted
+          ref.invalidate(recipesProvider);
+          Navigator.of(context).pop();
+        }
+      });
     } else {
       showSnackBar(context, "You must select an image");
-      return false;
     }
-    return true;
   }
 
   @override
@@ -122,9 +129,7 @@ class _AddRecipeViewState extends ConsumerState<AddRecipeView> {
           IconButton(
             onPressed: () {
               if (!isLoading && _formKey.currentState!.validate()) {
-                if (shareRecipe(context)) {
-                  Navigator.pop(context);
-                }
+                shareRecipe(context);
               }
             },
             icon: isLoading

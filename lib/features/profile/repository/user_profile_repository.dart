@@ -2,10 +2,9 @@ import 'dart:convert';
 
 import 'package:amplify_auth_cognito/amplify_auth_cognito.dart';
 import 'package:amplify_flutter/amplify_flutter.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter/material.dart';
 import 'package:fpdart/fpdart.dart';
 import 'package:whatfood/core/failure.dart';
-import 'package:whatfood/core/providers/aws_providers.dart';
 import 'package:whatfood/models/Post.dart';
 import 'package:whatfood/models/User.dart';
 import 'package:whatfood/models/post_extensions.dart';
@@ -18,24 +17,41 @@ class UserProfileRepository {
   Future<Either<Failure, void>> editProfile(User user) async {
     try {
       // La mutation updateUser aggiorna i campi dell'utente.
+      debugPrint(user.bio);
+      final Map<String, dynamic> variables = {
+        "input": {
+          "id": user.id,
+          "name": user.name,
+          "email": user.email,
+          "profilePic": user.profilePic,
+          "banner": user.banner,
+          "preferences": user.preferences.toList(),
+          "savedPosts": user.savedPosts.toList(),
+          "postsCount": user.postsCount,
+          "dailyIntake": user.dailyIntake,
+          "followers": user.followers.toList(),
+          "following": user.following.toList(),
+          "bio": user.bio,
+        }
+      };
       String updateMutation = '''
-        mutation UpdateUser(\$id: ID!, \$data: UserInput!) {
-          updateUser(input: { id: \$id, ...\$data }) {
+        mutation UpdateUser(\$input: UpdateUserInput!) {
+          updateUser(input: \$input ) {
             id
           }
         }
       ''';
 
-      final request = GraphQLRequest<String>(
-        document: updateMutation,
-        variables: {
-          'id': user.id,
-          // Assicurati che user.toMap() restituisca una mappa conforme al tipo UserInput definito nello schema
-          'data': user.toMap(),
-        },
+      var operation = Amplify.API.mutate(
+        request: GraphQLRequest<String>(
+          document: updateMutation,
+          variables: variables, // Passiamo le variabili separatamente
+        ),
       );
 
-      final response = await Amplify.API.mutate(request: request).response;
+      // Attendi la risposta dell'API
+      final response = await operation.response;
+
       if (response.errors.isNotEmpty) {
         return left(Failure(response.errors.first.message));
       }

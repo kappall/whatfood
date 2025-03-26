@@ -200,7 +200,7 @@ class PostController extends StateNotifier<bool> {
     return fileSize <= maxSizeInBytes;
   }
 
-  void shareimagePost({
+  Future<void> shareimagePost({
     required BuildContext context,
     required String description,
     required List<String> tags,
@@ -208,7 +208,7 @@ class PostController extends StateNotifier<bool> {
     required MealType mealType,
   }) async {
     state = true;
-    final user = _ref.watch(userProvider);
+    final user = _ref.read(userProvider);
 
     if (user == null) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -255,7 +255,6 @@ class PostController extends StateNotifier<bool> {
       );
 
       final res = await _postRepository.addPost(post, user.postsCount);
-      state = false;
       res.fold(
         (l) => ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(l.message)),
@@ -265,18 +264,30 @@ class PostController extends StateNotifier<bool> {
         },
       );
     } catch (e) {
-      state = false;
       if (context.mounted) {
         showSnackBar(context, 'Error: ${e.toString()}');
       }
+    } finally {
+      state = false;
     }
   }
 
-  void deletePost(Post post, BuildContext context) async {
-    final res = await _postRepository.deletePost(post.id, post.uid);
+  Future<void> deletePost(Post post, BuildContext context) async {
+    debugPrint("hi");
+    final user = _ref.read(userProvider);
+
+    if (user == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('User not logged in')),
+      );
+      state = false;
+      return;
+    }
+
+    final res =
+        await _postRepository.deletePost(post.id, post.uid, user.postsCount);
     _ref.read(userProfileControllerProvider.notifier);
-    res.fold((l) => null,
-        (r) => showSnackBar(context, 'Post Deleted successfully!'));
+    res.fold((l) => showSnackBar(context, l.message), (r) => null);
   }
 
   void likeOrUnlike(Post post) {

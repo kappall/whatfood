@@ -169,6 +169,13 @@ class PostCard extends ConsumerWidget {
                     post.imageUrl,
                     fit: BoxFit.contain,
                     width: double.infinity,
+                    errorBuilder: (BuildContext context, Object exception,
+                        StackTrace? stackTrace) {
+                      return Container(
+                        color: Colors.grey[300],
+                        child: const Icon(Icons.broken_image, size: 50),
+                      );
+                    },
                   ),
                 ),
               ),

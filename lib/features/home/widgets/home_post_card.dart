@@ -34,7 +34,12 @@ class _HomePostCardState extends ConsumerState<HomePostCard> {
   }
 
   void deletePost(BuildContext context) {
-    ref.read(postControllerProvider.notifier).deletePost(_post, context);
+    ref
+        .read(postControllerProvider.notifier)
+        .deletePost(_post, context)
+        .then((_) {
+      ref.invalidate(postsProvider);
+    });
   }
 
   void likeOrUnlikePost() {
@@ -92,7 +97,7 @@ class _HomePostCardState extends ConsumerState<HomePostCard> {
 
   @override
   Widget build(BuildContext context) {
-    final user = ref.read(userProvider)!;
+    final user = ref.watch(userProvider)!;
 
     return GestureDetector(
       onDoubleTap: likeOrUnlikePost,
@@ -103,6 +108,13 @@ class _HomePostCardState extends ConsumerState<HomePostCard> {
               widget.imageUrl,
               fit: BoxFit.contain,
               width: double.infinity,
+              errorBuilder: (BuildContext context, Object exception,
+                  StackTrace? stackTrace) {
+                return Container(
+                  color: Colors.grey[300],
+                  child: const Icon(Icons.broken_image, size: 50),
+                );
+              },
             ),
           ),
           Positioned.fill(
@@ -280,7 +292,7 @@ class PostContentOverlay extends StatelessWidget {
       iconSize: 32,
       onSelected: (String value) async {
         if (value == 'delete') {
-          onDeletePost;
+          onDeletePost();
         } else if (value == 'share') {
           debugPrint('Share');
         }

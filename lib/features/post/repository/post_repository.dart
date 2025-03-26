@@ -59,8 +59,8 @@ class PostRepository {
 
       String updateUserMutation = '''
     mutation UpdateUser {
-      updateUser(input: { uid: "${post.uid}", postsCount: ${postsCount + 1} }) {
-        uid
+      updateUser(input: { id: "${post.uid}", postsCount: ${postsCount + 1} }) {
+        id
       }
     }
     ''';
@@ -215,8 +215,8 @@ class PostRepository {
       ''';
       final deleteRequest =
           GraphQLRequest<String>(document: deleteCommentMutation);
-      await Amplify.API.mutate(request: deleteRequest).response;
-
+      final ret = await Amplify.API.mutate(request: deleteRequest).response;
+      debugPrint(ret.toString());
       // Decrement post comment count
       String updatePostMutation = '''
       mutation UpdatePost {
@@ -235,36 +235,65 @@ class PostRepository {
     }
   }
 
-  FutureEither<void> deletePost(String id, String uid) async {
+  Future<void> deleteImageFolder(String id) async {
     try {
-      // Remove the post's media from S3 storage
-      Amplify.Storage.remove(path: StoragePath.fromString('posts/$id'));
+      // Ottieni tutti i file nella cartella
+      final listResult = await Amplify.Storage.list(
+              path: StoragePath.fromString('images/$id/'))
+          .result;
+      // Elimina ogni file individualmente
+      for (final item in listResult.items) {
+        await Amplify.Storage.remove(path: StoragePath.fromString(item.path))
+            .result;
+      }
 
-      String deletePostMutation = '''
-      mutation DeletePost {
-        deletePost(input: { id: "$id" }) {
+      debugPrint('Cartella eliminata con successo!');
+    } catch (e) {
+      debugPrint('Errore nell\'eliminazione della cartella: $e');
+    }
+  }
+
+  FutureEither<void> deletePost(String id, String uid, int postsCount) async {
+    try {
+      // First try to delete from GraphQL to ensure the post exists
+      final deletePostRequest = GraphQLRequest<String>(
+        document: '''
+      mutation DeletePost(\$input: DeletePostInput!) {
+        deletePost(input: \$input) {
+          ${PostGraphQLFields.graphQLFields}
+        }
+      }
+      ''',
+        variables: {
+          'input': {'id': id}
+        },
+      );
+
+      // Delete the post from API
+      await Amplify.API.mutate(request: deletePostRequest).response;
+      // Try to delete the image from storage
+      try {
+        await deleteImageFolder(id);
+      } catch (storageError) {
+        debugPrint('Storage delete error: $storageError');
+        // Continue with post deletion even if storage deletion fails
+      }
+
+      // Update user post count
+      final updateUserRequest = GraphQLRequest<String>(
+        document: '''
+      mutation UpdateUser {
+        updateUser(input: { id: "$uid", postsCount: ${postsCount - 1} }) {
           id
         }
       }
-      ''';
-      final deleteRequest =
-          GraphQLRequest<String>(document: deletePostMutation);
-      await Amplify.API.mutate(request: deleteRequest).response;
-
-      // Update the user's posts count
-      String updateUserMutation = '''
-      mutation UpdateUser {
-        updateUser(input: { uid: "$uid", postsCount: -1 }) {
-          uid
-        }
-      }
-      ''';
-      final updateRequest =
-          GraphQLRequest<String>(document: updateUserMutation);
-      await Amplify.API.mutate(request: updateRequest).response;
+      ''',
+      );
+      await Amplify.API.mutate(request: updateUserRequest).response;
 
       return right(null);
     } catch (e) {
+      debugPrint('Delete post error: $e');
       return left(Failure(e.toString()));
     }
   }
@@ -272,7 +301,7 @@ class PostRepository {
   Future<void> likeOrUnlike(Post post, String uid) async {
     try {
       List<String> updatedLikes = List.from(post.likes);
-      debugPrint(updatedLikes.toString());
+
       if (post.likes.contains(uid)) {
         updatedLikes.remove(uid);
       } else {
@@ -286,7 +315,7 @@ class PostRepository {
       }
       ''';
       final request = GraphQLRequest<String>(document: updateLikesMutation);
-      debugPrint(updatedLikes.toString());
+
       final ret = await Amplify.API.mutate(request: request).response;
       print(ret.toString());
     } catch (e) {
@@ -333,7 +362,6 @@ class PostRepository {
           return;
         }
         try {
-          debugPrint(response.data);
           var json = jsonDecode(response.data!)['getPost'];
           final post = Post.fromJson(json);
           controller.add(post);

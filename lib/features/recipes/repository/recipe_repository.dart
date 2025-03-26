@@ -215,7 +215,6 @@ class RecipeRepository {
           "uid": recipe.uid,
           "userImage": recipe.userImage,
           "username": recipe.username,
-          "updatedAt": TemporalDate.now().toString()
         }
       };
       String graphQLDocument = '''

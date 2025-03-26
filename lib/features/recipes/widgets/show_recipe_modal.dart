@@ -49,9 +49,12 @@ class RecipeModal extends ConsumerWidget {
             onPressed: () {
               ref
                   .read(recipeControllerProvider.notifier)
-                  .deleteRecipe(recipe.id, context);
-              Navigator.pop(context);
-              Routemaster.of(context).pop();
+                  .deleteRecipe(recipe.id, context)
+                  .then((_) {
+                ref.invalidate(recipesProvider);
+                Navigator.of(context).pop();
+                Routemaster.of(context).popUntil((route) => route.path == '/');
+              });
             },
             child: const Text(
               'Delete',
@@ -240,6 +243,13 @@ class RecipeModal extends ConsumerWidget {
                         width: double.infinity,
                         height: 250,
                         fit: BoxFit.cover,
+                        errorBuilder: (BuildContext context, Object exception,
+                            StackTrace? stackTrace) {
+                          return Container(
+                            color: Colors.grey[300],
+                            child: const Icon(Icons.broken_image, size: 50),
+                          );
+                        },
                       ),
                       Positioned.fill(
                         child: DecoratedBox(

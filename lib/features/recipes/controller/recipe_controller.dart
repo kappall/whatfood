@@ -50,7 +50,7 @@ class RecipeController extends StateNotifier<bool> {
     return _recipeRepository.fetchRecipes();
   }
 
-  void shareRecipe({
+  Future<void> shareRecipe({
     required BuildContext context,
     required String title,
     required String description,
@@ -98,9 +98,6 @@ class RecipeController extends StateNotifier<bool> {
           SnackBar(content: Text(l.message)),
         ),
         (r) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Posted successfully!')),
-          );
           Routemaster.of(context).popUntil((route) => route.path == '/');
         },
       );
@@ -113,10 +110,9 @@ class RecipeController extends StateNotifier<bool> {
     }
   }
 
-  void deleteRecipe(String id, BuildContext context) async {
+  Future<void> deleteRecipe(String id, BuildContext context) async {
     final res = await _recipeRepository.deleteRecipe(id);
-    res.fold((l) => null,
-        (r) => showSnackBar(context, 'Recipe Deleted successfully!'));
+    res.fold((l) => null, (r) => null);
   }
 /*
   void likeOrUnlike(Recipe recipe) async {

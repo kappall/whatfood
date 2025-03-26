@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:whatfood/core/common/loader.dart';
 import 'package:whatfood/core/utils.dart';
+import 'package:whatfood/features/auth/controller/auth_controller.dart';
 import 'package:whatfood/features/post/controller/post_controller.dart';
 import 'package:whatfood/models/MealType.dart';
 
@@ -127,13 +128,19 @@ class _AddPostTypeViewState extends ConsumerState<AddPostTypeView> {
     }
     if (ref.read(postControllerProvider)) return;
 
-    ref.read(postControllerProvider.notifier).shareimagePost(
+    ref
+        .read(postControllerProvider.notifier)
+        .shareimagePost(
           context: context,
           description: descriptionController.text.trim(),
           tags: tags,
           image: image!,
           mealType: selectedMealType!,
-        );
+        )
+        .then((_) {
+      ref.invalidate(postsProvider);
+      ref.invalidate(getUserDataProvider);
+    });
   }
 
   Widget _buildMealTypeSelector() {
