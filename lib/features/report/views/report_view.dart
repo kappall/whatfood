@@ -33,10 +33,15 @@ class _ReportViewState extends ConsumerState<ReportView> {
 
   void deleteSelectedReports(BuildContext context) {
     for (final reportId in selectedReports) {
-      ref.read(reportControllerProvider.notifier).deleteReport(
+      ref
+          .read(reportControllerProvider.notifier)
+          .deleteReport(
             context: context,
             reportId: reportId,
-          );
+          )
+          .then((_) {
+        ref.invalidate(userReportsProvider(ref.read(userProvider)!.id));
+      });
     }
     setState(() {
       selectedReports.clear();
@@ -160,8 +165,6 @@ class _ReportViewState extends ConsumerState<ReportView> {
                     totalCalories = value;
                   }
                 });
-                //aggregatedData[''] = user.dailyIntake - totalCalories;
-                //aggregatedData['enegy'] = totalCalories;
                 final pieChartSections = buildPieChartSections(aggregatedData);
 
                 return SingleChildScrollView(

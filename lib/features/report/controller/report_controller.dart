@@ -31,7 +31,7 @@ class ReportController extends StateNotifier<bool> {
         _ref = ref,
         super(false);
 
-  void addFoodReport({
+  Future<void> addFoodReport({
     required BuildContext context,
     required String nutritionalValues,
     required String description,
@@ -70,7 +70,7 @@ class ReportController extends StateNotifier<bool> {
     }
   }
 
-  void deleteReport({
+  Future<void> deleteReport({
     required BuildContext context,
     required String reportId,
   }) async {

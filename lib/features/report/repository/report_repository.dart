@@ -83,7 +83,6 @@ class ReportRepository {
 
         try {
           final Map<String, dynamic> jsonResponse = jsonDecode(response.data!);
-          print(jsonResponse);
           if (jsonResponse['listReports'] == null ||
               jsonResponse['listReports']['items'] == null) {
             controller.add([]);
