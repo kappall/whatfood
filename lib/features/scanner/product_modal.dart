@@ -151,6 +151,7 @@ class _ProductModalState extends ConsumerState<ProductModal> {
 
   @override
   Widget build(BuildContext context) {
+    debugPrint("here modal");
     return Material(
       color: Theme.of(context).scaffoldBackgroundColor,
       shape: RoundedRectangleBorder(

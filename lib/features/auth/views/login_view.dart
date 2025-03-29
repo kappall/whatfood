@@ -42,9 +42,9 @@ class _LoginViewState extends ConsumerState<LoginView> {
           backgroundColor: Colors.green,
           centerTitle: true,
         ),
-        body: Padding(
+        body: Center(child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 20.0),
-          child: Column(
+          child: SingleChildScrollView(child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
@@ -129,7 +129,7 @@ class _LoginViewState extends ConsumerState<LoginView> {
               ),
             ],
           ),
-        ),
+        ),),),
       ),
     );
   }

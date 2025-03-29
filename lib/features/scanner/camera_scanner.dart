@@ -82,6 +82,8 @@ class CameraScannerState extends ConsumerState<CameraScanner> {
         if (_cameras[i].lensDirection == CameraLensDirection.back) {
           _cameraIndex = i;
           break;
+        } else {
+          debugPrint('No back camera found');
         }
       }
       if (_cameraIndex != -1) {
@@ -105,7 +107,7 @@ class CameraScannerState extends ConsumerState<CameraScanner> {
     final camera = _cameras[_cameraIndex];
     _controller = CameraController(
       camera,
-      ResolutionPreset.medium,
+      Platform.isAndroid ? ResolutionPreset.low : ResolutionPreset.medium,
       enableAudio: false,
       imageFormatGroup: Platform.isAndroid
           ? ImageFormatGroup.nv21
@@ -229,12 +231,15 @@ class CameraScannerState extends ConsumerState<CameraScanner> {
         }
 
         final userIntolerances = ref.read(userProvider)!.preferences;
-
         // Process ingredients
         final ingredientsText = productData['ingredientes_text_en'] ??
             productData['ingredients_text'];
+        List<String> processedIngredients = List.empty(),
+            intolerableIngredients = List.empty(),
+            unhealthyIngredients = List.empty();
+
         if (ingredientsText != null) {
-          final (
+          var (
             processedIngredients,
             intolerableIngredients,
             unhealthyIngredients
@@ -254,23 +259,23 @@ class CameraScannerState extends ConsumerState<CameraScanner> {
                 await _showUnhealthyWarningDialog(unhealthyIngredients);
             if (!shouldContinue) return;
           }
-
-          // Show product modal if user wants to continue
-          if (!mounted) return;
-          await showModalBottomSheet(
-            context: context,
-            isScrollControlled: true,
-            useSafeArea: true,
-            backgroundColor: Colors.transparent,
-            builder: (context) => ProductModal(
-              productData: productData,
-              quantity: quantity,
-              processedIngredients: processedIngredients,
-              intolerableIngredients: intolerableIngredients,
-              unhealthyIngredients: unhealthyIngredients,
-            ),
-          );
         }
+
+        // Show product modal if user wants to continue
+        if (!mounted) return;
+        await showModalBottomSheet(
+          context: context,
+          isScrollControlled: true,
+          useSafeArea: true,
+          backgroundColor: Colors.transparent,
+          builder: (context) => ProductModal(
+            productData: productData,
+            quantity: quantity,
+            processedIngredients: processedIngredients,
+            intolerableIngredients: intolerableIngredients,
+            unhealthyIngredients: unhealthyIngredients,
+          ),
+        );
       } else {
         await _showErrorDialog();
       }
