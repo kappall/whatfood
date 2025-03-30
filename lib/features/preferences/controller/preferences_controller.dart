@@ -14,13 +14,11 @@ final preferencesControllerProvider =
 
 class PreferencesController extends StateNotifier<bool> {
   final PreferencesRepository _preferencesRepository;
-  final Ref _ref;
 
   PreferencesController({
     required PreferencesRepository preferencesRepository,
     required Ref ref,
   })  : _preferencesRepository = preferencesRepository,
-        _ref = ref,
         super(false);
 
   Future<void> savePreferences({

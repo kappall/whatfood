@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 
 class TranslationService {
@@ -23,7 +24,7 @@ class TranslationService {
       }
       throw Exception('Translation failed');
     } catch (e) {
-      print('Translation error: $e');
+      debugPrint('Translation error: $e');
       return text; // Return original text if translation fails
     }
   }

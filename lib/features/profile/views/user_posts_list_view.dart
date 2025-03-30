@@ -14,44 +14,34 @@ class PostList extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    // TODO: implement build
-    throw UnimplementedError();
+    return Scaffold(
+      appBar: PreferredSize(
+        preferredSize: Size.fromHeight(50),
+        child: AppBar(
+          leading: IconButton(
+            icon: Icon(Icons.arrow_back),
+            onPressed: () => Routemaster.of(context).pop(),
+          ),
+          title: const Text('Post List'),
+        ),
+      ),
+      body: ref.watch(getUserPostsProvider(uid)).when(
+            data: (data) {
+              return ListView.builder(
+                  itemCount: data.length,
+                  itemBuilder: (BuildContext content, int indez) {
+                    final post = data[indez];
+                    return PostCard(
+                      post: post,
+                    );
+                  });
+            },
+            error: (error, stackTrace) {
+              debugPrint(stackTrace.toString());
+              return ErrorText(error: error.toString());
+            },
+            loading: () => const Loader(),
+          ),
+    );
   }
-
-  // @override
-  // Widget build(BuildContext context, WidgetRef ref) {
-  //   return Scaffold(
-  //     appBar: PreferredSize(
-  //       preferredSize: Size.fromHeight(50),
-  //       child: AppBar(
-  //         leading: IconButton(
-  //           icon: Icon(Icons.arrow_back),
-  //           onPressed: () => Routemaster.of(context).pop(),
-  //         ),
-  //         title: const Text('Post List'),
-  //       ),
-  //     ),
-  //     body: ref.watch(getUserPostsProvider(uid)).when(
-  //           data: (data) {
-  //             return ListView.builder(
-  //                 itemCount: data.length,
-  //                 itemBuilder: (BuildContext content, int indez) {
-  //                   final post = data[indez];
-  //                   final controller =
-  //                       MyProvider.of<PostController>(context)?.value;
-  //                   if (controller == null) {
-  //                     return Scaffold(
-  //                         body: Center(child: Text('Controller not found')));
-  //                   }
-  //                   return PostCard(post: post, controller: controller);
-  //                 });
-  //           },
-  //           error: (error, stackTrace) {
-  //             debugPrint(stackTrace.toString());
-  //             return ErrorText(error: error.toString());
-  //           },
-  //           loading: () => const Loader(),
-  //         ),
-  //   );
-  // }
 }

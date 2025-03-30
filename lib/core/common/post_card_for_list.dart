@@ -1,20 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:routemaster/routemaster.dart';
-import 'package:whatfood/core/common/error_text.dart';
-import 'package:whatfood/core/common/loader.dart';
 import 'package:whatfood/features/auth/controller/auth_controller.dart';
 import 'package:whatfood/features/post/controller/post_controller.dart';
 import 'package:whatfood/models/Post.dart';
-import 'package:whatfood/models/User.dart';
 
 class PostCard extends ConsumerWidget {
   final Post post;
   final bool isCommenting;
-  final PostController controller;
   const PostCard({
     super.key,
-    required this.controller,
     this.isCommenting = false,
     required this.post,
   });

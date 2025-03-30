@@ -30,7 +30,7 @@ class StorageRepository {
         path: path,
         options: options,
         onProgress: (progress) {
-          print('Upload progress: ${progress.fractionCompleted}');
+          debugPrint('Upload progress: ${progress.fractionCompleted}');
         },
       ).result;
       debugPrint(result.uploadedItem.toString());
@@ -82,7 +82,7 @@ class StorageRepository {
   Future<void> deleteFile(String filePath) async {
     try {
       final path = StoragePath.fromString(filePath);
-      await Amplify.Storage.remove(path: path);
+      Amplify.Storage.remove(path: path);
     } catch (e) {
       throw Exception("Errore durante l'eliminazione: $e");
     }

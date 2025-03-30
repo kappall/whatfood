@@ -188,8 +188,6 @@ class _HomeViewState extends State<HomeView>
         scrollDirection: Axis.horizontal,
         physics: const NeverScrollableScrollPhysics(),
         onPageChanged: (index) {
-          print("Page changed: $index, Tab index: ${_tabController.index}");
-
           if (_mounted) {
             setState(() {
               _tabController.animateTo(index);

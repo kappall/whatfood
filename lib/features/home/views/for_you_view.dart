@@ -3,26 +3,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:whatfood/core/common/error_text.dart';
 import 'package:whatfood/core/common/loader.dart';
-import 'package:whatfood/core/common/provider.dart';
-import 'package:whatfood/features/auth/controller/auth_controller.dart';
 import 'package:whatfood/features/home/widgets/home_post_card.dart';
 import 'package:whatfood/features/post/controller/post_controller.dart';
-import 'package:whatfood/models/MealType.dart';
 
 class ForYouView extends ConsumerWidget {
   const ForYouView({super.key});
-  IconData _getMealTypeIcon(MealType type) {
-    switch (type) {
-      case MealType.BREAKFAST:
-        return Icons.breakfast_dining;
-      case MealType.LUNCH:
-        return Icons.lunch_dining;
-      case MealType.DINNER:
-        return Icons.dinner_dining;
-      case MealType.SNACK:
-        return Icons.cookie;
-    }
-  }
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {

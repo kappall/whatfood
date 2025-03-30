@@ -5,8 +5,6 @@ class InspirationView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    print("Building InspirationView");
-
     return CustomScrollView(
       slivers: [
         SliverFillRemaining(

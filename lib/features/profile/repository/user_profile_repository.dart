@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:amplify_auth_cognito/amplify_auth_cognito.dart';
@@ -64,8 +65,10 @@ class UserProfileRepository {
   }
 
   // Recupera i post dell'utente tramite una query GraphQL
-  Future<List<Post>> getUserPosts(String uid) async {
-    String query = '''
+  Stream<List<Post>> getUserPosts(String uid) {
+    final controller = StreamController<List<Post>>();
+    try {
+      String query = '''
       query ListUserPosts(\$uid: ID!) {
         listPosts(filter: { uid: { eq: \$uid } }, sortDirection: DESC, sortField: createdAt) {
           items {
@@ -75,20 +78,52 @@ class UserProfileRepository {
       }
     ''';
 
-    final request = GraphQLRequest<String>(
-      document: query,
-      variables: {'uid': uid},
-    );
+      final request = GraphQLRequest<String>(
+        document: query,
+        variables: {'uid': uid},
+      );
 
-    final response = await Amplify.API.query(request: request).response;
-    if (response.data == null) return [];
-    final Map<String, dynamic> decoded =
-        jsonDecode(response.data!) as Map<String, dynamic>;
-    final List<dynamic> items =
-        decoded['data']['listPosts']['items'] as List<dynamic>;
-    return items
-        .map((item) => Post.fromJson(item as Map<String, dynamic>))
-        .toList();
+      Amplify.API.query(request: request).response.then((response) {
+        if (response.errors.isNotEmpty) {
+          debugPrint("GraphQL Errors: ${response.errors}");
+          controller.addError(response.errors.first.message);
+          return;
+        }
+
+        if (response.data == null) {
+          controller.add([]);
+          return;
+        }
+
+        try {
+          final Map<String, dynamic> jsonResponse = jsonDecode(response.data!);
+          if (jsonResponse['listPosts'] == null ||
+              jsonResponse['listPosts']['items'] == null) {
+            controller.add([]);
+            return;
+          }
+
+          final List<dynamic> items = jsonResponse['listPosts']['items'];
+          final posts = items.map((item) => Post.fromJson(item)).toList();
+
+          // Sort by creation date, newest first
+          posts.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+
+          controller.add(posts);
+        } catch (e, stackTrace) {
+          debugPrint("Parse error: $e");
+          debugPrint("Stack trace: $stackTrace");
+          controller.addError('Error parsing posts: $e');
+        }
+      }).catchError((error) {
+        debugPrint("Query error: $error");
+        controller.addError(error);
+      });
+    } catch (e) {
+      debugPrint("General error: $e");
+      controller.addError(e);
+    }
+    return controller.stream;
   }
 
   // Recupera i post salvati (in base agli id) tramite una query GraphQL

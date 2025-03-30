@@ -153,7 +153,6 @@ class AuthRepository {
     } on AuthException catch (e) {
       return left(Failure(e.message));
     } catch (e) {
-      print(e.toString());
       return left(Failure(e.toString()));
     }
   }
@@ -277,7 +276,7 @@ class AuthRepository {
     try {
       await Amplify.Auth.signOut();
     } catch (e) {
-      print('Error signing out: $e');
+      debugPrint('Error signing out: $e');
     }
   }
 }

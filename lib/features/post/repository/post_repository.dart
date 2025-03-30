@@ -142,7 +142,6 @@ class PostRepository {
 
         try {
           final Map<String, dynamic> jsonResponse = jsonDecode(response.data!);
-          print(jsonResponse);
           if (jsonResponse['listPosts'] == null ||
               jsonResponse['listPosts']['items'] == null) {
             controller.add([]);
@@ -316,8 +315,7 @@ class PostRepository {
       ''';
       final request = GraphQLRequest<String>(document: updateLikesMutation);
 
-      final ret = await Amplify.API.mutate(request: request).response;
-      print(ret.toString());
+      await Amplify.API.mutate(request: request).response;
     } catch (e) {
       debugPrint(e.toString());
     }
@@ -339,8 +337,7 @@ class PostRepository {
       }
       ''';
       final request = GraphQLRequest<String>(document: updateUserMutation);
-      final res = await Amplify.API.mutate(request: request).response;
-      print(res.toString());
+      await Amplify.API.mutate(request: request).response;
     } catch (e) {
       debugPrint(e.toString());
     }

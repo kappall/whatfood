@@ -1,4 +1,3 @@
-import 'package:amplify_analytics_pinpoint/amplify_analytics_pinpoint.dart';
 import 'package:amplify_api/amplify_api.dart';
 import 'package:amplify_auth_cognito/amplify_auth_cognito.dart';
 import 'package:amplify_datastore/amplify_datastore.dart';
@@ -9,9 +8,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:whatfood/amplifyconfiguration.dart';
 import 'package:whatfood/core/common/error_text.dart';
 import 'package:whatfood/core/common/loader.dart';
-import 'package:whatfood/core/common/provider.dart';
 import 'package:whatfood/features/auth/controller/auth_controller.dart';
-import 'package:whatfood/features/auth/repository/auth_repository.dart';
 import 'package:whatfood/models/ModelProvider.dart';
 import 'package:whatfood/router.dart';
 import 'package:routemaster/routemaster.dart';

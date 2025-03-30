@@ -22,7 +22,7 @@ final userProfileControllerProvider =
   );
 });
 
-final getUserPostsProvider = FutureProvider.family((ref, String uid) {
+final getUserPostsProvider = StreamProvider.family((ref, String uid) {
   return ref.read(userProfileControllerProvider.notifier).getUserPosts(uid);
 });
 
@@ -74,7 +74,7 @@ class UserProfileController extends StateNotifier<bool> {
     });
   }
 
-  Future<List<Post>> getUserPosts(String uid) {
+  Stream<List<Post>> getUserPosts(String uid) {
     return _userProfileRepository.getUserPosts(uid);
   }
 

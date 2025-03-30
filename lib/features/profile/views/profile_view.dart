@@ -347,7 +347,7 @@ class _ProfileViewState extends ConsumerState<ProfileView>
             );
           },
           error: (error, stackTrace) {
-            //debugPrint(stackTrace.toString());
+            debugPrint(stackTrace.toString());
             return ErrorText(error: error.toString());
           },
           loading: () => const Loader(),

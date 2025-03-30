@@ -132,7 +132,7 @@ class AuthController extends StateNotifier<bool> {
           debugPrint(signUpResult.toString());
           if (signUpResult.nextStep.signUpStep ==
               AuthSignUpStep.confirmSignUp) {
-            print("here");
+            debugPrint("here");
 
             final userModel = User(
               name: name,
@@ -152,7 +152,7 @@ class AuthController extends StateNotifier<bool> {
             _showVerificationDialog(context, userModel, password);
           }
         } catch (e) {
-          print(e.toString());
+          debugPrint(e.toString());
         }
       },
     );
@@ -191,18 +191,14 @@ class AuthController extends StateNotifier<bool> {
 
                 if (confirmResult.isSignUpComplete) {
                   final email = user.email;
-                  print("tryng to save:\n$user");
                   await _authRepository.saveUserData(user);
-                  print("user data saved");
 
                   final signInResult = await Amplify.Auth.signIn(
                     username: email,
                     password: password,
                   );
-                  print("login done");
                   if (signInResult.isSignedIn) {
                     Navigator.of(context).pop();
-                    print("navigating to preferences");
                     if (context.mounted) {
                       Routemaster.of(context).replace('/preferences');
                     }
