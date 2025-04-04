@@ -69,8 +69,8 @@ class UserProfileRepository {
     final controller = StreamController<List<Post>>();
     try {
       String query = '''
-      query ListUserPosts(\$uid: ID!) {
-        listPosts(filter: { uid: { eq: \$uid } }, sortDirection: DESC, sortField: createdAt) {
+      query ListUserPosts(\$uid: String!) {
+        listPosts(filter: { uid: { eq: \$uid } }) {
           items {
             ${PostGraphQLFields.graphQLFields}
           }

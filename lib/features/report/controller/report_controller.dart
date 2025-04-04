@@ -58,9 +58,7 @@ class ReportController extends StateNotifier<bool> {
 
       res.fold((failure) {
         showSnackBar(context, failure.message);
-      }, (_) {
-        showSnackBar(context, 'Food added to your report successfully');
-      });
+      }, (_) => null);
     } catch (e) {
       if (context.mounted) {
         showSnackBar(context, e.toString());

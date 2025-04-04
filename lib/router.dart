@@ -57,8 +57,6 @@ final loggedInRoutes = RouteMap(
           ),
         ),
     '/profile': (_) => MaterialPage(child: ProfileView()),
-    '/post_list/:uid': (route) =>
-        MaterialPage(child: PostList(uid: route.pathParameters['uid']!)),
     '/post_list/:uid/:postid/comments': (route) => MaterialPage(
             child: CommentsView(
           postId: route.pathParameters['postid']!,

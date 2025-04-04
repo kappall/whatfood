@@ -1,18 +1,24 @@
 import 'package:flutter/material.dart';
-import 'package:routemaster/routemaster.dart';
 import 'package:whatfood/models/Post.dart';
+import 'post_details_dialog.dart';
 
 class PostCard extends StatelessWidget {
   final Post post;
+  final String imageUrl;
   final bool isCommenting;
   const PostCard({
     super.key,
     this.isCommenting = false,
     required this.post,
+    required this.imageUrl,
   });
 
-  void navigateToListPosts(BuildContext context) {
-    Routemaster.of(context).push('/post_list/${post.uid}');
+  void showPostDetails(BuildContext context) {
+    showDialog(
+      context: context,
+      barrierDismissible: true,
+      builder: (context) => PostDetailsDialog(post: post, imageUrl: imageUrl),
+    );
   }
 
   @override
@@ -22,30 +28,33 @@ class PostCard extends StatelessWidget {
       builder: (context, constraints) {
         double cardWidth = (constraints.maxWidth - 32) / 2;
         return GestureDetector(
-          onTap: () => navigateToListPosts(context),
+          onTap: () => showPostDetails(context),
           child: Container(
             width: cardWidth,
             height: cardWidth,
-            margin: EdgeInsets.all(4),
+            margin: const EdgeInsets.all(4),
             child: Card(
-                shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(16)),
-                elevation: 4,
-                child: isTypeImage
-                    ? ClipRRect(
-                        child: Image.network(
-                          post.imageUrl,
-                          fit: BoxFit.cover,
-                          errorBuilder: (BuildContext context, Object exception,
-                              StackTrace? stackTrace) {
-                            return Container(
-                              color: Colors.grey[300],
-                              child: const Icon(Icons.broken_image, size: 50),
-                            );
-                          },
-                        ),
-                      )
-                    : null),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
+              ),
+              elevation: 4,
+              child: isTypeImage
+                  ? ClipRRect(
+                      borderRadius: BorderRadius.circular(16),
+                      child: Image.network(
+                        imageUrl,
+                        fit: BoxFit.cover,
+                        errorBuilder: (BuildContext context, Object exception,
+                            StackTrace? stackTrace) {
+                          return Container(
+                            color: Colors.grey[300],
+                            child: const Icon(Icons.broken_image, size: 50),
+                          );
+                        },
+                      ),
+                    )
+                  : null,
+            ),
           ),
         );
       },

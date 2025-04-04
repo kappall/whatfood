@@ -284,6 +284,7 @@ class PostRepository {
       mutation UpdateUser {
         updateUser(input: { id: "$uid", postsCount: ${postsCount - 1} }) {
           id
+          postsCount
         }
       }
       ''',
@@ -300,22 +301,26 @@ class PostRepository {
   Future<void> likeOrUnlike(Post post, String uid) async {
     try {
       List<String> updatedLikes = List.from(post.likes);
+      debugPrint(updatedLikes.toString());
 
       if (post.likes.contains(uid)) {
         updatedLikes.remove(uid);
       } else {
         updatedLikes.add(uid);
       }
+      debugPrint(jsonEncode(updatedLikes).toString());
       String updateLikesMutation = '''
       mutation UpdatePost {
         updatePost(input: { id: "${post.id}", likes: ${jsonEncode(updatedLikes)} }) {
           id
+          likes
         }
       }
       ''';
       final request = GraphQLRequest<String>(document: updateLikesMutation);
 
-      await Amplify.API.mutate(request: request).response;
+      final res = await Amplify.API.mutate(request: request).response;
+      debugPrint(res.toString());
     } catch (e) {
       debugPrint(e.toString());
     }

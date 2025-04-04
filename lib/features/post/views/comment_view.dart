@@ -107,8 +107,8 @@ class _CommentsViewState extends ConsumerState<CommentsView> {
           boxShadow: [
             BoxShadow(
               color: Colors.green,
-              blurRadius: 6,
-              offset: Offset(0, -2),
+              blurRadius: 8,
+              offset: Offset(0, -10),
             ),
           ],
         ),

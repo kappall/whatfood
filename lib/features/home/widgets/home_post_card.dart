@@ -44,6 +44,11 @@ class _HomePostCardState extends ConsumerState<HomePostCard> {
 
   void likeOrUnlikePost() {
     final user = ref.read(userProvider)!;
+    if (user.id == _post.uid) {
+      return;
+    }
+
+    ref.read(postControllerProvider.notifier).likeOrUnlike(_post, user.id);
     setState(() {
       if (_post.likes.contains(user.id)) {
         _post = _post.copyWith(
@@ -55,8 +60,6 @@ class _HomePostCardState extends ConsumerState<HomePostCard> {
         );
       }
     });
-    // Update backend
-    ref.read(postControllerProvider.notifier).likeOrUnlike(_post);
   }
 
   void navigateToComments(BuildContext context) {

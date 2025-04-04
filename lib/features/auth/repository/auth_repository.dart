@@ -265,9 +265,10 @@ class AuthRepository {
 
   Future<bool> isUserSignedIn() async {
     try {
-      final userId = await getCurrentUserId();
-      return userId != null;
-    } catch (e) {
+      final session = await Amplify.Auth.fetchAuthSession();
+      return session.isSignedIn;
+    } on AuthException catch (e) {
+      debugPrint('Error checking auth session: ${e.message}');
       return false;
     }
   }

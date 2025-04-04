@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:amplify_flutter/amplify_flutter.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:routemaster/routemaster.dart';
@@ -8,6 +9,7 @@ import 'package:whatfood/core/common/loader.dart';
 import 'package:whatfood/core/common/post_card_for_grid.dart';
 import 'package:whatfood/features/auth/controller/auth_controller.dart';
 import 'package:whatfood/features/profile/controller/user_profile_controller.dart';
+import 'package:whatfood/models/Post.dart';
 import 'package:whatfood/models/User.dart';
 
 class ProfileView extends ConsumerStatefulWidget {
@@ -37,9 +39,8 @@ class _ProfileViewState extends ConsumerState<ProfileView>
   }
 
   void _handleTabChange() {
-    if (_mounted) {
-      setState(() {});
-    }
+    // no set state for optimization
+    // set state whould make the user post reload, dosen't make any sense
   }
 
   @override
@@ -208,33 +209,39 @@ class _ProfileViewState extends ConsumerState<ProfileView>
                         child: Column(
                           children: [
                             Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceAround,
                               children: [
                                 CircleAvatar(
                                   backgroundImage:
                                       NetworkImage(user.profilePic),
                                   radius: 45,
                                 ),
-                                const SizedBox(width: 32),
-                                Column(
+                                Row(
                                   children: [
-                                    Text((user.postsCount).toString()),
-                                    Text('posts')
+                                    Column(
+                                      children: [
+                                        Text((user.postsCount).toString()),
+                                        Text('posts')
+                                      ],
+                                    ),
+                                    const SizedBox(width: 16),
+                                    Column(
+                                      children: [
+                                        Text(
+                                            (user.followers.length).toString()),
+                                        Text('followers')
+                                      ],
+                                    ),
+                                    const SizedBox(width: 16),
+                                    Column(
+                                      children: [
+                                        Text(
+                                            (user.following.length).toString()),
+                                        Text('following')
+                                      ],
+                                    )
                                   ],
                                 ),
-                                const SizedBox(width: 16),
-                                Column(
-                                  children: [
-                                    Text((user.followers.length).toString()),
-                                    Text('followers')
-                                  ],
-                                ),
-                                const SizedBox(width: 16),
-                                Column(
-                                  children: [
-                                    Text((user.following.length).toString()),
-                                    Text('following')
-                                  ],
-                                )
                               ],
                             ),
                             if (user.bio!.isNotEmpty)
@@ -337,8 +344,35 @@ class _ProfileViewState extends ConsumerState<ProfileView>
                       physics:
                           widget.public ? NeverScrollableScrollPhysics() : null,
                       children: [
-                        UserPosts(uid: uid),
-                        if (!widget.public) UserSavedPosts(),
+                        ref.watch(getUserPostsProvider(uid)).when(
+                              data: (posts) {
+                                debugPrint("generating potst");
+                                return UserPosts(uid: uid, posts: posts);
+                              },
+                              error: (error, stackTrace) {
+                                debugPrint(error.toString());
+                                return ErrorText(error: error.toString());
+                              },
+                              loading: () => const Loader(),
+                            ),
+                        if (!widget.public)
+                          Builder(builder: (context) {
+                            final userModel = ref.read(userProvider)!;
+                            return ref
+                                .read(getUserSavedPostsProvider(userModel))
+                                .when(
+                                  data: (posts) {
+                                    return UserSavedPosts(
+                                      posts: posts,
+                                    );
+                                  },
+                                  error: (error, stackTrace) {
+                                    debugPrint(error.toString());
+                                    return ErrorText(error: error.toString());
+                                  },
+                                  loading: () => const Loader(),
+                                );
+                          }),
                       ],
                     ),
                   ),
@@ -356,57 +390,75 @@ class _ProfileViewState extends ConsumerState<ProfileView>
 }
 
 class UserSavedPosts extends ConsumerWidget {
-  const UserSavedPosts({super.key});
+  final List<Post> posts;
+  const UserSavedPosts({super.key, required this.posts});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final userModel = ref.watch(userProvider)!;
-    return ref.watch(getUserSavedPostsProvider(userModel)).when(
-          data: (posts) {
-            return GridView.builder(
-              gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 2,
-              ),
-              itemCount: posts.length,
-              itemBuilder: (context, index) {
-                final post = posts[index];
-                return PostCard(post: post);
-              },
-            );
-          },
-          error: (error, stackTrace) {
-            debugPrint(error.toString());
-            return ErrorText(error: error.toString());
-          },
-          loading: () => const Loader(),
-        );
+    return GridView.builder(
+      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 2,
+      ),
+      itemCount: posts.length,
+      itemBuilder: (context, index) {
+        final post = posts[index];
+        return FutureBuilder(
+            future: Amplify.Storage.getUrl(
+              path: StoragePath.fromString(post.imageUrl),
+            ).result,
+            builder: (context, snapshot) {
+              if (snapshot.connectionState == ConnectionState.waiting) {
+                return const Loader();
+              }
+              if (snapshot.hasError) {
+                return ErrorText(error: snapshot.error.toString());
+              }
+              if (!snapshot.hasData) {
+                return const Loader();
+              }
+              String imageUrl = snapshot.data!.url.toString();
+              return PostCard(
+                post: post,
+                imageUrl: imageUrl,
+              );
+            });
+      },
+    );
   }
 }
 
 class UserPosts extends ConsumerWidget {
   final String uid;
-  const UserPosts({super.key, required this.uid});
+  final List<Post> posts;
+  const UserPosts({super.key, required this.uid, required this.posts});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    return ref.watch(getUserPostsProvider(uid)).when(
-          data: (posts) {
-            return GridView.builder(
-              gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 2,
-              ),
-              itemCount: posts.length,
-              itemBuilder: (context, index) {
-                final post = posts[index];
-                return PostCard(post: post);
-              },
-            );
-          },
-          error: (error, stackTrace) {
-            debugPrint(error.toString());
-            return ErrorText(error: error.toString());
-          },
-          loading: () => const Loader(),
-        );
+    return GridView.builder(
+      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 2,
+      ),
+      itemCount: posts.length,
+      itemBuilder: (context, index) {
+        final post = posts[index];
+        return FutureBuilder(
+            future: Amplify.Storage.getUrl(
+              path: StoragePath.fromString(post.imageUrl),
+            ).result,
+            builder: (context, snapshot) {
+              if (snapshot.connectionState == ConnectionState.waiting) {
+                return const Loader();
+              }
+              if (snapshot.hasError) {
+                return ErrorText(error: snapshot.error.toString());
+              }
+              if (!snapshot.hasData) {
+                return const Loader();
+              }
+              String imageUrl = snapshot.data!.url.toString();
+              return PostCard(post: post, imageUrl: imageUrl);
+            });
+      },
+    );
   }
 }

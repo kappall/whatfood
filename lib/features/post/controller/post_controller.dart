@@ -272,7 +272,6 @@ class PostController extends StateNotifier<bool> {
   }
 
   Future<void> deletePost(Post post, BuildContext context) async {
-    debugPrint("hi");
     final user = _ref.read(userProvider);
 
     if (user == null) {
@@ -286,11 +285,12 @@ class PostController extends StateNotifier<bool> {
     final res =
         await _postRepository.deletePost(post.id, post.uid, user.postsCount);
     _ref.read(userProfileControllerProvider.notifier);
-    res.fold((l) => showSnackBar(context, l.message), (r) => null);
+    res.fold((l) => showSnackBar(context, l.message), (r) {
+      _ref.invalidate(getUserPostsProvider(user.id));
+    });
   }
 
-  void likeOrUnlike(Post post) {
-    final uid = _ref.read(userProvider)!.id;
+  void likeOrUnlike(Post post, String uid) {
     _postRepository.likeOrUnlike(post, uid);
   }
 
