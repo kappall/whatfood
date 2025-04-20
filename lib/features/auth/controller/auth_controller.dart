@@ -19,7 +19,7 @@ final authControllerProvider = StateNotifierProvider<AuthController, bool>(
   ),
 );
 
-final authStateChangeProvider = StreamProvider.autoDispose((ref) {
+final authStateChangeProvider = StreamProvider((ref) {
   final authController = ref.watch(authControllerProvider.notifier);
   return authController.authStateChange.map((user) {
     if (user != null) {
@@ -129,11 +129,8 @@ class AuthController extends StateNotifier<bool> {
       (l) => showSnackBar(context, l.message),
       (signUpResult) {
         try {
-          debugPrint(signUpResult.toString());
           if (signUpResult.nextStep.signUpStep ==
               AuthSignUpStep.confirmSignUp) {
-            debugPrint("here");
-
             final userModel = User(
               name: name,
               email: email,
@@ -170,7 +167,7 @@ class AuthController extends StateNotifier<bool> {
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Text('Inser the code sent to your email'),
+            const Text('Insert the code sent to your email'),
             TextField(
               controller: verificationController,
               keyboardType: TextInputType.number,
@@ -181,6 +178,16 @@ class AuthController extends StateNotifier<bool> {
           ],
         ),
         actions: [
+          TextButton(
+            onPressed: () async {
+              debugPrint("deleting: ${user.email}");
+              _authRepository.deleteUnconfirmedUser(user.email);
+              if (context.mounted) {
+                Navigator.of(context).pop();
+              }
+            },
+            child: const Text('Cancel'),
+          ),
           TextButton(
             onPressed: () async {
               try {
@@ -214,7 +221,7 @@ class AuthController extends StateNotifier<bool> {
                   SnackBar(content: Text(e.message)),
                 );
               } catch (e) {
-                Amplify.Auth.deleteUser();
+                _authRepository.deleteUnconfirmedUser(user.email);
                 debugPrint("Exeption: ${e.toString()}");
               }
             },

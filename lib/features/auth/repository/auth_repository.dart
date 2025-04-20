@@ -5,6 +5,7 @@ import 'package:amplify_flutter/amplify_flutter.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:fpdart/fpdart.dart';
+import 'package:http/http.dart' as http;
 import 'package:uuid/uuid.dart';
 import 'package:whatfood/core/constants/costants.dart';
 import 'package:whatfood/core/type_def.dart';
@@ -157,9 +158,23 @@ class AuthRepository {
     }
   }
 
+  Future<void> deleteUnconfirmedUser(String email) async {
+    final response = await http.post(
+      Uri.parse(
+          'https://nnszaho8de.execute-api.eu-north-1.amazonaws.com//delete-user'),
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode({'username': email}),
+    );
+
+    if (response.statusCode == 200) {
+      print('User deleted');
+    } else {
+      print('Failed to delete user: ${response.body}');
+    }
+  }
+
   Future<void> saveUserData(User user) async {
     try {
-      // Definizione della mutation con variabili GraphQL
       const String graphQLDocument = '''
     mutation CreateUser(\$input: CreateUserInput!) {
       createUser(input: \$input) {
@@ -168,7 +183,6 @@ class AuthRepository {
     }
     ''';
 
-      // Costruzione dell'oggetto di variabili da passare alla mutation
       final Map<String, dynamic> variables = {
         "input": {
           "id": user.id,

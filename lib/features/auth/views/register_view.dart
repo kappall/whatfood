@@ -129,9 +129,8 @@ class _RegisterViewState extends ConsumerState<RegisterView> {
                               password: password,
                               name: name,
                             );
-
-                        if (!context.mounted) return;
                       } catch (e) {
+                        if (!context.mounted) return;
                         showSnackBar(
                             context, "Registration failed: ${e.toString()}");
                       }
