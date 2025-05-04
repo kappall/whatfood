@@ -1,26 +1,31 @@
 import 'package:flutter/material.dart';
 
 class IntollerancesList extends StatefulWidget {
-  final Set<String> intollerances;
+  final List<String> intollerances;
   const IntollerancesList({super.key, required this.intollerances});
 
   static const List<String> foodIntolerances = [
+    // Latticini e Proteine Animali
     "Milk",
     "Eggs",
     "Fish",
     "Shellfish",
+    "Mollusks",
+    "Crustaceans",
+    "Tree Nuts",
+
+    // Legumi, Cereali e Condimenti
     "Peanuts",
     "Soy",
     "Wheat",
     "Gluten",
-    "Tree Nuts",
     "Sesame",
     "Mustard",
     "Sulfites",
+
+    // Cereali e Frutti di Mare
     "Lupin",
     "Celery",
-    "Mollusks",
-    "Crustaceans",
     "Corn",
     "Rice",
     "Barley",
@@ -37,7 +42,7 @@ class _IntollerancesListState extends State<IntollerancesList>
   late AnimationController _animationController;
   final List<double> _scrollOffsets = [0, 0, 0];
   final List<bool> _isManualScrolling = [false, false, false];
-  final double _autoScrollSpeed = 0.6;
+  final double _autoScrollSpeed = 1;
   final List<double> _scrollSpeeds = [1, 1, 1];
 
   @override
@@ -133,7 +138,7 @@ class _IntollerancesListState extends State<IntollerancesList>
                     reverse: row == 1,
                     physics: const BouncingScrollPhysics(),
                     padding: const EdgeInsets.symmetric(horizontal: 24),
-                    itemCount: itemsPerRow * 4,
+                    itemCount: itemsPerRow,
                     itemBuilder: (context, index) {
                       final actualIndex =
                           (row * itemsPerRow + (index % itemsPerRow)) %

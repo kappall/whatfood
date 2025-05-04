@@ -1,88 +1,244 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_storage/firebase_storage.dart';
+import 'dart:async';
+import 'dart:convert';
+import 'package:amplify_flutter/amplify_flutter.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:fpdart/fpdart.dart';
-import 'package:whatfood/core/constants/firebase_constants.dart';
 import 'package:whatfood/core/failure.dart';
-import 'package:whatfood/core/providers/firebase_providers.dart';
-import 'package:whatfood/core/type_def.dart';
-import 'package:whatfood/models/recipe_model.dart';
+import 'package:whatfood/models/Recipe.dart';
+import 'package:whatfood/models/recipe_extensions.dart';
 
 final recipeRepositoryProvider = Provider((ref) {
-  return RecipeRepository(
-    firestore: ref.watch(firestoreProvider),
-    storage: ref.watch(storageProvider),
-  );
+  return RecipeRepository();
 });
 
 class RecipeRepository {
-  final FirebaseFirestore _firestore;
-  final FirebaseStorage _storage;
-  RecipeRepository(
-      {required FirebaseFirestore firestore, required FirebaseStorage storage})
-      : _firestore = firestore,
-        _storage = storage;
-
-  CollectionReference get _recipes =>
-      _firestore.collection(FirebaseConstants.recipesCollection);
-  CollectionReference get _comments =>
-      _firestore.collection(FirebaseConstants.commentsCollection);
-  CollectionReference get _users =>
-      _firestore.collection(FirebaseConstants.usersCollection);
-
-  FutureVoid addRecipe(Recipe recipe) async {
+  Future<Either<Failure, void>> addRecipe(Recipe recipe) async {
     try {
-      return right(_recipes.doc(recipe.id).set(recipe.toMap()));
-    } on FirebaseException catch (e) {
-      throw e.message!;
+      Map<String, Object?> recipeMap = {
+        "input": {
+          "id": recipe.id,
+          "title": recipe.title,
+          "coverImage": recipe.coverImage,
+          "description": recipe.description,
+          "ingredients": recipe.ingredients,
+          "instructions": recipe.instructions,
+          "servings": recipe.servings,
+          "cookTimeMinutes": recipe.cookTimeMinutes,
+          "createdAt": recipe.createdAt.toString(),
+          "likes": recipe.likes,
+          "uid": recipe.uid,
+          "userImage": recipe.userImage,
+          "username": recipe.username,
+        }
+      };
+
+      String graphQLDocument = '''
+          mutation CreateRecipe(\$input: CreateRecipeInput!) {
+            createRecipe(input: \$input) {
+              id
+            }
+          }
+        ''';
+      var operation = Amplify.API.mutate(
+        request: GraphQLRequest<String>(
+          document: graphQLDocument,
+          variables: recipeMap,
+        ),
+      );
+
+      final response = await operation.response;
+
+      if (response.errors.isNotEmpty) {
+        throw Exception(response.errors.first.message);
+      }
+      return right(null);
     } catch (e) {
       return left(Failure(e.toString()));
     }
   }
 
   Stream<List<Recipe>> fetchRecipes() {
-    return _recipes
-        .orderBy(
-          'createdAt',
-          descending: true,
-        )
-        .snapshots()
-        .map(
-          (snapshot) => snapshot.docs
-              .map(
-                (doc) => Recipe.fromMap(doc.data() as Map<String, dynamic>),
-              )
-              .toList(),
-        );
+    final controller = StreamController<List<Recipe>>();
+    var recipesQuery = '''
+        query ListRecipes {
+          listRecipes {
+            items {
+              ${RecipeGraphQLFields.graphQLFields}
+            }
+          }
+        }
+      ''';
+
+    final request = GraphQLRequest<String>(document: recipesQuery);
+    Amplify.API
+        .query(request: request)
+        .response
+        .then((response) {
+          if (response.errors.isNotEmpty) {
+            debugPrint("GraphQL Errors: ${response.errors}");
+            controller.addError(response.errors.first.message);
+            return;
+          }
+          if (response.data == null) {
+            controller.add([]);
+            return;
+          }
+          try {
+            final Map<String, dynamic> decoded =
+                jsonDecode(response.data!) as Map<String, dynamic>;
+            final List<dynamic> items =
+                decoded['listRecipes']['items'] as List<dynamic>;
+            final recipes = items.map((data) => Recipe.fromJson(data)).toList();
+
+            recipes.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+            controller.add(recipes);
+          } catch (e, stackTrace) {
+            debugPrint("Parse error: $e");
+            debugPrint("Stack trace: $stackTrace");
+            controller.addError('Error parsing posts: $e');
+          }
+        })
+        .whenComplete(() => controller.close())
+        .catchError((error) {
+          controller.addError(error);
+        });
+    return controller.stream;
   }
 
-  FutureVoid deleteRecipe(String id) async {
+  Future<Either<Failure, void>> deleteRecipe(String id) async {
     try {
-      await _storage.ref('recipes/$id').delete();
-      return right(_recipes.doc(id).delete());
-    } on FirebaseException catch (e) {
-      throw e.message!;
+      final request = GraphQLRequest<String>(
+        document: '''
+          mutation DeleteRecipe(\$input: DeleteRecipeInput!) {
+            deleteRecipe(input: \$input) {
+              ${RecipeGraphQLFields.graphQLFields}
+            }
+          }
+        ''',
+        variables: {
+          'input': {'id': id}
+        },
+      );
+      await Amplify.API.mutate(request: request).response;
+      return right(null);
     } catch (e) {
       return left(Failure(e.toString()));
     }
   }
 
-  void likeOrUnlike(Recipe recipe, String uid) async {
-    if (recipe.likes.contains(uid)) {
-      _recipes.doc(recipe.id).update({
-        'likes': FieldValue.arrayRemove([uid])
-      });
+  // Aggiorna i like di una ricetta tramite mutation GraphQL.
+  Future<void> likeOrUnlike(Recipe recipe, String uid) async {
+    final bool isLiked = recipe.likes.contains(uid);
+    if (isLiked) {
+      final request = GraphQLRequest<String>(
+        document: '''
+          mutation UnlikeRecipe(\$input: UnlikeRecipeInput!) {
+            unlikeRecipe(input: \$input) {
+              ${RecipeGraphQLFields.graphQLFields}
+            }
+          }
+        ''',
+        variables: {
+          'input': {'id': recipe.id, 'uid': uid}
+        },
+      );
+      await Amplify.API.mutate(request: request).response;
     } else {
-      _recipes.doc(recipe.id).update({
-        'likes': FieldValue.arrayUnion([uid])
-      });
+      final request = GraphQLRequest<String>(
+        document: '''
+          mutation LikeRecipe(\$input: LikeRecipeInput!) {
+            likeRecipe(input: \$input) {
+              ${RecipeGraphQLFields.graphQLFields}
+            }
+          }
+        ''',
+        variables: {
+          'input': {'id': recipe.id, 'uid': uid}
+        },
+      );
+      await Amplify.API.mutate(request: request).response;
     }
   }
 
   Stream<Recipe> getRecipeById(String id) {
-    return _recipes
-        .doc(id)
-        .snapshots()
-        .map((e) => Recipe.fromMap(e.data() as Map<String, dynamic>));
+    final controller = StreamController<Recipe>();
+    try {
+      String query = '''
+        query GetRecipe(\$id: ID!) {
+          getRecipe(id: \$id) {
+            ${RecipeGraphQLFields.graphQLFields}
+          }
+        }
+      ''';
+      final request = GraphQLRequest<String>(document: query);
+      Amplify.API.query(request: request).response.then((response) {
+        if (response.data == null) {
+          return;
+        }
+        try {
+          debugPrint(response.data);
+          var json = jsonDecode(response.data!)['getRecipe'];
+          final recipe = Recipe.fromJson(json);
+          controller.add(recipe);
+        } catch (e) {
+          debugPrint("Error parsing recipe data: $e");
+          controller.addError(e);
+        }
+      }).catchError((error) {
+        debugPrint("Error fetching user: $error");
+        controller.addError(error);
+      }).whenComplete(() {
+        controller.close();
+      });
+    } catch (e) {
+      controller.addError(e);
+      controller.close();
+    }
+    return controller.stream;
+  }
+
+  Future<Either<Failure, void>> updateRecipe(Recipe recipe) async {
+    try {
+      Map<String, Object?> recipeMap = {
+        "input": {
+          "id": recipe.id,
+          "title": recipe.title,
+          "coverImage": recipe.coverImage,
+          "description": recipe.description,
+          "ingredients": recipe.ingredients,
+          "instructions": recipe.instructions,
+          "servings": recipe.servings,
+          "cookTimeMinutes": recipe.cookTimeMinutes,
+          "createdAt": recipe.createdAt.toString(),
+          "likes": recipe.likes,
+          "uid": recipe.uid,
+          "userImage": recipe.userImage,
+          "username": recipe.username,
+        }
+      };
+      String graphQLDocument = '''
+          mutation UpdateRecipe(\$input: UpdateRecipeInput!) {
+            updateRecipe(input: \$input) {
+              id
+            }
+          }
+        ''';
+      var operation = Amplify.API.mutate(
+        request: GraphQLRequest<String>(
+          document: graphQLDocument,
+          variables: recipeMap,
+        ),
+      );
+
+      final response = await operation.response;
+
+      if (response.errors.isNotEmpty) {
+        throw Exception(response.errors.first.message);
+      }
+      return right(null);
+    } catch (e) {
+      return left(Failure(e.toString()));
+    }
   }
 }

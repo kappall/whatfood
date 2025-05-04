@@ -1,0 +1,76 @@
+
+type User @model @auth(rules: [{ allow: public, operations: [read,create,delete,update] }]){
+  id: String!
+  name: String!
+  profilePic: String!
+  banner: String!
+  preferences: [String]!
+  savedPosts: [String]!
+  bio: String
+  postsCount: Int!
+  dailyIntake: Int!
+  followers: [String]!
+  following: [String]!
+  email: String!
+}
+
+
+enum MealType {
+  BREAKFAST
+  LUNCH
+  DINNER
+  SNACK
+}
+
+type Post @model @auth(rules: [{ allow: public, operations: [read,create,delete,update] }]){
+  id: ID!
+  description: String!
+  likes: [String]!
+  username: String!
+  uid: String!
+  userImage: String!
+  type: String!
+  createdAt: AWSDateTime!
+  commentCount: Int!
+  imageUrl: String!
+  tags: [String]!
+  mealType: MealType!
+
+}
+
+type Comment @model @auth(rules: [{ allow: public, operations: [read,create,delete,update] }]){
+  id: ID!
+  text: String!
+  likes: [String]!
+  username: String!
+  uid: String!
+  postID: String!
+  userImage: String!
+  createdAt: AWSDateTime!
+
+}
+
+type Recipe @model @auth(rules: [{ allow: public, operations: [read,create,delete,update] }]){
+  id: ID!
+  title: String!
+  coverImage: String!
+  description: String!
+  ingredients: [String]!
+  instructions: [String]!
+  servings: String!
+  cookTimeMinutes: String!
+  createdAt: AWSDateTime!
+  likes: [String]!
+  uid: String!
+  userImage: String!
+  username: String!
+}
+
+type Report @model @auth(rules: [{ allow: public, operations: [read,create,delete,update] }]){
+id: ID!
+uid: String!
+nutritionalValues: AWSJSON!
+description: String!
+category: String!
+createdAt: AWSDateTime!
+}

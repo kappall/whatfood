@@ -1,9 +1,7 @@
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:routemaster/routemaster.dart';
 import 'package:whatfood/features/auth/views/login_view.dart';
 import 'package:whatfood/features/auth/views/register_view.dart';
-import 'package:whatfood/features/auth/views/verify_email_view.dart';
 import 'package:whatfood/features/post/views/add_post_type_view.dart';
 import 'package:whatfood/features/post/views/comment_view.dart';
 import 'package:whatfood/features/preferences/views/preferences_view.dart';
@@ -11,9 +9,10 @@ import 'package:whatfood/features/profile/views/edit_profile_view.dart';
 import 'package:whatfood/features/profile/views/user_posts_list_view.dart';
 import 'package:whatfood/features/profile/views/profile_view.dart';
 import 'package:whatfood/features/recipes/views/add_recipe_view.dart';
+import 'package:whatfood/features/recipes/views/edit_recipe_view.dart';
 import 'package:whatfood/pages/start_page.dart';
 
-final loggedInRoute = RouteMap(
+final loggedInRoutes = RouteMap(
   onUnknownRoute: (_) => MaterialPage(
       child: MainPage(
     isGuest: false,
@@ -34,9 +33,15 @@ final loggedInRoute = RouteMap(
               )
             : AddRecipeView()),
     '/add-recipe': (_) => const MaterialPage(child: AddRecipeView()),
-    '/edit_profile/:uid': (route) => MaterialPage(
+    '/edit-recipe/:recipe': (route) {
+      debugPrint(route.pathParameters['recipe']!);
+      return MaterialPage(
+          child:
+              EditRecipeView(encodedRecipe: route.pathParameters['recipe']!));
+    },
+    '/edit_profile/:user': (route) => MaterialPage(
             child: EditProfileView(
-          uid: route.pathParameters['uid']!,
+          encodedUser: route.pathParameters['user']!,
         )),
     '/:id/comments': (route) => MaterialPage(
             child: CommentsView(
@@ -52,8 +57,6 @@ final loggedInRoute = RouteMap(
           ),
         ),
     '/profile': (_) => MaterialPage(child: ProfileView()),
-    '/post_list/:uid': (route) =>
-        MaterialPage(child: PostList(uid: route.pathParameters['uid']!)),
     '/post_list/:uid/:postid/comments': (route) => MaterialPage(
             child: CommentsView(
           postId: route.pathParameters['postid']!,
@@ -61,21 +64,9 @@ final loggedInRoute = RouteMap(
   },
 );
 
-final loggedOutRoute = RouteMap(routes: {
-  '/': (_) {
-    final user = FirebaseAuth.instance.currentUser;
-    if (user == null) {
-      return const MaterialPage(child: LoginView());
-    } else {
-      return const MaterialPage(child: VerifyEmailView());
-    }
-  },
+final loggedOutRoutes = RouteMap(routes: {
+  '/': (_) => const MaterialPage(child: LoginView()),
   '/login': (_) => const MaterialPage(child: LoginView()),
-  '/preferences': (route) => const MaterialPage(
-          child: PreferencesView(
-        isFromProfile: false,
-      )),
-  '/verify-email': (_) => const MaterialPage(child: VerifyEmailView()),
   '/register': (_) => const MaterialPage(child: RegisterView()),
   '/main_guest': (_) => const MaterialPage(child: MainPage(isGuest: true)),
 });

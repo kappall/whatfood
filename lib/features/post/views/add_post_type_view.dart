@@ -4,9 +4,10 @@ import 'package:dotted_border/dotted_border.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:whatfood/core/common/loader.dart';
-import 'package:whatfood/core/common/meal_type_enum.dart';
 import 'package:whatfood/core/utils.dart';
+import 'package:whatfood/features/auth/controller/auth_controller.dart';
 import 'package:whatfood/features/post/controller/post_controller.dart';
+import 'package:whatfood/models/MealType.dart';
 
 class AddPostTypeView extends ConsumerStatefulWidget {
   final String type;
@@ -127,13 +128,19 @@ class _AddPostTypeViewState extends ConsumerState<AddPostTypeView> {
     }
     if (ref.read(postControllerProvider)) return;
 
-    ref.read(postControllerProvider.notifier).shareimagePost(
+    ref
+        .read(postControllerProvider.notifier)
+        .shareimagePost(
           context: context,
           description: descriptionController.text.trim(),
           tags: tags,
           image: image!,
           mealType: selectedMealType!,
-        );
+        )
+        .then((_) {
+      ref.invalidate(postsProvider);
+      ref.invalidate(getUserDataProvider);
+    });
   }
 
   Widget _buildMealTypeSelector() {
@@ -197,13 +204,13 @@ class _AddPostTypeViewState extends ConsumerState<AddPostTypeView> {
 
   IconData _getMealTypeIcon(MealType type) {
     switch (type) {
-      case MealType.breakfast:
+      case MealType.BREAKFAST:
         return Icons.breakfast_dining;
-      case MealType.lunch:
+      case MealType.LUNCH:
         return Icons.lunch_dining;
-      case MealType.dinner:
+      case MealType.DINNER:
         return Icons.dinner_dining;
-      case MealType.snack:
+      case MealType.SNACK:
         return Icons.cookie;
     }
   }

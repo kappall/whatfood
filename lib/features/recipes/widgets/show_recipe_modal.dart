@@ -1,24 +1,73 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:routemaster/routemaster.dart';
 import 'package:whatfood/button_styles.dart';
 import 'package:whatfood/features/auth/controller/auth_controller.dart';
+import 'package:whatfood/features/recipes/controller/recipe_controller.dart';
 import 'package:whatfood/features/scanner/utils/ingridients_processor.dart';
-import 'package:whatfood/models/recipe_model.dart';
+import 'package:whatfood/models/Recipe.dart';
 
 class RecipeModal extends ConsumerWidget {
   final Recipe recipe;
+  final String imageUrl;
+  const RecipeModal({super.key, required this.recipe, required this.imageUrl});
 
-  const RecipeModal({super.key, required this.recipe});
-
-  bool _hasIntolerance(String ingredient, Set<String> intolerances) {
+  bool _hasIntolerance(String ingredient, List<String> intolerances) {
     final lowerIngredient = ingredient.toLowerCase();
     return intolerances.any(
         (intolerance) => lowerIngredient.contains(intolerance.toLowerCase()));
   }
 
-  Widget _buildIngredientsList(Set<String> intolerances, BuildContext context,
-      Set<String> userIntolerances) {
+  void _editRecipe(BuildContext context, WidgetRef ref) {
+    final recipeJson = jsonEncode(recipe.toJson());
+    final encodedRecipe = Uri.encodeComponent(recipeJson);
+    Routemaster.of(context).pop();
+    Routemaster.of(context).push('/edit-recipe/$encodedRecipe');
+  }
+
+  void _showDeleteConfirmation(BuildContext context, WidgetRef ref) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: Colors.grey[900],
+        title: const Text(
+          'Delete Recipe',
+          style: TextStyle(color: Colors.white),
+        ),
+        content: const Text(
+          'Are you sure you want to delete this recipe?',
+          style: TextStyle(color: Colors.white70),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () {
+              ref
+                  .read(recipeControllerProvider.notifier)
+                  .deleteRecipe(recipe.id, context)
+                  .then((_) {
+                ref.invalidate(recipesProvider);
+                Navigator.of(context).pop();
+                Routemaster.of(context).popUntil((route) => route.path == '/');
+              });
+            },
+            child: const Text(
+              'Delete',
+              style: TextStyle(color: Colors.red),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildIngredientsList(List<String> intolerances, BuildContext context,
+      List<String> userIntolerances) {
     bool hasIntolerances = recipe.ingredients.any((ingredient) =>
         IngredientsProcessor.hasIntolerance(ingredient, userIntolerances));
 
@@ -69,7 +118,7 @@ class RecipeModal extends ConsumerWidget {
                   children: [
                     Padding(
                       padding:
-                          EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                          EdgeInsets.symmetric(horizontal: 8, vertical: 12),
                       child: Text(
                         'Ingredient',
                         style: TextStyle(
@@ -79,7 +128,9 @@ class RecipeModal extends ConsumerWidget {
                         ),
                       ),
                     ),
-                    Center(
+                    Padding(
+                      padding:
+                          EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                       child: Text(
                         'Status',
                         style: TextStyle(
@@ -101,10 +152,9 @@ class RecipeModal extends ConsumerWidget {
                     return TableRow(
                       children: [
                         Padding(
-                          padding: const EdgeInsets.only(
-                            left: 8,
-                            right: 0,
-                            top: 12,
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 12,
                           ),
                           child: Text(
                             trimmedIngredient,
@@ -116,36 +166,34 @@ class RecipeModal extends ConsumerWidget {
                         ),
                         Padding(
                           padding: const EdgeInsets.symmetric(
-                            horizontal: 8,
+                            horizontal: 16,
                             vertical: 12,
                           ),
-                          child: Center(
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Container(
-                                  width: 8,
-                                  height: 8,
-                                  decoration: BoxDecoration(
-                                    shape: BoxShape.circle,
-                                    color: hasIntolerance
-                                        ? Colors.red
-                                        : Colors.green,
-                                  ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Container(
+                                width: 8,
+                                height: 8,
+                                decoration: BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  color: hasIntolerance
+                                      ? Colors.red
+                                      : Colors.green,
                                 ),
-                                const SizedBox(width: 8),
-                                Text(
-                                  hasIntolerance ? 'Warning' : 'Safe',
-                                  style: TextStyle(
-                                    color: hasIntolerance
-                                        ? Colors.red
-                                        : Colors.green,
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 14,
-                                  ),
+                              ),
+                              const SizedBox(width: 8),
+                              Text(
+                                hasIntolerance ? 'Warning' : 'Safe',
+                                style: TextStyle(
+                                  color: hasIntolerance
+                                      ? Colors.red
+                                      : Colors.green,
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 14,
                                 ),
-                              ],
-                            ),
+                              ),
+                            ],
                           ),
                         ),
                       ],
@@ -163,9 +211,10 @@ class RecipeModal extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final user = ref.watch(userProvider)!;
-    final userIntolerances = user?.preferences ?? <String>{};
+    final userIntolerances = user.preferences;
     final hasIntolerances = recipe.ingredients
         .any((ingredient) => _hasIntolerance(ingredient, userIntolerances));
+    final isOwner = recipe.uid == user.id;
 
     return Material(
       color: const Color.fromARGB(255, 30, 30, 30),
@@ -190,10 +239,17 @@ class RecipeModal extends ConsumerWidget {
                   Stack(
                     children: [
                       Image.network(
-                        recipe.coverImage,
+                        imageUrl,
                         width: double.infinity,
                         height: 250,
                         fit: BoxFit.cover,
+                        errorBuilder: (BuildContext context, Object exception,
+                            StackTrace? stackTrace) {
+                          return Container(
+                            color: Colors.grey[300],
+                            child: const Icon(Icons.broken_image, size: 50),
+                          );
+                        },
                       ),
                       Positioned.fill(
                         child: DecoratedBox(
@@ -203,7 +259,7 @@ class RecipeModal extends ConsumerWidget {
                               end: Alignment.bottomCenter,
                               colors: [
                                 Colors.transparent,
-                                Colors.black.withOpacity(0.7),
+                                Colors.black.withValues(alpha: 0.7),
                               ],
                             ),
                           ),
@@ -242,6 +298,38 @@ class RecipeModal extends ConsumerWidget {
                           ],
                         ),
                       ),
+                      if (isOwner)
+                        Positioned(
+                          bottom: 16,
+                          right: 16,
+                          child: Container(
+                            decoration: BoxDecoration(
+                              color: Colors.black45,
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                IconButton(
+                                  icon: const Icon(
+                                    Icons.edit,
+                                    color: Colors.white,
+                                  ),
+                                  onPressed: () => _editRecipe(context, ref),
+                                ),
+                                IconButton(
+                                  icon: const Icon(
+                                    Icons.delete,
+                                    color: Colors.red,
+                                  ),
+                                  onPressed: () {
+                                    _showDeleteConfirmation(context, ref);
+                                  },
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
                     ],
                   ),
                   Padding(
@@ -249,7 +337,6 @@ class RecipeModal extends ConsumerWidget {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        // Ingredients Section
                         const Text(
                           'Ingredients',
                           style: TextStyle(

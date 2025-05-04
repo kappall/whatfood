@@ -60,36 +60,59 @@ class _AddRecipeViewState extends ConsumerState<AddRecipeView> {
     _instructions[index] = value;
   }
 
-  bool shareRecipe(BuildContext context) {
+  void _removeIngredient(int index) {
+    if (_ingredients.length > 1) {
+      setState(() {
+        _ingredients.removeAt(index);
+      });
+    }
+  }
+
+  void _removeInstruction(int index) {
+    if (_instructions.length > 1) {
+      setState(() {
+        _instructions.removeAt(index);
+      });
+    }
+  }
+
+  void shareRecipe(BuildContext context) {
     if (_ingredients.isEmpty || _ingredients[0].isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('At least one ingredient is required.')),
       );
-      return false;
+      return;
     }
 
     if (_instructions.isEmpty || _instructions[0].isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('At least one instruction is required.')),
       );
-      return false;
+      return;
     }
 
     if (_image != null) {
-      ref.read(recipeControllerProvider.notifier).shareRecipe(
-          context: context,
-          title: _titleController.text.trim(),
-          description: _descriptionController.text.trim(),
-          instructions: _instructions,
-          ingredients: _ingredients,
-          servings: _servingsController.text.trim(),
-          cookTimeMinutes: _cookTimeController.text.trim(),
-          image: _image!);
+      ref
+          .read(recipeControllerProvider.notifier)
+          .shareRecipe(
+              context: context,
+              title: _titleController.text.trim(),
+              description: _descriptionController.text.trim(),
+              instructions: _instructions,
+              ingredients: _ingredients,
+              servings: _servingsController.text.trim(),
+              cookTimeMinutes: _cookTimeController.text.trim(),
+              image: _image!)
+          .then((_) {
+        if (mounted) {
+          // Check if widget is still mounted
+          ref.invalidate(recipesProvider);
+          Navigator.of(context).pop();
+        }
+      });
     } else {
       showSnackBar(context, "You must select an image");
-      return false;
     }
-    return true;
   }
 
   @override
@@ -106,9 +129,7 @@ class _AddRecipeViewState extends ConsumerState<AddRecipeView> {
           IconButton(
             onPressed: () {
               if (!isLoading && _formKey.currentState!.validate()) {
-                if (shareRecipe(context)) {
-                  Navigator.pop(context);
-                }
+                shareRecipe(context);
               }
             },
             icon: isLoading
@@ -230,14 +251,29 @@ class _AddRecipeViewState extends ConsumerState<AddRecipeView> {
                 itemBuilder: (context, index) {
                   return Padding(
                     padding: const EdgeInsets.only(bottom: 8),
-                    child: TextFormField(
-                      autocorrect: false,
-                      initialValue: _ingredients[index],
-                      decoration: InputDecoration(
-                        labelText: 'Ingredient ${index + 1}',
-                        border: const OutlineInputBorder(),
-                      ),
-                      onChanged: (value) => _updateIngredient(index, value),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: TextFormField(
+                            autocorrect: false,
+                            initialValue: _ingredients[index],
+                            decoration: InputDecoration(
+                              labelText: 'Ingredient ${index + 1}',
+                              border: const OutlineInputBorder(),
+                            ),
+                            onChanged: (value) =>
+                                _updateIngredient(index, value),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        IconButton(
+                          icon: const Icon(Icons.remove_circle_outline),
+                          color: Colors.red,
+                          onPressed: _ingredients.length > 1
+                              ? () => _removeIngredient(index)
+                              : null,
+                        ),
+                      ],
                     ),
                   );
                 },
@@ -257,15 +293,31 @@ class _AddRecipeViewState extends ConsumerState<AddRecipeView> {
                 itemBuilder: (context, index) {
                   return Padding(
                     padding: const EdgeInsets.only(bottom: 8),
-                    child: TextFormField(
-                      autocorrect: false,
-                      initialValue: _instructions[index],
-                      decoration: InputDecoration(
-                        labelText: 'Step ${index + 1}',
-                        border: const OutlineInputBorder(),
-                      ),
-                      maxLines: 2,
-                      onChanged: (value) => _updateInstruction(index, value),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Expanded(
+                          child: TextFormField(
+                            autocorrect: false,
+                            initialValue: _instructions[index],
+                            decoration: InputDecoration(
+                              labelText: 'Step ${index + 1}',
+                              border: const OutlineInputBorder(),
+                            ),
+                            maxLines: 2,
+                            onChanged: (value) =>
+                                _updateInstruction(index, value),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        IconButton(
+                          icon: const Icon(Icons.remove_circle_outline),
+                          color: Colors.red,
+                          onPressed: _instructions.length > 1
+                              ? () => _removeInstruction(index)
+                              : null,
+                        ),
+                      ],
                     ),
                   );
                 },

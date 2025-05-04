@@ -11,20 +11,20 @@ class LoginView extends ConsumerStatefulWidget {
 }
 
 class _LoginViewState extends ConsumerState<LoginView> {
-  late final TextEditingController _email;
-  late final TextEditingController _password;
+  late final TextEditingController _emailController;
+  late final TextEditingController _passwordController;
 
   @override
   void initState() {
-    _email = TextEditingController();
-    _password = TextEditingController();
+    _emailController = TextEditingController();
+    _passwordController = TextEditingController();
     super.initState();
   }
 
   @override
   void dispose() {
-    _email.dispose();
-    _password.dispose();
+    _emailController.dispose();
+    _passwordController.dispose();
     super.dispose();
   }
 
@@ -42,9 +42,9 @@ class _LoginViewState extends ConsumerState<LoginView> {
           backgroundColor: Colors.green,
           centerTitle: true,
         ),
-        body: Padding(
+        body: Center(child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 20.0),
-          child: Column(
+          child: SingleChildScrollView(child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
@@ -62,7 +62,7 @@ class _LoginViewState extends ConsumerState<LoginView> {
               const SizedBox(height: 20),
               TextField(
                 style: const TextStyle(color: Colors.black),
-                controller: _email,
+                controller: _emailController,
                 enableSuggestions: true,
                 autocorrect: false,
                 keyboardType: TextInputType.emailAddress,
@@ -80,7 +80,7 @@ class _LoginViewState extends ConsumerState<LoginView> {
               const SizedBox(height: 15),
               TextField(
                 style: const TextStyle(color: Colors.black),
-                controller: _password,
+                controller: _passwordController,
                 obscureText: true,
                 enableSuggestions: false,
                 autocorrect: false,
@@ -98,8 +98,8 @@ class _LoginViewState extends ConsumerState<LoginView> {
               const SizedBox(height: 30),
               FilledButton(
                 onPressed: () async {
-                  final email = _email.text.trim();
-                  final password = _password.text.trim();
+                  final email = _emailController.text.trim();
+                  final password = _passwordController.text.trim();
                   ref
                       .read(authControllerProvider.notifier)
                       .signInWithEmailAndPassword(
@@ -129,7 +129,7 @@ class _LoginViewState extends ConsumerState<LoginView> {
               ),
             ],
           ),
-        ),
+        ),),),
       ),
     );
   }

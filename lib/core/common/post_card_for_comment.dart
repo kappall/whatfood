@@ -1,12 +1,16 @@
+import 'package:amplify_flutter/amplify_flutter.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:routemaster/routemaster.dart';
 import 'package:whatfood/button_styles.dart';
+import 'package:whatfood/core/common/error_text.dart';
+import 'package:whatfood/core/common/loader.dart';
 import 'package:whatfood/features/auth/controller/auth_controller.dart';
 import 'package:whatfood/features/post/controller/post_controller.dart';
-import 'package:whatfood/models/post_model.dart';
+import 'package:whatfood/models/Post.dart';
 
-class PostCardForComment extends ConsumerWidget {
+class PostCardForComment extends ConsumerStatefulWidget {
   final Post post;
   final bool isCommenting;
   const PostCardForComment({
@@ -15,17 +19,45 @@ class PostCardForComment extends ConsumerWidget {
     this.isCommenting = false,
   });
 
-  void deletePost(WidgetRef ref, BuildContext context) async {
-    ref.read(postControllerProvider.notifier).deletePost(post, context);
+  @override
+  ConsumerState<ConsumerStatefulWidget> createState() =>
+      _PostCardForCommentState();
+}
+
+class _PostCardForCommentState extends ConsumerState<PostCardForComment> {
+  late Post _post;
+  @override
+  void initState() {
+    _post = widget.post;
+    super.initState();
   }
 
-  void likeOrUnlikePost(WidgetRef ref) async {
-    ref.read(postControllerProvider.notifier).likeOrUnlike(post);
+  void deletePost(WidgetRef ref, BuildContext context) async {
+    ref.read(postControllerProvider.notifier).deletePost(_post, context);
+  }
+
+  void likeOrUnlikePost() {
+    final user = ref.read(userProvider)!;
+    if (user.id == _post.id) {
+      return;
+    }
+    ref.read(postControllerProvider.notifier).likeOrUnlike(_post, user.id);
+    setState(() {
+      if (_post.likes.contains(user.id)) {
+        _post = _post.copyWith(
+          likes: List<String>.from(_post.likes)..remove(user.id),
+        );
+      } else {
+        _post = _post.copyWith(
+          likes: List<String>.from(_post.likes)..add(user.id),
+        );
+      }
+    });
   }
 
   void navigateToUser(BuildContext context) {
     try {
-      Routemaster.of(context).push('/user_page/${post.uid}');
+      Routemaster.of(context).push('/user_page/${_post.uid}');
     } catch (e) {
       debugPrint(e.toString());
     }
@@ -75,102 +107,123 @@ class PostCardForComment extends ConsumerWidget {
   }
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
     final user = ref.watch(userProvider)!;
-    return GestureDetector(
-      onDoubleTap: () => likeOrUnlikePost(ref),
-      child: Card(
-        margin: EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-        elevation: 4,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
-        ),
-        child: Padding(
-          padding: EdgeInsets.symmetric(vertical: 16, horizontal: 8),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Row(
-                    children: [
-                      GestureDetector(
-                        onTap: () => navigateToUser(context),
-                        child: CircleAvatar(
-                          backgroundImage: NetworkImage(post.userImage),
-                          radius: 24,
-                        ),
+    return Card(
+      margin: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      elevation: 4,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Padding(
+        padding: EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Row(
+                  children: [
+                    GestureDetector(
+                      onTap: () => navigateToUser(context),
+                      child: CircleAvatar(
+                        backgroundImage: NetworkImage(_post.userImage),
+                        radius: 24,
                       ),
-                      SizedBox(width: 12),
-                      Text(
-                        post.username,
-                        style: Theme.of(context).textTheme.headlineSmall,
-                      ),
-                    ],
-                  ),
-                  popUpMenu(context, ref, post.uid == user.uid)
-                ],
-              ),
-              SizedBox(height: 12),
-              Text(
-                post.description,
-                style: Theme.of(context)
-                    .textTheme
-                    .headlineSmall
-                    ?.copyWith(fontWeight: FontWeight.w600),
-              ),
-              SizedBox(height: 12),
-              ClipRRect(
-                borderRadius: BorderRadius.circular(16),
-                child: Image.network(
-                  post.imageUrl,
-                  fit: BoxFit.cover,
-                  width: double.infinity,
-                  height: MediaQuery.of(context).size.height * 0.35,
+                    ),
+                    SizedBox(width: 12),
+                    Text(
+                      _post.username,
+                      style: Theme.of(context).textTheme.headlineSmall,
+                    ),
+                  ],
                 ),
-              ),
-              SizedBox(height: 12),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Row(
-                    children: [
-                      IconButton(
-                        icon: Icon(
-                          post.likes.contains(ref.watch(userProvider)?.uid)
-                              ? Icons.favorite
-                              : Icons.favorite_outline,
-                          color:
-                              post.likes.contains(ref.watch(userProvider)?.uid)
-                                  ? Colors.red
-                                  : Colors.white,
-                          size: 30,
-                        ),
-                        onPressed: () => likeOrUnlikePost(ref),
-                      ),
-                      Text(
-                        post.likes.isEmpty ? 'Like' : '${post.likes.length}',
-                        style: TextStyle(fontSize: 16),
-                      ),
-                    ],
+                popUpMenu(context, ref, _post.uid == user.id)
+              ],
+            ),
+            SizedBox(height: 12),
+            Text(
+              _post.description,
+              style: Theme.of(context)
+                  .textTheme
+                  .headlineSmall
+                  ?.copyWith(fontWeight: FontWeight.w600),
+            ),
+            SizedBox(height: 12),
+            FutureBuilder(
+              future: Amplify.Storage.getUrl(
+                path: StoragePath.fromString(_post.imageUrl),
+              ).result,
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return const Loader();
+                }
+                if (!snapshot.hasData) {
+                  return const Loader();
+                }
+                String imageUrl = snapshot.data!.url.toString();
+                return ClipRRect(
+                  borderRadius: BorderRadius.circular(16),
+                  child: Image.network(
+                    imageUrl,
+                    fit: BoxFit.cover,
+                    width: double.infinity,
+                    height: MediaQuery.of(context).size.height * 0.35,
+                    errorBuilder: (BuildContext context, Object exception,
+                        StackTrace? stackTrace) {
+                      return Container(
+                        color: Colors.grey[300],
+                        child: const Icon(Icons.broken_image, size: 50),
+                      );
+                    },
                   ),
-                  Row(
-                    children: [
-                      IconButton(
-                        icon: Icon(Icons.comment, size: 28),
-                        onPressed: () {},
+                );
+              },
+            ),
+            SizedBox(height: 12),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Row(
+                  children: [
+                    IconButton(
+                      icon: Icon(
+                        _post.likes.contains(user.id)
+                            ? Icons.favorite
+                            : Icons.favorite_outline,
+                        color: _post.likes.contains(user.id)
+                            ? Colors.red
+                            : Colors.white,
                       ),
-                      Text(
-                        '${post.commentCount}',
-                        style: TextStyle(fontSize: 16),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ],
-          ),
+                      onPressed: () {
+                        likeOrUnlikePost();
+                      },
+                    ),
+                    Text(
+                      _post.likes.isEmpty ? 'Like' : '${_post.likes.length}',
+                      style: TextStyle(fontSize: 16),
+                    ),
+                  ],
+                ),
+                Row(
+                  children: [
+                    FaIcon(
+                      FontAwesomeIcons.commentDots,
+                      color: Colors.white,
+                    ),
+                    SizedBox(
+                      width: 8,
+                    ),
+                    Text(
+                      '${_post.commentCount}',
+                      style: TextStyle(fontSize: 16),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ],
         ),
       ),
     );

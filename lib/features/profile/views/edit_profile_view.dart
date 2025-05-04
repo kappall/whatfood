@@ -1,38 +1,48 @@
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:whatfood/core/common/error_text.dart';
-import 'package:whatfood/core/common/loader.dart';
 import 'package:whatfood/core/utils.dart';
 import 'package:whatfood/features/auth/controller/auth_controller.dart';
+
 import 'package:whatfood/features/profile/controller/user_profile_controller.dart';
+import 'package:whatfood/models/User.dart';
 
 class EditProfileView extends ConsumerStatefulWidget {
-  final String uid;
+  final String encodedUser;
   const EditProfileView({
     super.key,
-    required this.uid,
+    required this.encodedUser,
   });
 
   @override
-  ConsumerState<ConsumerStatefulWidget> createState() =>
-      _EditProfileViewState();
+  ConsumerState<EditProfileView> createState() => _EditProfileViewState();
 }
 
 class _EditProfileViewState extends ConsumerState<EditProfileView> {
   File? profileFile;
-  late TextEditingController nameController;
-  late TextEditingController bioController;
-  late TextEditingController dailyIntakeController;
+  final TextEditingController nameController = TextEditingController();
+  final TextEditingController bioController = TextEditingController();
+  final TextEditingController dailyIntakeController = TextEditingController();
+  late User user;
 
   @override
   void initState() {
     super.initState();
-    nameController = TextEditingController(text: ref.read(userProvider)!.name);
-    bioController = TextEditingController(text: ref.read(userProvider)!.bio);
-    dailyIntakeController = TextEditingController(
-        text: ref.read(userProvider)!.dailyIntake.toString());
+    _loadUserData();
+  }
+
+  Future<void> _loadUserData() async {
+    final decodedString = Uri.decodeComponent(widget.encodedUser);
+    final jsonMap = jsonDecode(decodedString);
+    user = User.fromJson(jsonMap as Map<String, dynamic>);
+
+    setState(() {
+      nameController.text = user.name;
+      bioController.text = user.bio ?? '';
+      dailyIntakeController.text = user.dailyIntake.toString();
+    });
   }
 
   @override
@@ -55,11 +65,14 @@ class _EditProfileViewState extends ConsumerState<EditProfileView> {
 
   void save() {
     ref.read(userProfileControllerProvider.notifier).updateUserProfile(
-        context: context,
-        name: nameController.text.trim(),
-        bio: bioController.text.trim(),
-        dailyIntake: int.parse(dailyIntakeController.text.trim()),
-        profileFile: profileFile);
+          context: context,
+          name: nameController.text.trim(),
+          bio: bioController.text.trim(),
+          dailyIntake: int.parse(dailyIntakeController.text.trim()),
+          profileFile: profileFile,
+          user: user,
+        );
+    ref.invalidate(getUserDataProvider);
   }
 
   Widget _buildTextField({
@@ -105,156 +118,158 @@ class _EditProfileViewState extends ConsumerState<EditProfileView> {
     return SafeArea(
       child: GestureDetector(
         onTap: () => FocusScope.of(context).unfocus(),
-        child: ref.watch(getUserDataProvider(widget.uid)).when(
-              data: (user) => Scaffold(
-                appBar: AppBar(
-                  title: const Text('Edit Profile'),
-                  centerTitle: true,
-                  actions: [
-                    TextButton.icon(
-                      onPressed: save,
-                      icon: const Icon(Icons.check, color: Colors.indigoAccent),
-                      label: const Text(
-                        'Save',
-                        style: TextStyle(color: Colors.indigoAccent),
-                      ),
-                    ),
-                  ],
-                ),
-                body: Container(
-                  decoration: BoxDecoration(),
-                  child: SingleChildScrollView(
-                    padding: const EdgeInsets.all(16.0),
-                    child: Column(
-                      children: [
-                        Stack(
-                          children: [
-                            Container(
-                              height: 150,
-                              width: 150,
-                              decoration: BoxDecoration(
-                                shape: BoxShape.circle,
-                                border: Border.all(
-                                  color: Theme.of(context).primaryColor,
-                                  width: 2,
-                                ),
-                              ),
-                              child: ClipOval(
-                                child: profileFile != null
-                                    ? Image.file(
-                                        profileFile!,
-                                        fit: BoxFit.cover,
-                                      )
-                                    : Image.network(
-                                        user.profilePic,
-                                        fit: BoxFit.cover,
-                                      ),
-                              ),
-                            ),
-                            Positioned(
-                              bottom: 0,
-                              right: 0,
-                              child: GestureDetector(
-                                onTap: selectProfileImage,
-                                child: Container(
-                                  padding: const EdgeInsets.all(8),
-                                  decoration: BoxDecoration(
-                                    color: Theme.of(context).primaryColor,
-                                    shape: BoxShape.circle,
-                                  ),
-                                  child: const Icon(
-                                    Icons.camera_alt,
-                                    color: Colors.indigo,
-                                    size: 20,
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 64),
-                        Stack(
-                          children: [
-                            Positioned(
-                              child: _buildTextField(
-                                controller: nameController,
-                                label: 'Username',
-                                hint: 'Enter your username',
-                              ),
-                            ),
-                            Positioned(
-                              right: 0,
-                              left: 0,
-                              bottom: 1,
-                              child: Divider(
-                                color: Colors.white,
-                                thickness: 2,
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(
-                          height: 16,
-                        ),
-                        Stack(
-                          children: [
-                            _buildTextField(
-                              controller: bioController,
-                              label: 'Bio',
-                              hint: 'Tell us about yourself',
-                              maxLines: 3,
-                              maxLength: 100,
-                            ),
-                            Positioned(
-                              right: 0,
-                              left: 0,
-                              bottom: 1,
-                              child: Divider(
-                                color: Colors.white,
-                                thickness: 2,
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(
-                          height: 16,
-                        ),
-                        Stack(
-                          children: [
-                            _buildTextField(
-                              controller: dailyIntakeController,
-                              label: 'Dayly goal',
-                              hint: 'Enter your daily goal',
-                              suffixText: 'kcal',
-                              keyboardType:
-                                  const TextInputType.numberWithOptions(
-                                decimal: true,
-                                signed: false,
-                              ),
-                              maxLength: 4,
-                              enableInteractiveSelection: false,
-                            ),
-                            Positioned(
-                              right: 0,
-                              left: 0,
-                              bottom: 1,
-                              child: Divider(
-                                color: Colors.white,
-                                thickness: 2,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
-                  ),
+        child: Scaffold(
+          appBar: AppBar(
+            title: const Text('Edit Profile'),
+            centerTitle: true,
+            actions: [
+              TextButton.icon(
+                onPressed: save,
+                icon: const Icon(Icons.check, color: Colors.indigoAccent),
+                label: const Text(
+                  'Save',
+                  style: TextStyle(color: Colors.indigoAccent),
                 ),
               ),
-              loading: () => const Loader(),
-              error: (error, stackTrace) => ErrorText(
-                error: error.toString(),
+            ],
+          ),
+          body: Container(
+            decoration: BoxDecoration(),
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                children: [
+                  Stack(
+                    children: [
+                      Container(
+                        height: 150,
+                        width: 150,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          border: Border.all(
+                            color: Theme.of(context).primaryColor,
+                            width: 2,
+                          ),
+                        ),
+                        child: ClipOval(
+                          child: profileFile != null
+                              ? Image.file(
+                                  profileFile!,
+                                  fit: BoxFit.cover,
+                                )
+                              : Image.network(
+                                  user.profilePic,
+                                  fit: BoxFit.cover,
+                                  errorBuilder: (BuildContext context,
+                                      Object exception,
+                                      StackTrace? stackTrace) {
+                                    return Container(
+                                      color: Colors.grey[300],
+                                      child: const Icon(Icons.broken_image,
+                                          size: 50),
+                                    );
+                                  },
+                                ),
+                        ),
+                      ),
+                      Positioned(
+                        bottom: 0,
+                        right: 0,
+                        child: GestureDetector(
+                          onTap: selectProfileImage,
+                          child: Container(
+                            padding: const EdgeInsets.all(8),
+                            decoration: BoxDecoration(
+                              color: Theme.of(context).primaryColor,
+                              shape: BoxShape.circle,
+                            ),
+                            child: const Icon(
+                              Icons.camera_alt,
+                              color: Colors.indigo,
+                              size: 20,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 64),
+                  Stack(
+                    children: [
+                      Positioned(
+                        child: _buildTextField(
+                          controller: nameController,
+                          label: 'Username',
+                          hint: 'Enter your username',
+                        ),
+                      ),
+                      Positioned(
+                        right: 0,
+                        left: 0,
+                        bottom: 1,
+                        child: Divider(
+                          color: Colors.white,
+                          thickness: 2,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(
+                    height: 16,
+                  ),
+                  Stack(
+                    children: [
+                      _buildTextField(
+                        controller: bioController,
+                        label: 'Bio',
+                        hint: 'Tell us about yourself',
+                        maxLines: 3,
+                        maxLength: 100,
+                      ),
+                      Positioned(
+                        right: 0,
+                        left: 0,
+                        bottom: 1,
+                        child: Divider(
+                          color: Colors.white,
+                          thickness: 2,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(
+                    height: 16,
+                  ),
+                  Stack(
+                    children: [
+                      _buildTextField(
+                        controller: dailyIntakeController,
+                        label: 'Dayly goal',
+                        hint: 'Enter your daily goal',
+                        suffixText: 'kcal',
+                        keyboardType: const TextInputType.numberWithOptions(
+                          decimal: true,
+                          signed: false,
+                        ),
+                        maxLength: 4,
+                        enableInteractiveSelection: false,
+                      ),
+                      Positioned(
+                        right: 0,
+                        left: 0,
+                        bottom: 1,
+                        child: Divider(
+                          color: Colors.white,
+                          thickness: 2,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
               ),
             ),
+          ),
+        ),
       ),
     );
   }

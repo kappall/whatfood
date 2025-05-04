@@ -8,7 +8,7 @@ import 'package:whatfood/features/scanner/widgets/nutriscore_widget.dart';
 import 'package:whatfood/features/scanner/widgets/nutrition_table.dart';
 import 'package:whatfood/features/scanner/utils/ingridients_processor.dart';
 
-class ProductModal extends ConsumerWidget {
+class ProductModal extends ConsumerStatefulWidget {
   final Map<String, dynamic> productData;
   final int quantity;
   final List<String> processedIngredients;
@@ -24,17 +24,48 @@ class ProductModal extends ConsumerWidget {
     required this.unhealthyIngredients,
   });
 
+  @override
+  ConsumerState<ProductModal> createState() => _ProductModalState();
+}
+
+class _ProductModalState extends ConsumerState<ProductModal> {
+  bool? _hasIntolerances;
+
+  @override
+  void initState() {
+    super.initState();
+    _translateIngredients();
+  }
+
+  Future<void> _translateIngredients() async {
+    if (widget.productData['ingredients_text'] != null) {
+      final ingredients =
+          await IngredientsProcessor.cleanAndTranslateIngredients(
+              widget.productData['ingredients_text_en'] ??
+                  widget.productData['ingredients_text']);
+
+      if (mounted) {
+        setState(() {
+          _hasIntolerances = ingredients.split(RegExp(r',\s*(?![^()]*\))')).any(
+              (ingredient) => IngredientsProcessor.hasIntolerance(
+                  ingredient.trim(),
+                  ref.read(userProvider)?.preferences ?? <String>[]));
+        });
+      }
+    }
+  }
+
   Widget _buildIngredientsList(BuildContext context) {
-    if (processedIngredients.isEmpty) {
+    if (widget.processedIngredients.isEmpty) {
       return const Text(
         'No ingredients available',
         style: TextStyle(fontSize: 16),
       );
     }
 
-    final chips = processedIngredients.map((ingredient) {
-      final isIntolerable = intolerableIngredients.contains(ingredient);
-      final isUnhealthy = unhealthyIngredients.contains(ingredient);
+    final chips = widget.processedIngredients.map((ingredient) {
+      final isIntolerable = widget.intolerableIngredients.contains(ingredient);
+      final isUnhealthy = widget.unhealthyIngredients.contains(ingredient);
 
       return Container(
         decoration: BoxDecoration(
@@ -61,7 +92,7 @@ class ProductModal extends ConsumerWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        if (intolerableIngredients.isNotEmpty)
+        if (widget.intolerableIngredients.isNotEmpty)
           Container(
             margin: const EdgeInsets.only(bottom: 16),
             padding: const EdgeInsets.all(12),
@@ -103,9 +134,9 @@ class ProductModal extends ConsumerWidget {
       context: context,
       builder: (context) => AddProductDialog(
         productName:
-            productData['product_name'] ?? 'Product Name not available',
-        nutritionalValues: productData['nutriments'],
-        totalGrams: quantity,
+            widget.productData['product_name'] ?? 'Product Name not available',
+        nutritionalValues: widget.productData['nutriments'],
+        totalGrams: widget.quantity,
       ),
     );
   }
@@ -119,27 +150,13 @@ class ProductModal extends ConsumerWidget {
   }
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final user = ref.watch(userProvider);
-    final userIntolerances = user?.preferences ?? <String>{};
-
-    // Check if product contains any intolerant ingredients
-    bool hasIntolerances = false;
-    if (productData['ingredients_text'] != null) {
-      final ingredients = IngredientsProcessor.cleanIngredients(
-              productData['ingredients_text_en'] ??
-                  productData['ingredients_text'])
-          .split(RegExp(r',\s*(?![^()]*\))'));
-
-      hasIntolerances = ingredients.any((ingredient) =>
-          IngredientsProcessor.hasIntolerance(ingredient, userIntolerances));
-    }
-
+  Widget build(BuildContext context) {
+    debugPrint("here modal");
     return Material(
       color: Theme.of(context).scaffoldBackgroundColor,
       shape: RoundedRectangleBorder(
         borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
-        side: hasIntolerances
+        side: _hasIntolerances ?? false
             ? const BorderSide(color: Colors.red, width: 6)
             : BorderSide.none,
       ),
@@ -167,25 +184,32 @@ class ProductModal extends ConsumerWidget {
                         borderRadius: BorderRadius.circular(10),
                       ),
                     ),
-                    if (productData['image_url']?.isNotEmpty ?? false)
+                    if (widget.productData['image_url']?.isNotEmpty ?? false)
                       ClipRRect(
                         borderRadius: BorderRadius.circular(10),
                         child: Image.network(
-                          productData['image_url']!,
+                          widget.productData['image_url']!,
                           height: 150,
                           fit: BoxFit.cover,
+                          errorBuilder: (BuildContext context, Object exception,
+                              StackTrace? stackTrace) {
+                            return Container(
+                              color: Colors.grey[300],
+                              child: const Icon(Icons.broken_image, size: 50),
+                            );
+                          },
                         ),
                       ),
-                    if (productData['nutriscore_grade'] != null)
+                    if (widget.productData['nutriscore_grade'] != null)
                       Padding(
                         padding: const EdgeInsets.symmetric(vertical: 8),
                         child: NutriScoreWidget(
-                          grade: productData['nutriscore_grade'],
+                          grade: widget.productData['nutriscore_grade'],
                         ),
                       ),
                     const SizedBox(height: 16),
                     Text(
-                      '${productData['product_name'] ?? 'Product Name not available'} ${productData['product_name'] != null && productData['product_name']!.isNotEmpty ? '${quantity}g' : ''}',
+                      '${widget.productData['product_name'] ?? 'Product Name not available'} ${widget.productData['product_name'] != null && widget.productData['product_name']!.isNotEmpty ? '${widget.quantity}g' : ''}',
                       style: const TextStyle(
                         fontSize: 22,
                         fontWeight: FontWeight.bold,
@@ -193,9 +217,9 @@ class ProductModal extends ConsumerWidget {
                       textAlign: TextAlign.center,
                     ),
                     const SizedBox(height: 8),
-                    if (productData['brands']?.isNotEmpty ?? false)
+                    if (widget.productData['brands']?.isNotEmpty ?? false)
                       Text(
-                        'Brand: ${productData['brands']}',
+                        'Brand: ${widget.productData['brands']}',
                         style: const TextStyle(
                           fontSize: 16,
                           color: Colors.white60,
@@ -203,7 +227,7 @@ class ProductModal extends ConsumerWidget {
                         textAlign: TextAlign.center,
                       ),
                     const SizedBox(height: 16),
-                    if (productData['ingredients_text'] != null)
+                    if (widget.productData['ingredients_text'] != null)
                       Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
@@ -217,7 +241,7 @@ class ProductModal extends ConsumerWidget {
                         ],
                       ),
                     const SizedBox(height: 16),
-                    NutritionTable(data: productData["nutriments"]),
+                    NutritionTable(data: widget.productData["nutriments"]),
                     const SizedBox(height: 16),
                     ElevatedButton(
                       onPressed: () async {

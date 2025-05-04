@@ -6,7 +6,7 @@ import 'package:whatfood/core/common/loader.dart';
 import 'package:whatfood/core/common/post_card_for_comment.dart';
 import 'package:whatfood/features/post/controller/post_controller.dart';
 import 'package:whatfood/features/post/widgets/comment_card.dart';
-import 'package:whatfood/models/post_model.dart';
+import 'package:whatfood/models/Post.dart';
 
 class CommentsView extends ConsumerStatefulWidget {
   final String postId;
@@ -30,13 +30,12 @@ class _CommentsViewState extends ConsumerState<CommentsView> {
   }
 
   void addComment(Post post) {
-    if (commentController.text.trim().isNotEmpty) {
-      ref.read(postControllerProvider.notifier).addComment(
-            context: context,
-            content: commentController.text.trim(),
-            postId: post.id,
-          );
-    }
+    ref.read(postControllerProvider.notifier).addComment(
+          context: context,
+          content: commentController.text.trim(),
+          postId: post.id,
+          commentCount: post.commentCount,
+        );
     commentController.clear();
   }
 
@@ -104,7 +103,14 @@ class _CommentsViewState extends ConsumerState<CommentsView> {
         padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8)
             .copyWith(bottom: MediaQuery.of(context).viewInsets.bottom + 8),
         decoration: BoxDecoration(
-          color: Theme.of(context).appBarTheme.backgroundColor,
+          color: Theme.of(context).scaffoldBackgroundColor,
+          boxShadow: [
+            BoxShadow(
+              color: Colors.green,
+              blurRadius: 8,
+              offset: Offset(0, -10),
+            ),
+          ],
         ),
         child: Row(
           children: [

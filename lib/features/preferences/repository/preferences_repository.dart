@@ -1,47 +1,37 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
+import 'dart:convert';
+
+import 'package:amplify_flutter/amplify_flutter.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:fpdart/fpdart.dart';
-import 'package:google_sign_in/google_sign_in.dart';
-import 'package:whatfood/core/constants/firebase_constants.dart';
-import 'package:whatfood/core/providers/firebase_providers.dart';
 import 'package:whatfood/core/failure.dart';
 
 final preferencesRepositoryProvider = Provider(
-  (ref) => PreferencesRepository(
-    firestore: ref.read(firestoreProvider),
-    auth: ref.read(authProvider),
-    googleSignIn: ref.read(googleSignInProvider),
-  ),
+  (ref) => PreferencesRepository(),
 );
 
 class PreferencesRepository {
-  final FirebaseFirestore _firestore;
-  final FirebaseAuth _auth;
-
-  PreferencesRepository({
-    required FirebaseFirestore firestore,
-    required FirebaseAuth auth,
-    required GoogleSignIn googleSignIn,
-  })  : _auth = auth,
-        _firestore = firestore;
-
-  CollectionReference get _users =>
-      _firestore.collection(FirebaseConstants.usersCollection);
-
-  Stream<User?> get authStateChange => _auth.authStateChanges();
-
   Future<Either<Failure, void>> updateUserPreferences({
     required String uid,
-    required Set<String> newPreferences,
+    required List<String> newPreferences,
   }) async {
+    String updateMutation = '''
+    mutation UpdateUserPreferences(\$id: ID!, \$preferences: [String!]!) {
+      updateUser(input: { id: "$uid", preferences: ${jsonEncode(newPreferences)} }) {
+        id
+        preferences
+      }
+    }
+  ''';
+
+    // Crea una GraphQLRequest
+    final request = GraphQLRequest<String>(document: updateMutation);
+
     try {
-      await _users.doc(uid).update({
-        'preferences': newPreferences.toList(),
-      });
+      await Amplify.API.mutate(request: request).response;
+      // Controlla eventuali errori o gestisci la risposta
       return right(null);
-    } on FirebaseException catch (e) {
-      return left(Failure(e.message ?? "Unknown Firebase error"));
+    } on ApiException catch (e) {
+      return left(Failure(e.message));
     } catch (e) {
       return left(Failure(e.toString()));
     }

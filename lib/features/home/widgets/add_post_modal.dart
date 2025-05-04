@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:routemaster/routemaster.dart';
 
-class AddPostModal extends ConsumerWidget {
+class AddPostModal extends StatelessWidget {
   const AddPostModal({super.key});
 
   void _navigateToAddPost(BuildContext context, String type) {
@@ -10,7 +9,7 @@ class AddPostModal extends ConsumerWidget {
   }
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
     return Container(
       decoration: const BoxDecoration(
         color: Color.fromARGB(255, 30, 30, 30),

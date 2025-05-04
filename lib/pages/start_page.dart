@@ -1,123 +1,85 @@
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:routemaster/routemaster.dart';
-import 'package:whatfood/core/common/google_signin_button.dart';
-import 'package:whatfood/core/common/loader.dart';
-import 'package:whatfood/core/utils.dart';
 import 'package:whatfood/features/home/views/home_view.dart';
 import 'package:whatfood/features/profile/views/profile_view.dart';
 import 'package:whatfood/features/recipes/views/recipes_view.dart';
 import 'package:whatfood/features/report/views/report_view.dart';
 import 'package:whatfood/features/scanner/camera_scanner.dart';
-import 'package:whatfood/features/auth/controller/auth_controller.dart';
 import 'guest_page.dart';
 
-class StartPage extends ConsumerWidget {
+class StartPage extends StatelessWidget {
   const StartPage({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final isLoading = ref.watch(authControllerProvider);
-
+  Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFF5F5F5),
-      body: isLoading
-          ? const Loader()
-          : Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 40.0),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const Spacer(),
-                  const Align(
-                    alignment: Alignment.center,
-                    child: Text(
-                      "Welcome to Whatfood",
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        color: Colors.black,
-                        fontSize: 32,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ),
-                  const Spacer(),
-                  FilledButton(
-                    onPressed: () => Routemaster.of(context).push('/register/'),
-                    style: FilledButton.styleFrom(
-                      backgroundColor: Colors.lightGreen,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      padding: const EdgeInsets.symmetric(
-                        vertical: 15,
-                        horizontal: 30,
-                      ),
-                    ),
-                    child: const Text(
-                      'Register',
-                      style: TextStyle(
-                        fontSize: 18,
-                        color: Colors.white,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 15),
-                  OutlinedButton(
-                    onPressed: () => Routemaster.of(context).push('/login/'),
-                    style: OutlinedButton.styleFrom(
-                      side: const BorderSide(color: Colors.lightGreen),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      padding: const EdgeInsets.symmetric(
-                        vertical: 15,
-                        horizontal: 30,
-                      ),
-                    ),
-                    child: const Text(
-                      'Already registered? Login here!',
-                      style: TextStyle(
-                        fontSize: 16,
-                        color: Colors.lightGreen,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 15),
-                  const GoogleSigninButton(),
-                  const SizedBox(height: 30),
-                  const GuestAccessWidget(),
-                  const Spacer(),
-                ],
+      body: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 40.0),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Spacer(),
+            const Align(
+              alignment: Alignment.center,
+              child: Text(
+                "Welcome to Whatfood",
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  color: Colors.black,
+                  fontSize: 32,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
             ),
-    );
-  }
-}
-
-class GuestAccessWidget extends StatelessWidget {
-  const GuestAccessWidget({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return TextButton(
-      onPressed: () async {
-        try {
-          await FirebaseAuth.instance.signInAnonymously();
-          if (!context.mounted) return;
-          Routemaster.of(context).push('/main_guest/');
-        } catch (e) {
-          showSnackBar(context, 'Error during guest login: ${e.toString()}');
-        }
-      },
-      child: const Text(
-        'Enter as Guest',
-        style: TextStyle(
-          fontSize: 16,
-          color: Colors.black,
-          decoration: TextDecoration.underline,
+            const Spacer(),
+            FilledButton(
+              onPressed: () => Routemaster.of(context).push('/register/'),
+              style: FilledButton.styleFrom(
+                backgroundColor: Colors.lightGreen,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                padding: const EdgeInsets.symmetric(
+                  vertical: 15,
+                  horizontal: 30,
+                ),
+              ),
+              child: const Text(
+                'Register',
+                style: TextStyle(
+                  fontSize: 18,
+                  color: Colors.white,
+                ),
+              ),
+            ),
+            const SizedBox(height: 15),
+            OutlinedButton(
+              onPressed: () => Routemaster.of(context).push('/login/'),
+              style: OutlinedButton.styleFrom(
+                side: const BorderSide(color: Colors.lightGreen),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                padding: const EdgeInsets.symmetric(
+                  vertical: 15,
+                  horizontal: 30,
+                ),
+              ),
+              child: const Text(
+                'Already registered? Login here!',
+                style: TextStyle(
+                  fontSize: 16,
+                  color: Colors.lightGreen,
+                ),
+              ),
+            ),
+            const SizedBox(height: 15),
+            //const GoogleSigninButton(),
+            const SizedBox(height: 30),
+            const Spacer(),
+          ],
         ),
       ),
     );
@@ -152,10 +114,7 @@ class _MainPageState extends State<MainPage> {
         RecipesView(),
         HomeView(),
         ReportView(),
-        ProfileView(
-          uid: FirebaseAuth.instance.currentUser!.uid,
-          public: false,
-        ),
+        ProfileView()
       ];
     }
   }

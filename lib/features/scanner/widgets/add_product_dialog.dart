@@ -1,6 +1,9 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:whatfood/features/auth/controller/auth_controller.dart';
 import 'package:whatfood/features/report/controller/report_controller.dart';
 import 'package:whatfood/features/scanner/widgets/nutrition_table.dart';
 
@@ -23,7 +26,7 @@ class AddProductDialog extends ConsumerStatefulWidget {
 class _AddProductDialogState extends ConsumerState<AddProductDialog> {
   final TextEditingController quantityController = TextEditingController();
 
-  void addProduct(BuildContext context) {
+  Future<void> addProduct(BuildContext context) async {
     final quantity = double.tryParse(quantityController.text.trim()) ?? 0;
     if (quantity <= 0) return;
 
@@ -39,16 +42,13 @@ class _AddProductDialogState extends ConsumerState<AddProductDialog> {
       }),
     );
 
-    final now = DateTime.now();
-    final date = DateTime(now.year, now.month, now.day);
-
-    ref.read(reportControllerProvider.notifier).addFoodReport(
+    await ref.read(reportControllerProvider.notifier).addFoodReport(
           context: context,
-          nutritionalValues: filteredNutritionalValues,
+          nutritionalValues: jsonEncode(filteredNutritionalValues),
           description: '${widget.productName} ${quantity}g',
           category: 'Scanned Product',
-          date: date,
         );
+    ref.invalidate(userReportsProvider(ref.read(userProvider)!.id));
   }
 
   @override
@@ -90,9 +90,9 @@ class _AddProductDialogState extends ConsumerState<AddProductDialog> {
           ),
         ),
         ElevatedButton(
-          onPressed: () {
+          onPressed: () async {
+            await addProduct(context);
             Navigator.of(context).pop();
-            addProduct(context);
           },
           style: ElevatedButton.styleFrom(
             backgroundColor: Colors.green,

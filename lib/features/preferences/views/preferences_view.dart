@@ -5,28 +5,21 @@ import 'package:whatfood/core/common/loader.dart';
 import 'package:whatfood/features/auth/controller/auth_controller.dart';
 import 'package:whatfood/features/preferences/widgets/intollerances_list.dart';
 import 'package:whatfood/features/preferences/controller/preferences_controller.dart';
-import 'package:whatfood/models/user_model.dart';
+import 'package:whatfood/models/User.dart';
 
 class PreferencesView extends ConsumerWidget {
   const PreferencesView(
       {super.key, required this.isFromProfile, this.userModel});
   final bool isFromProfile;
-  final UserModel? userModel;
-
-  void navigateToVerify(BuildContext context) {
-    Routemaster.of(context).replace('/verify-email');
-  }
+  final User? userModel;
 
   Future<void> savePreferences(
-      BuildContext context, WidgetRef ref, Set<String> preferences) async {
+      BuildContext context, WidgetRef ref, List<String> preferences) async {
     if (!isFromProfile) {
       await ref.read(preferencesControllerProvider.notifier).savePreferences(
             context: context,
             preferences: preferences,
           );
-
-      // ignore: use_build_context_synchronously
-      await Routemaster.of(context).push('/verify-email').result;
     } else {
       await ref.read(preferencesControllerProvider.notifier).savePreferences(
             context: context,
@@ -44,7 +37,7 @@ class PreferencesView extends ConsumerWidget {
       );
     }
 
-    Set<String> intolerances = isFromProfile ? user?.preferences ?? {} : {};
+    List<String> intolerances = isFromProfile ? user?.preferences ?? [] : [];
 
     return SafeArea(
       child: Scaffold(
@@ -57,7 +50,7 @@ class PreferencesView extends ConsumerWidget {
           actions: [
             if (!isFromProfile)
               TextButton(
-                onPressed: () => navigateToVerify(context),
+                onPressed: () => Routemaster.of(context).replace('/'),
                 child: const Text(
                   'Skip',
                   style: TextStyle(color: Colors.white, fontSize: 15),

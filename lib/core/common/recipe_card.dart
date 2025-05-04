@@ -1,24 +1,23 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
+
 import 'package:routemaster/routemaster.dart';
 import 'package:whatfood/button_styles.dart';
 import 'package:whatfood/features/recipes/controller/recipe_controller.dart';
 import 'package:whatfood/features/recipes/widgets/show_recipe_modal.dart';
-import 'package:whatfood/models/recipe_model.dart';
+import 'package:whatfood/models/Recipe.dart';
 
-class RecipeCard extends ConsumerWidget {
+class RecipeCard extends StatelessWidget {
   final Recipe recipe;
-  const RecipeCard({super.key, required this.recipe});
+  final String imageUrl;
+  const RecipeCard({super.key, required this.recipe, required this.imageUrl});
 
-  void deleteRecipe(WidgetRef ref, BuildContext context) async {
-    ref
-        .read(recipeControllerProvider.notifier)
-        .deleteRecipe(recipe.id, context);
+  void deleteRecipe(BuildContext context, RecipeController controller) async {
+    controller.deleteRecipe(recipe.id, context);
   }
-
+/*
   void likeOrUnlikeRecipe(WidgetRef ref) async {
     ref.read(recipeControllerProvider.notifier).likeOrUnlike(recipe);
-  }
+  }*/
 
   void navigateToUser(BuildContext context) {
     try {
@@ -28,7 +27,8 @@ class RecipeCard extends ConsumerWidget {
     }
   }
 
-  Widget popUpMenu(BuildContext context, WidgetRef ref, bool isOwner) {
+  Widget popUpMenu(
+      BuildContext context, bool isOwner, RecipeController controller) {
     return PopupMenuButton<String>(
       icon: Icon(Icons.more_horiz),
       onSelected: (String result) {},
@@ -38,7 +38,7 @@ class RecipeCard extends ConsumerWidget {
             child: TextButton.icon(
               style: ButtonStyles.textButtonStyle(textColor: Colors.red),
               onPressed: () {
-                deleteRecipe(ref, context);
+                deleteRecipe(context, controller);
               },
               icon: Icon(Icons.delete, color: Colors.red),
               label: Text("Delete"),
@@ -75,12 +75,13 @@ class RecipeCard extends ConsumerWidget {
       backgroundColor: Colors.transparent,
       builder: (context) => RecipeModal(
         recipe: recipe,
+        imageUrl: imageUrl,
       ),
     );
   }
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
     return LayoutBuilder(
       builder: (context, constraints) {
         return GestureDetector(
@@ -97,8 +98,15 @@ class RecipeCard extends ConsumerWidget {
                   child: ClipRRect(
                     borderRadius: BorderRadius.circular(16),
                     child: Image.network(
-                      recipe.coverImage,
+                      imageUrl,
                       fit: BoxFit.cover,
+                      errorBuilder: (BuildContext context, Object exception,
+                          StackTrace? stackTrace) {
+                        return Container(
+                          color: Colors.grey[300],
+                          child: const Icon(Icons.broken_image, size: 50),
+                        );
+                      },
                     ),
                   ),
                 ),

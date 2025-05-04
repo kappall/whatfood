@@ -1,10 +1,11 @@
+import 'package:amplify_flutter/amplify_flutter.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:uuid/uuid.dart';
 import 'package:whatfood/core/utils.dart';
 import 'package:whatfood/features/auth/controller/auth_controller.dart';
 import 'package:whatfood/features/report/repository/report_repository.dart';
-import 'package:whatfood/models/report_model.dart';
+import 'package:whatfood/models/Report.dart';
 
 final reportControllerProvider =
     StateNotifierProvider<ReportController, bool>((ref) {
@@ -30,12 +31,11 @@ class ReportController extends StateNotifier<bool> {
         _ref = ref,
         super(false);
 
-  void addFoodReport({
+  Future<void> addFoodReport({
     required BuildContext context,
-    required Map<String, dynamic> nutritionalValues,
+    required String nutritionalValues,
     required String description,
     required String category,
-    DateTime? date,
   }) async {
     try {
       state = true;
@@ -45,21 +45,20 @@ class ReportController extends StateNotifier<bool> {
       }
 
       String reportId = const Uuid().v1();
-      ReportModel report = ReportModel(
-          id: reportId,
-          date: date ?? DateTime.now(),
-          nutritionalValues: nutritionalValues,
-          description: description,
-          category: category,
-          uid: user.uid);
+      Report report = Report(
+        id: reportId,
+        createdAt: TemporalDateTime.now(),
+        nutritionalValues: nutritionalValues,
+        description: description,
+        category: category,
+        uid: user.id,
+      );
 
       final res = await _reportRepository.addFoodReport(report);
 
       res.fold((failure) {
         showSnackBar(context, failure.message);
-      }, (_) {
-        showSnackBar(context, 'Food added to your report successfully');
-      });
+      }, (_) => null);
     } catch (e) {
       if (context.mounted) {
         showSnackBar(context, e.toString());
@@ -69,21 +68,21 @@ class ReportController extends StateNotifier<bool> {
     }
   }
 
-  void deleteReport({
+  Future<void> deleteReport({
     required BuildContext context,
     required String reportId,
   }) async {
-    final uid = _ref.read(userProvider)?.uid ?? '';
+    final uid = _ref.read(userProvider)?.id ?? '';
     if (uid.isEmpty) return;
 
-    final res = await _reportRepository.deleteReport(reportId, uid);
+    final res = await _reportRepository.deleteReport(reportId);
     res.fold(
       (l) => showSnackBar(context, l.message),
       (r) => null,
     );
   }
 
-  Stream<List<ReportModel>> getUserReports(String uid) {
+  Stream<List<Report>> getUserReports(String uid) {
     return _reportRepository.getUserReports(uid);
   }
 }

@@ -1,4 +1,3 @@
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:routemaster/routemaster.dart';
@@ -130,11 +129,10 @@ class _RegisterViewState extends ConsumerState<RegisterView> {
                               password: password,
                               name: name,
                             );
-
+                      } catch (e) {
                         if (!context.mounted) return;
-                      } on FirebaseAuthException catch (e) {
                         showSnackBar(
-                            context, e.message ?? 'Registration failed');
+                            context, "Registration failed: ${e.toString()}");
                       }
                     },
                     style: FilledButton.styleFrom(
@@ -152,7 +150,7 @@ class _RegisterViewState extends ConsumerState<RegisterView> {
                   ),
                   const SizedBox(height: 15),
                   TextButton(
-                    onPressed: () => Routemaster.of(context).push('/login'),
+                    onPressed: () => Routemaster.of(context).replace('/login'),
                     child: const Text(
                       'Already have an account? Login here',
                       style: TextStyle(fontSize: 16, color: Colors.lightGreen),

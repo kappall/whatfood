@@ -3,16 +3,17 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:routemaster/routemaster.dart';
+import 'package:whatfood/core/providers/aws_providers.dart';
 import 'package:whatfood/core/providers/storage_repository_provider.dart';
 import 'package:whatfood/core/utils.dart';
 import 'package:whatfood/features/auth/controller/auth_controller.dart';
 import 'package:whatfood/features/profile/repository/user_profile_repository.dart';
-import 'package:whatfood/models/post_model.dart';
-import 'package:whatfood/models/user_model.dart';
+import 'package:whatfood/models/Post.dart';
+import 'package:whatfood/models/User.dart';
 
 final userProfileControllerProvider =
     StateNotifierProvider<UserProfileController, bool>((ref) {
-  final userProfileRepository = ref.watch(userProfileRepositoryProvider);
+  final userProfileRepository = UserProfileRepository(auth: auth);
   final storageRepository = ref.watch(storageRepositoryProvider);
   return UserProfileController(
     userProfileRepository: userProfileRepository,
@@ -26,7 +27,7 @@ final getUserPostsProvider = StreamProvider.family((ref, String uid) {
 });
 
 final getUserSavedPostsProvider =
-    StreamProvider.family<List<Post>, UserModel>((ref, user) {
+    FutureProvider.family<List<Post>, User>((ref, user) {
   final userProfileController =
       ref.read(userProfileControllerProvider.notifier);
   return userProfileController.getUserSavedPosts(user.savedPosts);
@@ -52,20 +53,16 @@ class UserProfileController extends StateNotifier<bool> {
     required String bio,
     required int dailyIntake,
     required File? profileFile,
+    required User user,
   }) async {
     state = true;
-    UserModel user = _ref.read(userProvider)!;
 
     if (profileFile != null) {
-      final ris = await _storageRepository.storeFile(
-        path: 'users/profile',
-        id: user.uid,
-        file: profileFile,
+      final ris = await _storageRepository.uploadImage(
+        profileFile,
+        user.id,
       );
-      ris.fold(
-        (l) => showSnackBar(context, l.message),
-        (r) => user = user.copyWith(profilePic: r),
-      );
+      user = user.copyWith(profilePic: ris);
     }
 
     user = user.copyWith(name: name, bio: bio, dailyIntake: dailyIntake);
@@ -81,7 +78,7 @@ class UserProfileController extends StateNotifier<bool> {
     return _userProfileRepository.getUserPosts(uid);
   }
 
-  Stream<List<Post>> getUserSavedPosts(Set<String> savedPosts) {
+  Future<List<Post>> getUserSavedPosts(List<String> savedPosts) {
     return _userProfileRepository.getUserSavedPosts(savedPosts);
   }
 
@@ -104,8 +101,8 @@ class UserProfileController extends StateNotifier<bool> {
     });
   }
 
-  void followOrUnfollowUser(BuildContext context, UserModel user) {
-    final uid = _ref.read(userProvider)!.uid;
+  void followOrUnfollowUser(BuildContext context, User user) {
+    final uid = _ref.read(userProvider)!.id;
     _userProfileRepository.followOrUnfollowUser(uid, user);
   }
 }
