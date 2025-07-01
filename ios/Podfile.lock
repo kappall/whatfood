@@ -72,11 +72,11 @@ PODS:
   - Flutter (1.0.0)
   - flutter_native_splash (2.4.3):
     - Flutter
-  - google_mlkit_barcode_scanning (0.13.0):
+  - google_mlkit_barcode_scanning (0.14.1):
     - Flutter
     - google_mlkit_commons
     - GoogleMLKit/BarcodeScanning (~> 7.0.0)
-  - google_mlkit_commons (0.9.0):
+  - google_mlkit_commons (0.11.0):
     - Flutter
     - MLKitVision
   - google_sign_in_ios (0.0.1):
@@ -254,8 +254,8 @@ SPEC CHECKSUMS:
   file_picker: b159e0c068aef54932bb15dc9fd1571818edaf49
   Flutter: e0871f40cf51350855a761d2e70bf5af5b9b5de7
   flutter_native_splash: df59bb2e1421aa0282cb2e95618af4dcb0c56c29
-  google_mlkit_barcode_scanning: 1a409f86a4c7df45e6dee9ba06e520357b2c7110
-  google_mlkit_commons: 384e4e206e122b6dad430d3158205e0b2fac6789
+  google_mlkit_barcode_scanning: e6c5e596d4dd5342e51516dcf99becb9154bae2d
+  google_mlkit_commons: 2544377e5503bf78ee7412ccfce0394c2dcb8a6b
   google_sign_in_ios: 4111e87aa5e24a4404f00ea13479f35e571969cc
   GoogleDataTransport: aae35b7ea0c09004c3797d53c8c41f66f219d6a7
   GoogleMLKit: eff9e23ec1d90ea4157a1ee2e32a4f610c5b3318

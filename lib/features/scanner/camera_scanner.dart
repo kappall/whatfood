@@ -416,63 +416,140 @@ class CameraScannerState extends ConsumerState<CameraScanner> {
     ).then((value) => value ?? false);
   }
 
-  InputImage? _inputImageFromCameraImage(CameraImage image) {
-    if (_controller == null) {
-      return null;
+  InputImageRotation _cameraLensDirectionToInputImageRotation(
+      CameraLensDirection lensDirection, DeviceOrientation deviceOrientation) {
+    // Questa logica può essere complessa e dipende dall'orientamento del dispositivo,
+    // dall'orientamento del sensore della fotocamera e dall'orientamento di output desiderato per ML Kit.
+    // Questo è un esempio semplificato; potresti doverlo adattare in base al tuo
+    // dispositivo specifico e al modo in cui vengono presentati i frame della fotocamera.
+
+    int rotationDegrees;
+    switch (deviceOrientation) {
+      case DeviceOrientation.portraitUp:
+        rotationDegrees = 0;
+        break;
+      case DeviceOrientation.portraitDown:
+        rotationDegrees = 180;
+        break;
+      case DeviceOrientation.landscapeLeft:
+        rotationDegrees = 270;
+        break;
+      case DeviceOrientation.landscapeRight:
+        rotationDegrees = 90;
+        break;
     }
 
-    final camera = _cameras[_cameraIndex];
-    final sensorOrientation = camera.sensorOrientation;
+    // Per la fotocamera posteriore, di solito 0, 90, 180, 270 è sufficiente.
+    // Se viene utilizzata la fotocamera anteriore e viene specchiata, potrebbe essere necessario regolare la rotazione.
 
-    InputImageRotation? rotation;
-
-    if (Platform.isIOS) {
-      rotation = InputImageRotationValue.fromRawValue(sensorOrientation);
-    } else if (Platform.isAndroid) {
-      var rotationCompensation =
-          _orientations[_controller!.value.deviceOrientation];
-      if (rotationCompensation == null) return null;
-      rotationCompensation =
-          (sensorOrientation - rotationCompensation + 360) % 360;
-      rotation = InputImageRotationValue.fromRawValue(rotationCompensation);
+    switch (rotationDegrees) {
+      case 0:
+        return InputImageRotation.rotation0deg;
+      case 90:
+        return InputImageRotation.rotation90deg;
+      case 180:
+        return InputImageRotation.rotation180deg;
+      case 270:
+        return InputImageRotation.rotation270deg;
+      default:
+        return InputImageRotation.rotation0deg; // Fallback
     }
-    if (rotation == null) return null;
-
-    final format = InputImageFormatValue.fromRawValue(image.format.raw);
-
-    // validate format depending on platform
-    // only supported formats:
-    // * nv21 for Android
-    // * bgra8888 for iOS
-    if (format == null ||
-        (Platform.isAndroid && format != InputImageFormat.nv21) ||
-        (Platform.isIOS && format != InputImageFormat.bgra8888) ||
-        image.planes.length != 1) {
-      return null;
-    }
-
-    final plane = image.planes.first;
-    return InputImage.fromBytes(
-      bytes: plane.bytes,
-      metadata: InputImageMetadata(
-        size: Size(image.width.toDouble(), image.height.toDouble()),
-        rotation: rotation,
-        format: format,
-        bytesPerRow: plane.bytesPerRow,
-      ),
-    );
   }
 
-  final Map<DeviceOrientation, int> _orientations = {
-    DeviceOrientation.portraitUp: 0,
-    DeviceOrientation.landscapeLeft: 90,
-    DeviceOrientation.portraitDown: 180,
-    DeviceOrientation.landscapeRight: 270,
-  };
+  InputImage? _inputImageFromCameraImage(CameraImage image) {
+    if (_isBusy || _isModalVisible || _controller == null || !mounted) {
+      return null;
+    }
+    _isBusy = true;
+    try {
+      final InputImageRotation rotation =
+          _cameraLensDirectionToInputImageRotation(
+        _controller!.description.lensDirection,
+        _controller!.value.deviceOrientation,
+      );
+
+      final InputImageMetadata inputImageMetadata;
+      Uint8List mybytes;
+
+      if (image.format.group == ImageFormatGroup.yuv420) {
+        final int width = image.width;
+        final int height = image.height;
+
+        final Uint8List yBuffer = image.planes[0].bytes;
+        final Uint8List uBuffer = image.planes[1].bytes;
+        final Uint8List vBuffer = image.planes[2].bytes;
+
+        final int yRowStride = image.planes[0].bytesPerRow;
+        final int uRowStride = image.planes[1].bytesPerRow;
+        final int vRowStride = image.planes[2].bytesPerRow;
+
+        final int yPixelStride = image.planes[0].bytesPerPixel ?? 1;
+        final int uPixelStride = image.planes[1].bytesPerPixel ?? 1;
+        final int vPixelStride = image.planes[2].bytesPerPixel ?? 1;
+
+        final int nv21Size = (width * height) + (width * height ~/ 2);
+        final Uint8List nv21Bytes = Uint8List(nv21Size);
+
+        // Copia il piano Y
+        int destIndex = 0;
+        for (int y = 0; y < height; y++) {
+          for (int x = 0; x < width; x++) {
+            nv21Bytes[destIndex++] = yBuffer[y * yRowStride + x * yPixelStride];
+          }
+        }
+
+        final int uvWidth = width ~/ 2;
+        final int uvHeight = height ~/ 2;
+
+        for (int y = 0; y < uvHeight; y++) {
+          for (int x = 0; x < uvWidth; x++) {
+            // Byte V
+            nv21Bytes[destIndex++] = vBuffer[y * vRowStride + x * vPixelStride];
+            // Byte U
+            nv21Bytes[destIndex++] = uBuffer[y * uRowStride + x * uPixelStride];
+          }
+        }
+        mybytes = nv21Bytes;
+
+        inputImageMetadata = InputImageMetadata(
+          size: Size(width.toDouble(), height.toDouble()),
+          rotation: rotation,
+          format: InputImageFormat.nv21,
+          bytesPerRow: image.planes[0].bytesPerRow,
+        );
+      } else if (image.format.group == ImageFormatGroup.nv21) {
+        mybytes = image.planes[0].bytes;
+        inputImageMetadata = InputImageMetadata(
+          size: Size(image.width.toDouble(), image.height.toDouble()),
+          rotation: rotation,
+          format: InputImageFormat.nv21,
+          bytesPerRow: image.planes[0].bytesPerRow,
+        );
+      } else if (image.format.group == ImageFormatGroup.bgra8888) {
+        // Per iOS (formato BGRA8888)
+        mybytes = image.planes[0].bytes;
+        final InputImageMetadata inputImageMetadata = InputImageMetadata(
+          size: Size(image.width.toDouble(), image.height.toDouble()),
+          rotation: rotation,
+          format: InputImageFormat.bgra8888,
+          bytesPerRow: image.planes[0].bytesPerRow,
+        );
+        return InputImage.fromBytes(
+            bytes: mybytes, metadata: inputImageMetadata);
+      } else {
+        debugPrint('Formato immagine non supportato: ${image.format.group}');
+        return null;
+      }
+      return InputImage.fromBytes(bytes: mybytes, metadata: inputImageMetadata);
+    } catch (e) {
+      debugPrint('Errrorrrrrre: ${e}');
+      _isBusy = false;
+      return null;
+    }
+  }
 
   bool _isGalleryMode = false;
 
-  @override
   @override
   Widget build(BuildContext context) {
     if (!_isInitialized || _controller?.value.isInitialized != true) {
