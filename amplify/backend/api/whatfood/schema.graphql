@@ -12,6 +12,7 @@ type User @model @auth(rules: [{ allow: public, operations: [read,create,delete,
   followers: [String]!
   following: [String]!
   email: String!
+  isOnboarded: Boolean!
 }
 
 

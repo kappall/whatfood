@@ -1,18 +1,21 @@
 import 'package:amplify_flutter/amplify_flutter.dart';
 import 'package:flutter/material.dart';
+import 'package:whatfood/features/auth/controller/auth_controller.dart';
 import 'package:whatfood/features/home/views/for_you_view.dart';
 import 'package:whatfood/features/home/views/inspiration_view.dart';
 import 'package:whatfood/features/home/widgets/add_post_modal.dart';
 import 'package:whatfood/models/MealType.dart';
+import 'package:routemaster/routemaster.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-class HomeView extends StatefulWidget {
-  const HomeView({super.key});
+class HomeScreen extends ConsumerStatefulWidget {
+  const HomeScreen({super.key});
 
   @override
-  State<HomeView> createState() => _HomeViewState();
+  ConsumerState<HomeScreen> createState() => _HomeScreenState();
 }
 
-class _HomeViewState extends State<HomeView>
+class _HomeScreenState extends ConsumerState<HomeScreen>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
   late PageController _pageController;
@@ -117,6 +120,17 @@ class _HomeViewState extends State<HomeView>
   }
 
   @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final user = ref.watch(userProvider);
+    if (user != null && !user.isOnboarded) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        Routemaster.of(context).replace('/onboarding');
+      });
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
     //Amplify.Auth.signOut();
     return Scaffold(
@@ -196,8 +210,12 @@ class _HomeViewState extends State<HomeView>
           }
         },
         children: [
-          ForYouView(),
-          const InspirationView(),
+          const Center(
+            child: Text('incoming'),
+          ),
+          const Center(
+            child: Text('incoming'),
+          ),
         ],
       ),
       floatingActionButton: FloatingActionButton(

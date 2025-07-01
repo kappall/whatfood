@@ -88,6 +88,7 @@ class AuthRepository {
             banner: Constants.bannerDefault,
             id: Uuid().v4(),
             preferences: [],
+            isOnboarded: false,
             savedPosts: [],
             postsCount: 0,
             dailyIntake: 0,
@@ -161,7 +162,7 @@ class AuthRepository {
   Future<void> deleteUnconfirmedUser(String email) async {
     final response = await http.post(
       Uri.parse(
-          'https://nnszaho8de.execute-api.eu-north-1.amazonaws.com//delete-user'),
+          'https://nnszaho8de.execute-api.eu-north-1.amazonaws.com/delete-user'),
       headers: {'Content-Type': 'application/json'},
       body: jsonEncode({'username': email}),
     );
@@ -196,6 +197,7 @@ class AuthRepository {
           "dailyIntake": user.dailyIntake,
           "followers": user.followers.toList(),
           "following": user.following.toList(),
+          "isOnboarded": user.isOnboarded,
           "bio": user.bio,
         }
       };
@@ -239,6 +241,7 @@ class AuthRepository {
           savedPosts
           postsCount
           dailyIntake
+          isOnboarded
           followers
           following
           bio

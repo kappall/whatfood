@@ -14,6 +14,42 @@ class UserProfileRepository {
   final AmplifyAuthCognito _auth;
   UserProfileRepository({required AmplifyAuthCognito auth}) : _auth = auth;
 
+  Future<Either<Failure, void>> markOnboardingComplete(User user) async {
+    try {
+      // La mutation updateUser aggiorna i campi dell'utente.
+      debugPrint(user.bio);
+      final Map<String, dynamic> variables = {
+        "input": {"id": user.id, "isOnboarded": true}
+      };
+      String updateMutation = '''
+        mutation UpdateUser(\$input: UpdateUserInput!) {
+          updateUser(input: \$input ) {
+            id
+          }
+        }
+      ''';
+
+      var operation = Amplify.API.mutate(
+        request: GraphQLRequest<String>(
+          document: updateMutation,
+          variables: variables, // Passiamo le variabili separatamente
+        ),
+      );
+
+      // Attendi la risposta dell'API
+      final response = await operation.response;
+
+      if (response.errors.isNotEmpty) {
+        return left(Failure(response.errors.first.message));
+      }
+      return right(null);
+    } on ApiException catch (e) {
+      return left(Failure(e.message));
+    } catch (e) {
+      return left(Failure(e.toString()));
+    }
+  }
+
   // Aggiorna il profilo utente tramite una mutation GraphQL
   Future<Either<Failure, void>> editProfile(User user) async {
     try {

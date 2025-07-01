@@ -74,6 +74,40 @@ class UserProfileController extends StateNotifier<bool> {
     });
   }
 
+  Future<void> markOnboardingComplete(BuildContext context) async {
+    debugPrint('markOnboardingComplete called');
+    state = true;
+
+    final user = _ref.read(userProvider);
+    debugPrint('user: $user');
+    if (user == null) {
+      showSnackBar(context, 'User not found');
+      state = false;
+      return;
+    }
+
+    final updatedUser = user.copyWith(isOnboarded: true);
+    debugPrint('updatedUser: $updatedUser');
+    final res =
+        await _userProfileRepository.markOnboardingComplete(updatedUser);
+
+    state = false;
+
+    res.fold(
+      (l) {
+        debugPrint('error: ${l.message}');
+        return showSnackBar(context, l.message);
+      },
+      (_) async {
+        debugPrint('user onboarded');
+        await _ref.read(authControllerProvider.notifier).refreshUser();
+        debugPrint('userProvider updated');
+        Routemaster.of(context).replace('/');
+        debugPrint('navigated to /');
+      },
+    );
+  }
+
   Stream<List<Post>> getUserPosts(String uid) {
     return _userProfileRepository.getUserPosts(uid);
   }

@@ -22,6 +22,7 @@ final authControllerProvider = StateNotifierProvider<AuthController, bool>(
 final authStateChangeProvider = StreamProvider((ref) {
   final authController = ref.watch(authControllerProvider.notifier);
   return authController.authStateChange.map((user) {
+    debugPrint('authStateChangeProvider emitted: $user');
     if (user != null) {
       ref.read(userProvider.notifier).update((_) => user);
     }
@@ -44,6 +45,16 @@ class AuthController extends StateNotifier<bool> {
         _ref = ref,
         super(false) {
     _initializeAuthState();
+  }
+
+  Future<void> refreshUser() async {
+    try {
+      final amplifyUser = await Amplify.Auth.getCurrentUser();
+      final user = await _authRepository.getUserData(amplifyUser.userId).first;
+      _ref.read(userProvider.notifier).update((state) => user);
+    } catch (e) {
+      _ref.read(userProvider.notifier).update((state) => null);
+    }
   }
 
   void _initializeAuthState() {
@@ -143,6 +154,7 @@ class AuthController extends StateNotifier<bool> {
               dailyIntake: 0,
               followers: [],
               following: [],
+              isOnboarded: false,
               bio: '',
             );
 
@@ -182,6 +194,7 @@ class AuthController extends StateNotifier<bool> {
             onPressed: () async {
               debugPrint("deleting: ${user.email}");
               _authRepository.deleteUnconfirmedUser(user.email);
+              await Amplify.Auth.signOut();
               if (context.mounted) {
                 Navigator.of(context).pop();
               }
@@ -205,10 +218,14 @@ class AuthController extends StateNotifier<bool> {
                     password: password,
                   );
                   if (signInResult.isSignedIn) {
-                    Navigator.of(context).pop();
+                    debugPrint('user signed in');
                     if (context.mounted) {
-                      Routemaster.of(context).replace('/preferences');
+                      debugPrint(Routemaster.of(context).currentRoute.fullPath);
+                      Routemaster.of(context).replace('/');
                     }
+                    await _ref
+                        .read(authControllerProvider.notifier)
+                        .refreshUser();
                   } else {
                     ScaffoldMessenger.of(context).showSnackBar(
                       const SnackBar(
@@ -221,8 +238,8 @@ class AuthController extends StateNotifier<bool> {
                   SnackBar(content: Text(e.message)),
                 );
               } catch (e) {
-                _authRepository.deleteUnconfirmedUser(user.email);
                 debugPrint("Exeption: ${e.toString()}");
+                _authRepository.deleteUnconfirmedUser(user.email);
               }
             },
             child: const Text('Verify'),

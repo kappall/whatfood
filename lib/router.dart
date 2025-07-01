@@ -1,72 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:routemaster/routemaster.dart';
-import 'package:whatfood/features/auth/views/login_view.dart';
-import 'package:whatfood/features/auth/views/register_view.dart';
-import 'package:whatfood/features/post/views/add_post_type_view.dart';
-import 'package:whatfood/features/post/views/comment_view.dart';
-import 'package:whatfood/features/preferences/views/preferences_view.dart';
-import 'package:whatfood/features/profile/views/edit_profile_view.dart';
-import 'package:whatfood/features/profile/views/user_posts_list_view.dart';
-import 'package:whatfood/features/profile/views/profile_view.dart';
-import 'package:whatfood/features/recipes/views/add_recipe_view.dart';
-import 'package:whatfood/features/recipes/views/edit_recipe_view.dart';
-import 'package:whatfood/pages/start_page.dart';
+import 'package:whatfood/features/auth/screens/login_screen.dart';
+import 'package:whatfood/features/auth/screens/signup_screen.dart';
+import 'package:whatfood/features/home/views/home_view.dart';
+import 'package:whatfood/features/onboarding/screens/onboarding_screen.dart';
 
-final loggedInRoutes = RouteMap(
-  onUnknownRoute: (_) => MaterialPage(
-      child: MainPage(
-    isGuest: false,
-  )),
+final loggedOutRoutes = RouteMap(
   routes: {
-    '/': (_) => const MaterialPage(child: MainPage(isGuest: false)),
-    '/home': (_) => const MaterialPage(child: MainPage(isGuest: false)),
-    '/preferences': (_) => const MaterialPage(
-            child: PreferencesView(
-          isFromProfile: true,
-        )),
-    '/login': (_) => const MaterialPage(child: LoginView()),
-    '/register': (_) => const MaterialPage(child: RegisterView()),
-    '/home/add_post_type/:type': (route) => MaterialPage(
-        child: (route.pathParameters['type']!) == 'image'
-            ? AddPostTypeView(
-                type: route.pathParameters['type']!,
-              )
-            : AddRecipeView()),
-    '/add-recipe': (_) => const MaterialPage(child: AddRecipeView()),
-    '/edit-recipe/:recipe': (route) {
-      debugPrint(route.pathParameters['recipe']!);
-      return MaterialPage(
-          child:
-              EditRecipeView(encodedRecipe: route.pathParameters['recipe']!));
-    },
-    '/edit_profile/:user': (route) => MaterialPage(
-            child: EditProfileView(
-          encodedUser: route.pathParameters['user']!,
-        )),
-    '/:id/comments': (route) => MaterialPage(
-            child: CommentsView(
-          postId: route.pathParameters['id']!,
-        )),
-    '/user_page/:uid': (route) => MaterialPage(
-          child: SafeArea(
-            child: Scaffold(
-              extendBodyBehindAppBar: false,
-              body:
-                  ProfileView(uid: route.pathParameters['uid']!, public: true),
-            ),
-          ),
-        ),
-    '/profile': (_) => MaterialPage(child: ProfileView()),
-    '/post_list/:uid/:postid/comments': (route) => MaterialPage(
-            child: CommentsView(
-          postId: route.pathParameters['postid']!,
-        )),
+    '/': (_) => const MaterialPage(child: LoginScreen()),
+    '/onboarding': (_) => const MaterialPage(child: OnboardingScreen()),
+    '/signup': (_) => const MaterialPage(child: SignupScreen()),
   },
 );
 
-final loggedOutRoutes = RouteMap(routes: {
-  '/': (_) => const MaterialPage(child: LoginView()),
-  '/login': (_) => const MaterialPage(child: LoginView()),
-  '/register': (_) => const MaterialPage(child: RegisterView()),
-  '/main_guest': (_) => const MaterialPage(child: MainPage(isGuest: true)),
+final loggedInRoutes = RouteMap(routes: {
+  '/': (_) => const MaterialPage(child: HomeScreen()),
+  '/onboarding': (_) => const MaterialPage(child: OnboardingScreen()),
 });
