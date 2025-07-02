@@ -4,7 +4,7 @@ import 'package:routemaster/routemaster.dart';
 import 'package:whatfood/core/common/loader.dart';
 import 'package:whatfood/features/auth/controller/auth_controller.dart';
 import 'package:whatfood/features/preferences/widgets/intollerances_list.dart';
-import 'package:whatfood/features/preferences/controller/preferences_controller.dart';
+import 'package:whatfood/features/personalization/controller/preferences_controller.dart';
 import 'package:whatfood/models/User.dart';
 
 class PreferencesView extends ConsumerWidget {

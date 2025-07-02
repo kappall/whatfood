@@ -112,7 +112,7 @@ class _MainPageState extends State<MainPage> {
       _pages = [
         CameraScanner(),
         RecipesView(),
-        HomeView(),
+        HomeScreen(),
         ReportView(),
         ProfileView()
       ];

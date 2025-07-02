@@ -108,8 +108,7 @@ class AuthController extends StateNotifier<bool> {
           showSnackBar(context, l.message);
         },
         (userModel) {
-          Routemaster.of(context).push('/preferences');
-          debugPrint("got here");
+          Routemaster.of(context).replace('/onboarding');
         },
       );
     } catch (e) {
@@ -149,6 +148,9 @@ class AuthController extends StateNotifier<bool> {
               banner: Constants.bannerDefault,
               id: signUpResult.userId!,
               preferences: [],
+              allergies: [],
+              goals: [],
+              dislikes: [],
               savedPosts: [],
               postsCount: 0,
               dailyIntake: 0,
@@ -211,6 +213,7 @@ class AuthController extends StateNotifier<bool> {
 
                 if (confirmResult.isSignUpComplete) {
                   final email = user.email;
+                  debugPrint('svaing user $user');
                   await _authRepository.saveUserData(user);
 
                   final signInResult = await Amplify.Auth.signIn(
@@ -220,7 +223,6 @@ class AuthController extends StateNotifier<bool> {
                   if (signInResult.isSignedIn) {
                     debugPrint('user signed in');
                     if (context.mounted) {
-                      debugPrint(Routemaster.of(context).currentRoute.fullPath);
                       Routemaster.of(context).replace('/');
                     }
                     await _ref

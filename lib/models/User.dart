@@ -32,6 +32,9 @@ class User extends amplify_core.Model {
   final String? _profilePic;
   final String? _banner;
   final List<String>? _preferences;
+  final List<String>? _allergies;
+  final List<String>? _goals;
+  final List<String>? _dislikes;
   final List<String>? _savedPosts;
   final String? _bio;
   final int? _postsCount;
@@ -108,6 +111,45 @@ class User extends amplify_core.Model {
     }
   }
   
+  List<String> get allergies {
+    try {
+      return _allergies!;
+    } catch(e) {
+      throw amplify_core.AmplifyCodeGenModelException(
+          amplify_core.AmplifyExceptionMessages.codeGenRequiredFieldForceCastExceptionMessage,
+          recoverySuggestion:
+            amplify_core.AmplifyExceptionMessages.codeGenRequiredFieldForceCastRecoverySuggestion,
+          underlyingException: e.toString()
+          );
+    }
+  }
+  
+  List<String> get goals {
+    try {
+      return _goals!;
+    } catch(e) {
+      throw amplify_core.AmplifyCodeGenModelException(
+          amplify_core.AmplifyExceptionMessages.codeGenRequiredFieldForceCastExceptionMessage,
+          recoverySuggestion:
+            amplify_core.AmplifyExceptionMessages.codeGenRequiredFieldForceCastRecoverySuggestion,
+          underlyingException: e.toString()
+          );
+    }
+  }
+  
+  List<String> get dislikes {
+    try {
+      return _dislikes!;
+    } catch(e) {
+      throw amplify_core.AmplifyCodeGenModelException(
+          amplify_core.AmplifyExceptionMessages.codeGenRequiredFieldForceCastExceptionMessage,
+          recoverySuggestion:
+            amplify_core.AmplifyExceptionMessages.codeGenRequiredFieldForceCastRecoverySuggestion,
+          underlyingException: e.toString()
+          );
+    }
+  }
+  
   List<String> get savedPosts {
     try {
       return _savedPosts!;
@@ -121,8 +163,17 @@ class User extends amplify_core.Model {
     }
   }
   
-  String? get bio {
-    return _bio;
+  String get bio {
+    try {
+      return _bio!;
+    } catch(e) {
+      throw amplify_core.AmplifyCodeGenModelException(
+          amplify_core.AmplifyExceptionMessages.codeGenRequiredFieldForceCastExceptionMessage,
+          recoverySuggestion:
+            amplify_core.AmplifyExceptionMessages.codeGenRequiredFieldForceCastRecoverySuggestion,
+          underlyingException: e.toString()
+          );
+    }
   }
   
   int get postsCount {
@@ -211,15 +262,18 @@ class User extends amplify_core.Model {
     return _updatedAt;
   }
   
-  const User._internal({required this.id, required name, required profilePic, required banner, required preferences, required savedPosts, bio, required postsCount, required dailyIntake, required followers, required following, required email, required isOnboarded, createdAt, updatedAt}): _name = name, _profilePic = profilePic, _banner = banner, _preferences = preferences, _savedPosts = savedPosts, _bio = bio, _postsCount = postsCount, _dailyIntake = dailyIntake, _followers = followers, _following = following, _email = email, _isOnboarded = isOnboarded, _createdAt = createdAt, _updatedAt = updatedAt;
+  const User._internal({required this.id, required name, required profilePic, required banner, required preferences, required allergies, required goals, required dislikes, required savedPosts, required bio, required postsCount, required dailyIntake, required followers, required following, required email, required isOnboarded, createdAt, updatedAt}): _name = name, _profilePic = profilePic, _banner = banner, _preferences = preferences, _allergies = allergies, _goals = goals, _dislikes = dislikes, _savedPosts = savedPosts, _bio = bio, _postsCount = postsCount, _dailyIntake = dailyIntake, _followers = followers, _following = following, _email = email, _isOnboarded = isOnboarded, _createdAt = createdAt, _updatedAt = updatedAt;
   
-  factory User({String? id, required String name, required String profilePic, required String banner, required List<String> preferences, required List<String> savedPosts, String? bio, required int postsCount, required int dailyIntake, required List<String> followers, required List<String> following, required String email, required bool isOnboarded}) {
+  factory User({String? id, required String name, required String profilePic, required String banner, required List<String> preferences, required List<String> allergies, required List<String> goals, required List<String> dislikes, required List<String> savedPosts, required String bio, required int postsCount, required int dailyIntake, required List<String> followers, required List<String> following, required String email, required bool isOnboarded}) {
     return User._internal(
       id: id == null ? amplify_core.UUID.getUUID() : id,
       name: name,
       profilePic: profilePic,
       banner: banner,
       preferences: preferences != null ? List<String>.unmodifiable(preferences) : preferences,
+      allergies: allergies != null ? List<String>.unmodifiable(allergies) : allergies,
+      goals: goals != null ? List<String>.unmodifiable(goals) : goals,
+      dislikes: dislikes != null ? List<String>.unmodifiable(dislikes) : dislikes,
       savedPosts: savedPosts != null ? List<String>.unmodifiable(savedPosts) : savedPosts,
       bio: bio,
       postsCount: postsCount,
@@ -243,6 +297,9 @@ class User extends amplify_core.Model {
       _profilePic == other._profilePic &&
       _banner == other._banner &&
       DeepCollectionEquality().equals(_preferences, other._preferences) &&
+      DeepCollectionEquality().equals(_allergies, other._allergies) &&
+      DeepCollectionEquality().equals(_goals, other._goals) &&
+      DeepCollectionEquality().equals(_dislikes, other._dislikes) &&
       DeepCollectionEquality().equals(_savedPosts, other._savedPosts) &&
       _bio == other._bio &&
       _postsCount == other._postsCount &&
@@ -266,6 +323,9 @@ class User extends amplify_core.Model {
     buffer.write("profilePic=" + "$_profilePic" + ", ");
     buffer.write("banner=" + "$_banner" + ", ");
     buffer.write("preferences=" + (_preferences != null ? _preferences!.toString() : "null") + ", ");
+    buffer.write("allergies=" + (_allergies != null ? _allergies!.toString() : "null") + ", ");
+    buffer.write("goals=" + (_goals != null ? _goals!.toString() : "null") + ", ");
+    buffer.write("dislikes=" + (_dislikes != null ? _dislikes!.toString() : "null") + ", ");
     buffer.write("savedPosts=" + (_savedPosts != null ? _savedPosts!.toString() : "null") + ", ");
     buffer.write("bio=" + "$_bio" + ", ");
     buffer.write("postsCount=" + (_postsCount != null ? _postsCount!.toString() : "null") + ", ");
@@ -281,13 +341,16 @@ class User extends amplify_core.Model {
     return buffer.toString();
   }
   
-  User copyWith({String? name, String? profilePic, String? banner, List<String>? preferences, List<String>? savedPosts, String? bio, int? postsCount, int? dailyIntake, List<String>? followers, List<String>? following, String? email, bool? isOnboarded}) {
+  User copyWith({String? name, String? profilePic, String? banner, List<String>? preferences, List<String>? allergies, List<String>? goals, List<String>? dislikes, List<String>? savedPosts, String? bio, int? postsCount, int? dailyIntake, List<String>? followers, List<String>? following, String? email, bool? isOnboarded}) {
     return User._internal(
       id: id,
       name: name ?? this.name,
       profilePic: profilePic ?? this.profilePic,
       banner: banner ?? this.banner,
       preferences: preferences ?? this.preferences,
+      allergies: allergies ?? this.allergies,
+      goals: goals ?? this.goals,
+      dislikes: dislikes ?? this.dislikes,
       savedPosts: savedPosts ?? this.savedPosts,
       bio: bio ?? this.bio,
       postsCount: postsCount ?? this.postsCount,
@@ -303,8 +366,11 @@ class User extends amplify_core.Model {
     ModelFieldValue<String>? profilePic,
     ModelFieldValue<String>? banner,
     ModelFieldValue<List<String>?>? preferences,
+    ModelFieldValue<List<String>?>? allergies,
+    ModelFieldValue<List<String>?>? goals,
+    ModelFieldValue<List<String>?>? dislikes,
     ModelFieldValue<List<String>?>? savedPosts,
-    ModelFieldValue<String?>? bio,
+    ModelFieldValue<String>? bio,
     ModelFieldValue<int>? postsCount,
     ModelFieldValue<int>? dailyIntake,
     ModelFieldValue<List<String>?>? followers,
@@ -318,6 +384,9 @@ class User extends amplify_core.Model {
       profilePic: profilePic == null ? this.profilePic : profilePic.value,
       banner: banner == null ? this.banner : banner.value,
       preferences: preferences == null ? this.preferences : preferences.value,
+      allergies: allergies == null ? this.allergies : allergies.value,
+      goals: goals == null ? this.goals : goals.value,
+      dislikes: dislikes == null ? this.dislikes : dislikes.value,
       savedPosts: savedPosts == null ? this.savedPosts : savedPosts.value,
       bio: bio == null ? this.bio : bio.value,
       postsCount: postsCount == null ? this.postsCount : postsCount.value,
@@ -335,6 +404,9 @@ class User extends amplify_core.Model {
       _profilePic = json['profilePic'],
       _banner = json['banner'],
       _preferences = json['preferences']?.cast<String>(),
+      _allergies = json['allergies']?.cast<String>(),
+      _goals = json['goals']?.cast<String>(),
+      _dislikes = json['dislikes']?.cast<String>(),
       _savedPosts = json['savedPosts']?.cast<String>(),
       _bio = json['bio'],
       _postsCount = (json['postsCount'] as num?)?.toInt(),
@@ -347,7 +419,7 @@ class User extends amplify_core.Model {
       _updatedAt = json['updatedAt'] != null ? amplify_core.TemporalDateTime.fromString(json['updatedAt']) : null;
   
   Map<String, dynamic> toJson() => {
-    'id': id, 'name': _name, 'profilePic': _profilePic, 'banner': _banner, 'preferences': _preferences, 'savedPosts': _savedPosts, 'bio': _bio, 'postsCount': _postsCount, 'dailyIntake': _dailyIntake, 'followers': _followers, 'following': _following, 'email': _email, 'isOnboarded': _isOnboarded, 'createdAt': _createdAt?.format(), 'updatedAt': _updatedAt?.format()
+    'id': id, 'name': _name, 'profilePic': _profilePic, 'banner': _banner, 'preferences': _preferences, 'allergies': _allergies, 'goals': _goals, 'dislikes': _dislikes, 'savedPosts': _savedPosts, 'bio': _bio, 'postsCount': _postsCount, 'dailyIntake': _dailyIntake, 'followers': _followers, 'following': _following, 'email': _email, 'isOnboarded': _isOnboarded, 'createdAt': _createdAt?.format(), 'updatedAt': _updatedAt?.format()
   };
   
   Map<String, Object?> toMap() => {
@@ -356,6 +428,9 @@ class User extends amplify_core.Model {
     'profilePic': _profilePic,
     'banner': _banner,
     'preferences': _preferences,
+    'allergies': _allergies,
+    'goals': _goals,
+    'dislikes': _dislikes,
     'savedPosts': _savedPosts,
     'bio': _bio,
     'postsCount': _postsCount,
@@ -374,6 +449,9 @@ class User extends amplify_core.Model {
   static final PROFILEPIC = amplify_core.QueryField(fieldName: "profilePic");
   static final BANNER = amplify_core.QueryField(fieldName: "banner");
   static final PREFERENCES = amplify_core.QueryField(fieldName: "preferences");
+  static final ALLERGIES = amplify_core.QueryField(fieldName: "allergies");
+  static final GOALS = amplify_core.QueryField(fieldName: "goals");
+  static final DISLIKES = amplify_core.QueryField(fieldName: "dislikes");
   static final SAVEDPOSTS = amplify_core.QueryField(fieldName: "savedPosts");
   static final BIO = amplify_core.QueryField(fieldName: "bio");
   static final POSTSCOUNT = amplify_core.QueryField(fieldName: "postsCount");
@@ -425,6 +503,27 @@ class User extends amplify_core.Model {
     ));
     
     modelSchemaDefinition.addField(amplify_core.ModelFieldDefinition.field(
+      key: User.ALLERGIES,
+      isRequired: true,
+      isArray: true,
+      ofType: amplify_core.ModelFieldType(amplify_core.ModelFieldTypeEnum.collection, ofModelName: amplify_core.ModelFieldTypeEnum.string.name)
+    ));
+    
+    modelSchemaDefinition.addField(amplify_core.ModelFieldDefinition.field(
+      key: User.GOALS,
+      isRequired: true,
+      isArray: true,
+      ofType: amplify_core.ModelFieldType(amplify_core.ModelFieldTypeEnum.collection, ofModelName: amplify_core.ModelFieldTypeEnum.string.name)
+    ));
+    
+    modelSchemaDefinition.addField(amplify_core.ModelFieldDefinition.field(
+      key: User.DISLIKES,
+      isRequired: true,
+      isArray: true,
+      ofType: amplify_core.ModelFieldType(amplify_core.ModelFieldTypeEnum.collection, ofModelName: amplify_core.ModelFieldTypeEnum.string.name)
+    ));
+    
+    modelSchemaDefinition.addField(amplify_core.ModelFieldDefinition.field(
       key: User.SAVEDPOSTS,
       isRequired: true,
       isArray: true,
@@ -433,7 +532,7 @@ class User extends amplify_core.Model {
     
     modelSchemaDefinition.addField(amplify_core.ModelFieldDefinition.field(
       key: User.BIO,
-      isRequired: false,
+      isRequired: true,
       ofType: amplify_core.ModelFieldType(amplify_core.ModelFieldTypeEnum.string)
     ));
     

@@ -5,8 +5,11 @@ type User @model @auth(rules: [{ allow: public, operations: [read,create,delete,
   profilePic: String!
   banner: String!
   preferences: [String]!
+  allergies: [String]!
+  goals: [String]!
+  dislikes: [String]!
   savedPosts: [String]!
-  bio: String
+  bio: String!
   postsCount: Int!
   dailyIntake: Int!
   followers: [String]!

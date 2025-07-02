@@ -9,7 +9,6 @@ import 'package:whatfood/amplifyconfiguration.dart';
 import 'package:whatfood/core/common/error_text.dart';
 import 'package:whatfood/core/common/loader.dart';
 import 'package:whatfood/features/auth/controller/auth_controller.dart';
-import 'package:whatfood/features/onboarding/screens/onboarding_screen.dart';
 import 'package:whatfood/models/ModelProvider.dart';
 import 'package:whatfood/router.dart';
 import 'package:routemaster/routemaster.dart';
@@ -91,7 +90,7 @@ class _MyAppState extends ConsumerState<MyApp> {
           ),
           loading: () => const MaterialApp(
             home: Scaffold(
-              body: Center(child: Text('waiting for user data')),
+              body: Loader(),
             ),
           ),
         );

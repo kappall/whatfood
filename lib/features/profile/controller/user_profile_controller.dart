@@ -49,43 +49,63 @@ class UserProfileController extends StateNotifier<bool> {
 
   Future<void> updateUserProfile({
     required BuildContext context,
-    required String name,
-    required String bio,
-    required int dailyIntake,
-    required File? profileFile,
-    required User user,
+    String? name,
+    String? bio,
+    int? dailyIntake,
+    File? profileFile,
+    List<String>? preferences,
+    List<String>? allergies,
+    List<String>? goals,
+    List<String>? dislikes,
+    User? user,
   }) async {
     state = true;
 
-    if (profileFile != null) {
-      final ris = await _storageRepository.uploadImage(
-        profileFile,
-        user.id,
-      );
-      user = user.copyWith(profilePic: ris);
-    }
-
-    user = user.copyWith(name: name, bio: bio, dailyIntake: dailyIntake);
-    final res = await _userProfileRepository.editProfile(user);
-    state = false;
-    res.fold((l) => showSnackBar(context, l.message), (r) {
-      _ref.read(userProvider.notifier).update((state) => user);
-      Routemaster.of(context).popUntil((route) => route.path == '/');
-    });
-  }
-
-  Future<void> markOnboardingComplete(BuildContext context) async {
-    debugPrint('markOnboardingComplete called');
-    state = true;
-
-    final user = _ref.read(userProvider);
-    debugPrint('user: $user');
-    if (user == null) {
+    User? currentUser = user ?? _ref.read(userProvider);
+    if (currentUser == null) {
       showSnackBar(context, 'User not found');
       state = false;
       return;
     }
 
+    if (profileFile != null) {
+      final ris =
+          await _storageRepository.uploadImage(profileFile, currentUser.id);
+      currentUser = currentUser.copyWith(profilePic: ris);
+    }
+
+    currentUser = currentUser.copyWith(
+      name: name ?? currentUser.name,
+      bio: bio ?? currentUser.bio,
+      dailyIntake: dailyIntake ?? currentUser.dailyIntake,
+      preferences: preferences ?? currentUser.preferences,
+      allergies: allergies ?? currentUser.allergies,
+      goals: goals ?? currentUser.goals,
+      dislikes: dislikes ?? currentUser.dislikes,
+    );
+
+    final res = await _userProfileRepository.editProfile(currentUser);
+    state = false;
+
+    res.fold(
+      (l) => showSnackBar(context, l.message),
+      (_) {
+        _ref.read(userProvider.notifier).update((state) => currentUser!);
+        Routemaster.of(context).popUntil((route) => route.path == '/');
+      },
+    );
+  }
+
+  Future<void> markOnboardingComplete(BuildContext context) async {
+    state = true;
+
+    final user = _ref.read(userProvider);
+    if (user == null) {
+      showSnackBar(context, 'User not found');
+      state = false;
+      return;
+    }
+    debugPrint(user.toString());
     final updatedUser = user.copyWith(isOnboarded: true);
     debugPrint('updatedUser: $updatedUser');
     final res =
@@ -99,11 +119,10 @@ class UserProfileController extends StateNotifier<bool> {
         return showSnackBar(context, l.message);
       },
       (_) async {
-        debugPrint('user onboarded');
         await _ref.read(authControllerProvider.notifier).refreshUser();
-        debugPrint('userProvider updated');
-        Routemaster.of(context).replace('/');
-        debugPrint('navigated to /');
+        if (context.mounted) {
+          Routemaster.of(context).replace('/personalize/preferences');
+        }
       },
     );
   }

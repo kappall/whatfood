@@ -88,6 +88,9 @@ class AuthRepository {
             banner: Constants.bannerDefault,
             id: Uuid().v4(),
             preferences: [],
+            allergies: [],
+            dislikes: [],
+            goals: [],
             isOnboarded: false,
             savedPosts: [],
             postsCount: 0,
@@ -192,6 +195,9 @@ class AuthRepository {
           "profilePic": user.profilePic,
           "banner": user.banner,
           "preferences": user.preferences.toList(),
+          "allergies": user.allergies.toList(),
+          "goals": user.goals.toList(),
+          "dislikes": user.dislikes.toList(),
           "savedPosts": user.savedPosts.toList(),
           "postsCount": user.postsCount,
           "dailyIntake": user.dailyIntake,
@@ -238,6 +244,9 @@ class AuthRepository {
           profilePic
           banner
           preferences
+          allergies
+          goals
+          dislikes
           savedPosts
           postsCount
           dailyIntake
