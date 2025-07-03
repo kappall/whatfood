@@ -37,17 +37,17 @@ class _GoalsScreenState extends ConsumerState<GoalsScreen> {
   ];
 
   void _onContinue() {
-    final List<String> allPreferences = [];
+    final List<String> allGoals = [];
     if (_selectedDietaryGoal != null) {
-      allPreferences.add(_selectedDietaryGoal!);
+      allGoals.add(_selectedDietaryGoal!);
     }
     if (_selectedCookingSkill != null) {
-      allPreferences.add(_selectedCookingSkill!);
+      allGoals.add(_selectedCookingSkill!);
     }
-    allPreferences.addAll(_selectedCookingFor);
+    allGoals.addAll(_selectedCookingFor);
 
     ref.read(userProvider.notifier).update(
-          (state) => state!.copyWith(preferences: allPreferences),
+          (state) => state!.copyWith(goals: allGoals),
         );
     Routemaster.of(context).push('/personalize/dislikes');
   }

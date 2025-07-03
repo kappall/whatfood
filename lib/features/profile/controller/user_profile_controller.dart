@@ -88,10 +88,13 @@ class UserProfileController extends StateNotifier<bool> {
     state = false;
 
     res.fold(
-      (l) => showSnackBar(context, l.message),
+      (l) {
+        showSnackBar(context, l.message);
+        state = false;
+      },
       (_) {
         _ref.read(userProvider.notifier).update((state) => currentUser!);
-        Routemaster.of(context).popUntil((route) => route.path == '/');
+        Routemaster.of(context).replace('/');
       },
     );
   }

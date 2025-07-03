@@ -1,8 +1,6 @@
 import 'package:amplify_flutter/amplify_flutter.dart';
 import 'package:flutter/material.dart';
 import 'package:whatfood/features/auth/controller/auth_controller.dart';
-import 'package:whatfood/features/home/views/for_you_view.dart';
-import 'package:whatfood/features/home/views/inspiration_view.dart';
 import 'package:whatfood/features/home/widgets/add_post_modal.dart';
 import 'package:whatfood/models/MealType.dart';
 import 'package:routemaster/routemaster.dart';

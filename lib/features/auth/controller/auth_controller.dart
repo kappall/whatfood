@@ -136,7 +136,10 @@ class AuthController extends StateNotifier<bool> {
     );
 
     user.fold(
-      (l) => showSnackBar(context, l.message),
+      (l) {
+        showSnackBar(context, l.message);
+        state = false;
+      },
       (signUpResult) {
         try {
           if (signUpResult.nextStep.signUpStep ==
@@ -164,6 +167,8 @@ class AuthController extends StateNotifier<bool> {
           }
         } catch (e) {
           debugPrint(e.toString());
+        } finally {
+          state = false;
         }
       },
     );

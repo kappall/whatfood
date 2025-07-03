@@ -54,7 +54,7 @@ class UserProfileRepository {
   Future<Either<Failure, void>> editProfile(User user) async {
     try {
       // La mutation updateUser aggiorna i campi dell'utente.
-      debugPrint(user.bio);
+      debugPrint('mutatiting to $user');
       final Map<String, dynamic> variables = {
         "input": {
           "id": user.id,

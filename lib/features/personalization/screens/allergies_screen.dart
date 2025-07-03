@@ -26,7 +26,7 @@ class _AllergiesScreenState extends ConsumerState<AllergiesScreen> {
 
   void _onContinue() {
     ref.read(userProvider.notifier).update(
-          (state) => state!.copyWith(preferences: _selected),
+          (state) => state!.copyWith(allergies: _selected),
         );
     Routemaster.of(context).push('/personalize/goals');
   }

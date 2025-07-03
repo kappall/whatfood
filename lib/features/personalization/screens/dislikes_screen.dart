@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:routemaster/routemaster.dart';
 import 'package:whatfood/features/auth/controller/auth_controller.dart';
 import 'package:whatfood/features/profile/controller/user_profile_controller.dart';
 
@@ -32,22 +31,20 @@ class _DislikesScreenState extends ConsumerState<DislikesScreen> {
   }
 
   void _onContinue() async {
-    final user = ref.read(userProvider)!;
+    final user = ref.watch(userProvider)!;
     final preferencesList = user.preferences;
     final allergiesList = user.allergies;
     final goalsList = user.goals;
-    final dislikesList = user.dislikes;
 
-    await ref.read(userProfileControllerProvider.notifier).updateUserProfile(
-          context: context,
-          preferences: preferencesList,
-          allergies: allergiesList,
-          goals: goalsList,
-          dislikes: dislikesList,
-        );
-    if (context.mounted) {
-      Routemaster.of(context).replace('/');
-    }
+    return await ref
+        .read(userProfileControllerProvider.notifier)
+        .updateUserProfile(
+            context: context,
+            preferences: preferencesList,
+            allergies: allergiesList,
+            goals: goalsList,
+            dislikes: _dislikes,
+            user: user);
   }
 
   @override

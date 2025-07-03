@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:whatfood/core/common/loader.dart';
+import 'package:whatfood/features/auth/controller/auth_controller.dart';
 import 'package:whatfood/features/profile/controller/user_profile_controller.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -42,6 +44,10 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final user = ref.watch(userProvider);
+    if (user == null) {
+      return Loader();
+    }
     return Scaffold(
       body: PageView.builder(
         controller: _controller,
