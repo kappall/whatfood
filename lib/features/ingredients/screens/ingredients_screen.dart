@@ -1,0 +1,131 @@
+import 'package:amplify_flutter/amplify_flutter.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:routemaster/routemaster.dart';
+import 'package:whatfood/core/common/error_text.dart';
+import 'package:whatfood/core/common/loader.dart';
+import 'package:whatfood/features/ingredients/controller/ingredient_controller.dart';
+import 'package:whatfood/features/ingredients/widgets/ingredient_card.dart';
+
+class IngredientsScreen extends ConsumerStatefulWidget {
+  const IngredientsScreen({super.key});
+
+  @override
+  ConsumerState<IngredientsScreen> createState() =>
+      IngredientsScIngredientsScreenState();
+}
+
+class IngredientsScIngredientsScreenState
+    extends ConsumerState<IngredientsScreen> {
+  @override
+  Widget build(BuildContext context) {
+    return ref.watch(ingredientsProvider).when(
+          data: (data) {
+            return GestureDetector(
+              onTap: () => FocusScope.of(context).unfocus(),
+              child: Scaffold(
+                  floatingActionButton: FloatingActionButton(
+                    shape: const CircleBorder(),
+                    onPressed: () {
+                      Routemaster.of(context).push('/add-ingredient');
+                    },
+                    backgroundColor: Colors.green,
+                    child: const Icon(
+                      Icons.add,
+                      color: Colors.white,
+                      size: 40,
+                    ),
+                  ),
+                  appBar: PreferredSize(
+                    preferredSize: const Size.fromHeight(110),
+                    child: AppBar(
+                      backgroundColor:
+                          Theme.of(context).appBarTheme.backgroundColor,
+                      iconTheme: Theme.of(context).iconTheme,
+                      titleTextStyle:
+                          Theme.of(context).textTheme.headlineMedium,
+                      title: const Text('ingredients'),
+                      bottom: PreferredSize(
+                        preferredSize: const Size.fromHeight(60),
+                        child: Center(
+                          child: ConstrainedBox(
+                            constraints: const BoxConstraints(maxWidth: 600),
+                            child: Container(
+                              margin: const EdgeInsets.symmetric(
+                                  horizontal: 16, vertical: 8),
+                              padding:
+                                  const EdgeInsets.symmetric(horizontal: 12),
+                              decoration: BoxDecoration(
+                                border: Border.all(color: Colors.white),
+                                borderRadius: BorderRadius.circular(22),
+                              ),
+                              child: Row(
+                                children: [
+                                  const Icon(
+                                    Icons.search,
+                                    color: Colors.white,
+                                    size: 32,
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Expanded(
+                                    child: TextField(
+                                      style: TextStyle(
+                                        color: Colors.black,
+                                      ),
+                                      decoration: InputDecoration(
+                                        border: InputBorder.none,
+                                        hintText: 'Search...',
+                                        contentPadding:
+                                            const EdgeInsets.symmetric(
+                                                vertical: 16),
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                  body: GridView.builder(
+                    gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: 2,
+                    ),
+                    itemCount: data.length,
+                    itemBuilder: (BuildContext context, int index) {
+                      final ingredient = data[index];
+                      return FutureBuilder(
+                          future: Amplify.Storage.getUrl(
+                            path:
+                                StoragePath.fromString(ingredient.coverImage!),
+                          ).result,
+                          builder: (context, snapshot) {
+                            if (snapshot.connectionState ==
+                                ConnectionState.waiting) {
+                              return const Loader();
+                            }
+                            if (snapshot.hasError) {
+                              return ErrorText(
+                                  error: snapshot.error.toString());
+                            }
+                            if (!snapshot.hasData) {
+                              return const Loader();
+                            }
+                            String imageUrl = snapshot.data!.url.toString();
+                            return IngredientCard(
+                                ingredient: ingredient, imageUrl: imageUrl);
+                          });
+                    },
+                  )),
+            );
+          },
+          error: (error, stackTrace) {
+            debugPrint(stackTrace.toString());
+            return ErrorText(error: error.toString());
+          },
+          loading: () => const Loader(),
+        );
+  }
+}

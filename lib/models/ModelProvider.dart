@@ -21,12 +21,14 @@
 
 import 'package:amplify_core/amplify_core.dart' as amplify_core;
 import 'Comment.dart';
+import 'Ingredient.dart';
 import 'Post.dart';
 import 'Recipe.dart';
 import 'Report.dart';
 import 'User.dart';
 
 export 'Comment.dart';
+export 'Ingredient.dart';
 export 'MealType.dart';
 export 'Post.dart';
 export 'Recipe.dart';
@@ -35,9 +37,9 @@ export 'User.dart';
 
 class ModelProvider implements amplify_core.ModelProviderInterface {
   @override
-  String version = "6da6d0ed4fc48fd15cdeff60d988067f";
+  String version = "220d4c85eb3d6724fb8f5077177f00b9";
   @override
-  List<amplify_core.ModelSchema> modelSchemas = [Comment.schema, Post.schema, Recipe.schema, Report.schema, User.schema];
+  List<amplify_core.ModelSchema> modelSchemas = [Comment.schema, Ingredient.schema, Post.schema, Recipe.schema, Report.schema, User.schema];
   @override
   List<amplify_core.ModelSchema> customTypeSchemas = [];
   static final ModelProvider _instance = ModelProvider();
@@ -48,6 +50,8 @@ class ModelProvider implements amplify_core.ModelProviderInterface {
     switch(modelName) {
       case "Comment":
         return Comment.classType;
+      case "Ingredient":
+        return Ingredient.classType;
       case "Post":
         return Post.classType;
       case "Recipe":

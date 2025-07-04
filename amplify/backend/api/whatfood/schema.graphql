@@ -70,6 +70,19 @@ type Recipe @model @auth(rules: [{ allow: public, operations: [read,create,delet
   username: String!
 }
 
+type Ingredient @model @auth(rules: [{ allow: public, operations: [read,create,delete,update] }]){
+  id: ID!
+  name: String!
+  coverImage: String
+  description: String
+  similars: [String]!
+  tips: [String]!
+  shops: [String]!
+  recipes: [String]!
+  createdAt: AWSDateTime!
+  likes: [String]!
+}
+
 type Report @model @auth(rules: [{ allow: public, operations: [read,create,delete,update] }]){
 id: ID!
 uid: String!
