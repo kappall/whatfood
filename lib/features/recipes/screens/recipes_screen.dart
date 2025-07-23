@@ -2,6 +2,7 @@ import 'package:amplify_flutter/amplify_flutter.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:routemaster/routemaster.dart';
+import 'package:shimmer/shimmer.dart';
 import 'package:whatfood/core/common/error_text.dart';
 import 'package:whatfood/core/common/loader.dart';
 import 'package:whatfood/core/common/recipe_card.dart';
@@ -11,118 +12,179 @@ class RecipesScreen extends ConsumerStatefulWidget {
   const RecipesScreen({super.key});
 
   @override
-  ConsumerState<RecipesScreen> createState() => RecipesScreenState();
+  ConsumerState<RecipesScreen> createState() => _RecipesScreenState();
 }
 
-class RecipesScreenState extends ConsumerState<RecipesScreen> {
+class _RecipesScreenState extends ConsumerState<RecipesScreen> {
+  final TextEditingController _searchCtrl = TextEditingController();
+  String _query = '';
+
+  @override
+  void dispose() {
+    _searchCtrl.dispose();
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
-    return ref.watch(recipesProvider).when(
-          data: (data) {
-            return GestureDetector(
-              onTap: () => FocusScope.of(context).unfocus(),
-              child: Scaffold(
-                  floatingActionButton: FloatingActionButton(
-                    shape: const CircleBorder(),
-                    onPressed: () {
-                      Routemaster.of(context).push('/add-recipe');
-                    },
-                    backgroundColor: Colors.green,
-                    child: const Icon(
-                      Icons.add,
-                      color: Colors.white,
-                      size: 40,
-                    ),
+    return GestureDetector(
+      onTap: () => FocusScope.of(context).unfocus(),
+      child: Stack(
+        children: [
+          // --------------- CONTENT ---------------
+          Column(
+            children: [
+              _Header(
+                  searchCtrl: _searchCtrl,
+                  onChanged: (v) => setState(() => _query = v)),
+              Expanded(
+                child: _RecipeGrid(
+                  query: _query.toLowerCase(),
+                ),
+              ),
+            ],
+          ),
+
+          Positioned(
+            bottom: 16 + MediaQuery.of(context).padding.bottom,
+            right: 16,
+            child: FloatingActionButton(
+              heroTag: 'add-recipe-fab',
+              shape: const CircleBorder(),
+              backgroundColor: Colors.green,
+              onPressed: () => Routemaster.of(context).push('/create-recipe'),
+              child: const Icon(Icons.add, color: Colors.white, size: 32),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _Header extends StatelessWidget {
+  const _Header({required this.searchCtrl, required this.onChanged});
+  final TextEditingController searchCtrl;
+  final ValueChanged<String> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    final top = MediaQuery.of(context).padding.top;
+    return Container(
+      height: 110 + top,
+      padding: EdgeInsets.only(top: top, left: 16, right: 16, bottom: 8),
+      decoration: BoxDecoration(
+        color: Theme.of(context).appBarTheme.backgroundColor,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(.05),
+            blurRadius: 8,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.end,
+        children: [
+          Row(
+            children: [
+              Text(
+                'Recipes',
+                style: Theme.of(context)
+                    .textTheme
+                    .headlineLarge
+                    ?.copyWith(fontWeight: FontWeight.bold),
+              ),
+              const Spacer(),
+            ],
+          ),
+          const SizedBox(height: 8),
+          SizedBox(
+            height: 44,
+            child: Material(
+              borderRadius: BorderRadius.circular(22),
+              child: TextField(
+                controller: searchCtrl,
+                onChanged: onChanged,
+                decoration: InputDecoration(
+                  hintText: 'Search recipes...',
+                  prefixIcon: const Icon(
+                    Icons.search,
+                    size: 24,
                   ),
-                  appBar: PreferredSize(
-                    preferredSize: const Size.fromHeight(110),
-                    child: AppBar(
-                      backgroundColor:
-                          Theme.of(context).appBarTheme.backgroundColor,
-                      iconTheme: Theme.of(context).iconTheme,
-                      titleTextStyle:
-                          Theme.of(context).textTheme.headlineMedium,
-                      title: const Text('Recipes'),
-                      bottom: PreferredSize(
-                        preferredSize: const Size.fromHeight(60),
-                        child: Center(
-                          child: ConstrainedBox(
-                            constraints: const BoxConstraints(maxWidth: 600),
-                            child: Container(
-                              margin: const EdgeInsets.symmetric(
-                                  horizontal: 16, vertical: 8),
-                              padding:
-                                  const EdgeInsets.symmetric(horizontal: 12),
-                              decoration: BoxDecoration(
-                                border: Border.all(color: Colors.white),
-                                borderRadius: BorderRadius.circular(22),
-                              ),
-                              child: Row(
-                                children: [
-                                  const Icon(
-                                    Icons.search,
-                                    color: Colors.white,
-                                    size: 32,
-                                  ),
-                                  const SizedBox(width: 8),
-                                  Expanded(
-                                    child: TextField(
-                                      style: TextStyle(
-                                        color: Colors.black,
-                                      ),
-                                      decoration: InputDecoration(
-                                        border: InputBorder.none,
-                                        hintText: 'Search...',
-                                        contentPadding:
-                                            const EdgeInsets.symmetric(
-                                                vertical: 16),
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
+                  filled: true,
+                  fillColor: Colors.green.withValues(alpha: 0.4),
+                  contentPadding: EdgeInsets.zero,
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(22),
+                    borderSide: BorderSide.none,
                   ),
-                  body: GridView.builder(
-                    gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                      crossAxisCount: 2,
-                    ),
-                    itemCount: data.length,
-                    itemBuilder: (BuildContext context, int index) {
-                      final recipe = data[index];
-                      return FutureBuilder(
-                          future: Amplify.Storage.getUrl(
-                            path: StoragePath.fromString(recipe.coverImage),
-                          ).result,
-                          builder: (context, snapshot) {
-                            if (snapshot.connectionState ==
-                                ConnectionState.waiting) {
-                              return const Loader();
-                            }
-                            if (snapshot.hasError) {
-                              return ErrorText(
-                                  error: snapshot.error.toString());
-                            }
-                            if (!snapshot.hasData) {
-                              return const Loader();
-                            }
-                            String imageUrl = snapshot.data!.url.toString();
-                            return RecipeCard(
-                                recipe: recipe, imageUrl: imageUrl);
-                          });
-                    },
-                  )),
-            );
-          },
-          error: (error, stackTrace) {
-            debugPrint(stackTrace.toString());
-            return ErrorText(error: error.toString());
-          },
-          loading: () => const Loader(),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _RecipeGrid extends ConsumerWidget {
+  const _RecipeGrid({required this.query});
+  final String query;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final asyncRecipes = ref.watch(recipesProvider);
+
+    return asyncRecipes.when(
+      data: (recipes) {
+        final filtered = recipes
+            .where((r) =>
+                r.title.toLowerCase().contains(query) ||
+                (r.description ?? '').toLowerCase().contains(query))
+            .toList();
+
+        return GridView.builder(
+          padding: const EdgeInsets.all(16),
+          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: 2,
+            mainAxisSpacing: 16,
+            crossAxisSpacing: 16,
+            childAspectRatio: .75,
+          ),
+          itemCount: filtered.length,
+          itemBuilder: (_, i) => RecipeCard(recipe: filtered[i]),
         );
+      },
+      loading: () => ShimmerGrid(),
+      error: (e, __) => ErrorText(error: e.toString()),
+    );
+  }
+}
+
+class ShimmerGrid extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return GridView.builder(
+      padding: const EdgeInsets.all(16),
+      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 2,
+        mainAxisSpacing: 16,
+        crossAxisSpacing: 16,
+        childAspectRatio: .75,
+      ),
+      itemCount: 6,
+      itemBuilder: (_, __) => Shimmer.fromColors(
+        baseColor: Colors.grey.shade300,
+        highlightColor: Colors.grey.shade100,
+        child: Container(
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(16),
+          ),
+        ),
+      ),
+    );
   }
 }

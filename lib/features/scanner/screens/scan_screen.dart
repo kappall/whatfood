@@ -473,7 +473,6 @@ class ScanScreenState extends ConsumerState<ScanScreen> {
   bool _isGalleryMode = false;
 
   @override
-  @override
   Widget build(BuildContext context) {
     if (!_isInitialized || _controller?.value.isInitialized != true) {
       return const Center(child: CircularProgressIndicator());

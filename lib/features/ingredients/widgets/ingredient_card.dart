@@ -8,7 +8,7 @@ import 'package:whatfood/models/Ingredient.dart';
 
 class IngredientCard extends StatelessWidget {
   final Ingredient ingredient;
-  final String imageUrl;
+  final String? imageUrl;
   const IngredientCard(
       {super.key, required this.ingredient, required this.imageUrl});
 
@@ -48,7 +48,7 @@ class IngredientCard extends StatelessWidget {
                   child: ClipRRect(
                     borderRadius: BorderRadius.circular(16),
                     child: Image.network(
-                      imageUrl,
+                      imageUrl!,
                       fit: BoxFit.cover,
                       errorBuilder: (BuildContext context, Object exception,
                           StackTrace? stackTrace) {
