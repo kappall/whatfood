@@ -37,6 +37,12 @@ final postsProvider = StreamProvider((ref) {
   return postController.fetchPosts();
 });
 
+final viralPostsProvider = StreamProvider((ref) {
+  final postController = ref.watch(postControllerProvider.notifier);
+
+  return postController.fetchViralPosts();
+});
+
 final postByIdProvider = StreamProvider.family((ref, String id) {
   final posController = ref.watch(postControllerProvider.notifier);
   return posController.getPostById(id);
@@ -138,6 +144,10 @@ class PostController extends StateNotifier<bool> {
 
   Stream<List<Post>> fetchPosts() {
     return _postRepository.fetchPosts();
+  }
+
+  Stream<List<Post>> fetchViralPosts({int limit = 5}) {
+    return _postRepository.fetchViralPosts(limit);
   }
 
   Future<File> compressImage(File file,
@@ -250,7 +260,8 @@ class PostController extends StateNotifier<bool> {
         authorImage: user.profilePic,
         authorname: user.name,
         createdAt: TemporalDateTime.now(),
-        votes: [],
+        upVotes: [],
+        downVotes: [],
         tags: tags,
         imageUrl: imageUrl,
         commentCount: 0,
@@ -290,8 +301,12 @@ class PostController extends StateNotifier<bool> {
     });
   }
 
-  void likeOrUnlike(Post post, String uid) {
-    _postRepository.likeOrUnlike(post, uid);
+  Future<void> upvote(Post post, String uid) async {
+    await _postRepository.upvote(post, uid);
+  }
+
+  Future<void> downvote(Post post, String uid) async {
+    await _postRepository.downvote(post, uid);
   }
 
   Future<void> addOrRemoveBookmark(

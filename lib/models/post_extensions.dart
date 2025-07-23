@@ -4,7 +4,8 @@ extension PostGraphQLFields on Post {
   static String get graphQLFields => '''
     id
     content
-    votes
+    upVotes
+    downVotes
     authorname
     uid
     authorImage

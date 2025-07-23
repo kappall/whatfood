@@ -33,7 +33,8 @@ class Post extends amplify_core.Model {
   final String? _authorImage;
   final String? _title;
   final String? _content;
-  final List<String>? _votes;
+  final List<String>? _upVotes;
+  final List<String>? _downVotes;
   final amplify_core.TemporalDateTime? _createdAt;
   final int? _commentCount;
   final String? _imageUrl;
@@ -109,9 +110,22 @@ class Post extends amplify_core.Model {
     return _content;
   }
   
-  List<String> get votes {
+  List<String> get upVotes {
     try {
-      return _votes!;
+      return _upVotes!;
+    } catch(e) {
+      throw amplify_core.AmplifyCodeGenModelException(
+          amplify_core.AmplifyExceptionMessages.codeGenRequiredFieldForceCastExceptionMessage,
+          recoverySuggestion:
+            amplify_core.AmplifyExceptionMessages.codeGenRequiredFieldForceCastRecoverySuggestion,
+          underlyingException: e.toString()
+          );
+    }
+  }
+  
+  List<String> get downVotes {
+    try {
+      return _downVotes!;
     } catch(e) {
       throw amplify_core.AmplifyCodeGenModelException(
           amplify_core.AmplifyExceptionMessages.codeGenRequiredFieldForceCastExceptionMessage,
@@ -169,9 +183,9 @@ class Post extends amplify_core.Model {
     return _updatedAt;
   }
   
-  const Post._internal({required this.id, required authorname, required uid, required authorImage, required title, content, required votes, required createdAt, required commentCount, imageUrl, required tags, updatedAt}): _authorname = authorname, _uid = uid, _authorImage = authorImage, _title = title, _content = content, _votes = votes, _createdAt = createdAt, _commentCount = commentCount, _imageUrl = imageUrl, _tags = tags, _updatedAt = updatedAt;
+  const Post._internal({required this.id, required authorname, required uid, required authorImage, required title, content, required upVotes, required downVotes, required createdAt, required commentCount, imageUrl, required tags, updatedAt}): _authorname = authorname, _uid = uid, _authorImage = authorImage, _title = title, _content = content, _upVotes = upVotes, _downVotes = downVotes, _createdAt = createdAt, _commentCount = commentCount, _imageUrl = imageUrl, _tags = tags, _updatedAt = updatedAt;
   
-  factory Post({String? id, required String authorname, required String uid, required String authorImage, required String title, String? content, required List<String> votes, required amplify_core.TemporalDateTime createdAt, required int commentCount, String? imageUrl, required List<String> tags}) {
+  factory Post({String? id, required String authorname, required String uid, required String authorImage, required String title, String? content, required List<String> upVotes, required List<String> downVotes, required amplify_core.TemporalDateTime createdAt, required int commentCount, String? imageUrl, required List<String> tags}) {
     return Post._internal(
       id: id == null ? amplify_core.UUID.getUUID() : id,
       authorname: authorname,
@@ -179,7 +193,8 @@ class Post extends amplify_core.Model {
       authorImage: authorImage,
       title: title,
       content: content,
-      votes: votes != null ? List<String>.unmodifiable(votes) : votes,
+      upVotes: upVotes != null ? List<String>.unmodifiable(upVotes) : upVotes,
+      downVotes: downVotes != null ? List<String>.unmodifiable(downVotes) : downVotes,
       createdAt: createdAt,
       commentCount: commentCount,
       imageUrl: imageUrl,
@@ -200,7 +215,8 @@ class Post extends amplify_core.Model {
       _authorImage == other._authorImage &&
       _title == other._title &&
       _content == other._content &&
-      DeepCollectionEquality().equals(_votes, other._votes) &&
+      DeepCollectionEquality().equals(_upVotes, other._upVotes) &&
+      DeepCollectionEquality().equals(_downVotes, other._downVotes) &&
       _createdAt == other._createdAt &&
       _commentCount == other._commentCount &&
       _imageUrl == other._imageUrl &&
@@ -221,7 +237,8 @@ class Post extends amplify_core.Model {
     buffer.write("authorImage=" + "$_authorImage" + ", ");
     buffer.write("title=" + "$_title" + ", ");
     buffer.write("content=" + "$_content" + ", ");
-    buffer.write("votes=" + (_votes != null ? _votes!.toString() : "null") + ", ");
+    buffer.write("upVotes=" + (_upVotes != null ? _upVotes!.toString() : "null") + ", ");
+    buffer.write("downVotes=" + (_downVotes != null ? _downVotes!.toString() : "null") + ", ");
     buffer.write("createdAt=" + (_createdAt != null ? _createdAt!.format() : "null") + ", ");
     buffer.write("commentCount=" + (_commentCount != null ? _commentCount!.toString() : "null") + ", ");
     buffer.write("imageUrl=" + "$_imageUrl" + ", ");
@@ -232,7 +249,7 @@ class Post extends amplify_core.Model {
     return buffer.toString();
   }
   
-  Post copyWith({String? authorname, String? uid, String? authorImage, String? title, String? content, List<String>? votes, amplify_core.TemporalDateTime? createdAt, int? commentCount, String? imageUrl, List<String>? tags}) {
+  Post copyWith({String? authorname, String? uid, String? authorImage, String? title, String? content, List<String>? upVotes, List<String>? downVotes, amplify_core.TemporalDateTime? createdAt, int? commentCount, String? imageUrl, List<String>? tags}) {
     return Post._internal(
       id: id,
       authorname: authorname ?? this.authorname,
@@ -240,7 +257,8 @@ class Post extends amplify_core.Model {
       authorImage: authorImage ?? this.authorImage,
       title: title ?? this.title,
       content: content ?? this.content,
-      votes: votes ?? this.votes,
+      upVotes: upVotes ?? this.upVotes,
+      downVotes: downVotes ?? this.downVotes,
       createdAt: createdAt ?? this.createdAt,
       commentCount: commentCount ?? this.commentCount,
       imageUrl: imageUrl ?? this.imageUrl,
@@ -253,7 +271,8 @@ class Post extends amplify_core.Model {
     ModelFieldValue<String>? authorImage,
     ModelFieldValue<String>? title,
     ModelFieldValue<String?>? content,
-    ModelFieldValue<List<String>?>? votes,
+    ModelFieldValue<List<String>?>? upVotes,
+    ModelFieldValue<List<String>?>? downVotes,
     ModelFieldValue<amplify_core.TemporalDateTime>? createdAt,
     ModelFieldValue<int>? commentCount,
     ModelFieldValue<String?>? imageUrl,
@@ -266,7 +285,8 @@ class Post extends amplify_core.Model {
       authorImage: authorImage == null ? this.authorImage : authorImage.value,
       title: title == null ? this.title : title.value,
       content: content == null ? this.content : content.value,
-      votes: votes == null ? this.votes : votes.value,
+      upVotes: upVotes == null ? this.upVotes : upVotes.value,
+      downVotes: downVotes == null ? this.downVotes : downVotes.value,
       createdAt: createdAt == null ? this.createdAt : createdAt.value,
       commentCount: commentCount == null ? this.commentCount : commentCount.value,
       imageUrl: imageUrl == null ? this.imageUrl : imageUrl.value,
@@ -281,7 +301,8 @@ class Post extends amplify_core.Model {
       _authorImage = json['authorImage'],
       _title = json['title'],
       _content = json['content'],
-      _votes = json['votes']?.cast<String>(),
+      _upVotes = json['upVotes']?.cast<String>(),
+      _downVotes = json['downVotes']?.cast<String>(),
       _createdAt = json['createdAt'] != null ? amplify_core.TemporalDateTime.fromString(json['createdAt']) : null,
       _commentCount = (json['commentCount'] as num?)?.toInt(),
       _imageUrl = json['imageUrl'],
@@ -289,7 +310,7 @@ class Post extends amplify_core.Model {
       _updatedAt = json['updatedAt'] != null ? amplify_core.TemporalDateTime.fromString(json['updatedAt']) : null;
   
   Map<String, dynamic> toJson() => {
-    'id': id, 'authorname': _authorname, 'uid': _uid, 'authorImage': _authorImage, 'title': _title, 'content': _content, 'votes': _votes, 'createdAt': _createdAt?.format(), 'commentCount': _commentCount, 'imageUrl': _imageUrl, 'tags': _tags, 'updatedAt': _updatedAt?.format()
+    'id': id, 'authorname': _authorname, 'uid': _uid, 'authorImage': _authorImage, 'title': _title, 'content': _content, 'upVotes': _upVotes, 'downVotes': _downVotes, 'createdAt': _createdAt?.format(), 'commentCount': _commentCount, 'imageUrl': _imageUrl, 'tags': _tags, 'updatedAt': _updatedAt?.format()
   };
   
   Map<String, Object?> toMap() => {
@@ -299,7 +320,8 @@ class Post extends amplify_core.Model {
     'authorImage': _authorImage,
     'title': _title,
     'content': _content,
-    'votes': _votes,
+    'upVotes': _upVotes,
+    'downVotes': _downVotes,
     'createdAt': _createdAt,
     'commentCount': _commentCount,
     'imageUrl': _imageUrl,
@@ -314,7 +336,8 @@ class Post extends amplify_core.Model {
   static final AUTHORIMAGE = amplify_core.QueryField(fieldName: "authorImage");
   static final TITLE = amplify_core.QueryField(fieldName: "title");
   static final CONTENT = amplify_core.QueryField(fieldName: "content");
-  static final VOTES = amplify_core.QueryField(fieldName: "votes");
+  static final UPVOTES = amplify_core.QueryField(fieldName: "upVotes");
+  static final DOWNVOTES = amplify_core.QueryField(fieldName: "downVotes");
   static final CREATEDAT = amplify_core.QueryField(fieldName: "createdAt");
   static final COMMENTCOUNT = amplify_core.QueryField(fieldName: "commentCount");
   static final IMAGEURL = amplify_core.QueryField(fieldName: "imageUrl");
@@ -367,7 +390,14 @@ class Post extends amplify_core.Model {
     ));
     
     modelSchemaDefinition.addField(amplify_core.ModelFieldDefinition.field(
-      key: Post.VOTES,
+      key: Post.UPVOTES,
+      isRequired: true,
+      isArray: true,
+      ofType: amplify_core.ModelFieldType(amplify_core.ModelFieldTypeEnum.collection, ofModelName: amplify_core.ModelFieldTypeEnum.string.name)
+    ));
+    
+    modelSchemaDefinition.addField(amplify_core.ModelFieldDefinition.field(
+      key: Post.DOWNVOTES,
       isRequired: true,
       isArray: true,
       ofType: amplify_core.ModelFieldType(amplify_core.ModelFieldTypeEnum.collection, ofModelName: amplify_core.ModelFieldTypeEnum.string.name)

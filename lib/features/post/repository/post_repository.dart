@@ -24,7 +24,8 @@ class PostRepository {
         "input": {
           "id": post.id,
           "content": post.content,
-          "votes": post.votes,
+          "upVotes": post.upVotes,
+          "downVotes": post.downVotes,
           "authorname": post.authorname,
           "uid": post.uid,
           "authorImage": post.authorImage,
@@ -174,6 +175,74 @@ class PostRepository {
     return controller.stream;
   }
 
+  Stream<List<Post>> fetchViralPosts(int limit) {
+    final controller = StreamController<List<Post>>();
+
+    try {
+      final postsQuery = '''
+      query ListPosts {
+        listPosts(limit: 100) {
+          items {
+            ${PostGraphQLFields.graphQLFields}
+          }
+        }
+      }
+    ''';
+
+      final request = GraphQLRequest<String>(document: postsQuery);
+
+      Amplify.API.query(request: request).response.then((response) {
+        if (response.errors.isNotEmpty) {
+          debugPrint("GraphQL Errors: ${response.errors}");
+          controller.addError(response.errors.first.message);
+          return;
+        }
+
+        if (response.data == null) {
+          controller.add([]);
+          return;
+        }
+
+        try {
+          final Map<String, dynamic> jsonResponse = jsonDecode(response.data!);
+          final items = jsonResponse['listPosts']?['items'] as List<dynamic>?;
+
+          if (items == null) {
+            controller.add([]);
+            return;
+          }
+
+          final posts = items.map((item) => Post.fromJson(item)).toList();
+
+          final now = DateTime.now();
+          final oneWeekAgo = now.subtract(const Duration(days: 7));
+          final recentPosts = posts
+              .where((p) => p.createdAt.getDateTimeInUtc().isAfter(oneWeekAgo))
+              .toList();
+
+          recentPosts
+              .sort((a, b) => b.upVotes.length.compareTo(a.upVotes.length));
+
+          final topPosts = recentPosts.take(limit).toList();
+
+          controller.add(topPosts);
+        } catch (e, stackTrace) {
+          debugPrint("Parse error: $e");
+          debugPrint("Stack trace: $stackTrace");
+          controller.addError('Error parsing posts: $e');
+        }
+      }).catchError((error) {
+        debugPrint("Query error: $error");
+        controller.addError(error);
+      });
+    } catch (e) {
+      debugPrint("General error: $e");
+      controller.addError(e);
+    }
+
+    return controller.stream;
+  }
+
   FutureEither<void> addComment(Comment comment, int commentCount) async {
     try {
       String createCommentMutation = '''
@@ -300,22 +369,62 @@ class PostRepository {
     }
   }
 
-  Future<void> likeOrUnlike(Post post, String uid) async {
+  Future<void> upvote(Post post, String uid) async {
     try {
-      List<String> updatedLikes = List.from(post.votes);
-      debugPrint(updatedLikes.toString());
+      List<String> upVotes = List.from(post.upVotes);
+      List<String> downVotes = List.from(post.downVotes);
+      debugPrint(upVotes.toString());
 
-      if (post.votes.contains(uid)) {
-        updatedLikes.remove(uid);
+      if (post.upVotes.contains(uid)) {
+        upVotes.remove(uid);
       } else {
-        updatedLikes.add(uid);
+        if (downVotes.contains(uid)) {
+          downVotes.remove(uid);
+        }
+        upVotes.add(uid);
       }
-      debugPrint(jsonEncode(updatedLikes).toString());
+      debugPrint(jsonEncode(upVotes).toString());
       String updateLikesMutation = '''
       mutation UpdatePost {
-        updatePost(input: { id: "${post.id}", votes: ${jsonEncode(updatedLikes)} }) {
+        updatePost(input: { id: "${post.id}", upVotes: ${jsonEncode(upVotes)}, downVotes: ${jsonEncode(downVotes)} }) {
           id
-          votes
+          upVotes
+          downVotes
+        }
+      }
+      ''';
+      final request = GraphQLRequest<String>(document: updateLikesMutation);
+
+      final res = await Amplify.API.mutate(request: request).response;
+      debugPrint(res.toString());
+    } catch (e) {
+      debugPrint(e.toString());
+    }
+  }
+
+  Future<void> downvote(Post post, String uid) async {
+    try {
+      List<String> downVotes = List.from(post.downVotes);
+      List<String> upVotes = List.from(post.upVotes);
+      debugPrint(downVotes.toString());
+
+      if (post.downVotes.contains(uid)) {
+        debugPrint("removing downvote");
+        downVotes.remove(uid);
+      } else {
+        debugPrint("adding downvote");
+        if (upVotes.contains(uid)) {
+          upVotes.remove(uid);
+        }
+        downVotes.add(uid);
+      }
+      debugPrint(jsonEncode(downVotes).toString());
+      String updateLikesMutation = '''
+      mutation UpdatePost {
+        updatePost(input: { id: "${post.id}", upVotes: ${jsonEncode(upVotes)}, downVotes: ${jsonEncode(downVotes)} }) {
+          id
+          upVotes
+          downVotes
         }
       }
       ''';
