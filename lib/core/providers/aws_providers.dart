@@ -8,4 +8,3 @@ final api = Amplify.API;
 final auth = AmplifyAuthCognito();
 final storage = Amplify.Storage;
 final datastore = AmplifyDataStore(modelProvider: ModelProvider.instance);
-final googleSignIn = GoogleSignIn();

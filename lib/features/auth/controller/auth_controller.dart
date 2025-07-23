@@ -90,6 +90,8 @@ class AuthController extends StateNotifier<bool> {
     );
   }
 
+  Future<void> signInWithGoogle(BuildContext context) async {/* impl */}
+  Future<void> signInWithApple(BuildContext context) async {/* impl */}
   void signInWithEmailAndPassword({
     required BuildContext context,
     required String email,

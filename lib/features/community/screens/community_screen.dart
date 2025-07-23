@@ -36,92 +36,137 @@ class _CommunityScreenState extends ConsumerState<CommunityScreen> {
 
     return GestureDetector(
       onTap: () => FocusScope.of(context).unfocus(),
-      child: Scaffold(
-        appBar: AppBar(
-          toolbarHeight: 80,
-          elevation: 0,
-          backgroundColor: Theme.of(context).appBarTheme.backgroundColor,
-          title: _isSearching
-              ? _buildSearchBar()
-              : Text('Community',
-                  style: Theme.of(context)
-                      .textTheme
-                      .headlineLarge
-                      ?.copyWith(fontWeight: FontWeight.bold)),
-          actions: [
-            IconButton(
-              icon: Icon(_isSearching ? Icons.close : Icons.search),
-              onPressed: () {
-                setState(() {
-                  _isSearching = !_isSearching;
-                  if (!_isSearching) _searchController.clear();
-                });
-              },
-            ),
-          ],
-        ),
-        body: postsAsync.when(
-          data: (posts) {
-            final filteredPosts = _searchQuery.isEmpty
-                ? posts
-                : posts.where((post) {
-                    final title = post.title.toLowerCase();
-                    final content = post.content?.toLowerCase() ?? '';
-                    return title.contains(_searchQuery) ||
-                        content.contains(_searchQuery);
-                  }).toList();
+      child: Stack(
+        children: [
+          Column(
+            children: [
+              Material(
+                child: _buildHeader(context),
+              ),
+              Expanded(
+                child: postsAsync.when(
+                  data: (posts) {
+                    final filteredPosts = _searchQuery.isEmpty
+                        ? posts
+                        : posts.where((post) {
+                            final title = post.title.toLowerCase();
+                            final content = post.content?.toLowerCase() ?? '';
+                            return title.contains(_searchQuery) ||
+                                content.contains(_searchQuery);
+                          }).toList();
 
-            debugPrint(filteredPosts.toString());
-            if (filteredPosts.isEmpty) {
-              return Center(
-                child: Text('No posts found'),
-              );
-            }
-            return ListView.separated(
-              padding: const EdgeInsets.all(16),
-              separatorBuilder: (_, __) => const SizedBox(height: 12),
-              itemCount: filteredPosts.length,
-              itemBuilder: (_, index) {
-                final post = filteredPosts[index];
-                final hasImage = post.imageUrl != null;
-                return FutureBuilder(
-                  future: hasImage
-                      ? Amplify.Storage.getUrl(
-                          path: StoragePath.fromString(post.imageUrl!),
-                        ).result
-                      : null,
-                  builder: (_, snapshot) {
-                    final imageUrl =
-                        snapshot.hasData ? snapshot.data!.url.toString() : null;
+                    if (filteredPosts.isEmpty) {
+                      return const Center(child: Text('No posts found'));
+                    }
+                    return ListView.separated(
+                      padding: const EdgeInsets.all(16),
+                      separatorBuilder: (_, __) => const SizedBox(height: 12),
+                      itemCount: filteredPosts.length,
+                      itemBuilder: (_, index) {
+                        final post = filteredPosts[index];
+                        final hasImage = post.imageUrl != null;
+                        return FutureBuilder(
+                          future: hasImage
+                              ? Amplify.Storage.getUrl(
+                                  path: StoragePath.fromString(post.imageUrl!),
+                                ).result
+                              : null,
+                          builder: (_, snapshot) {
+                            final imageUrl = snapshot.hasData
+                                ? snapshot.data!.url.toString()
+                                : null;
 
-                    return CommunityPostCard(
-                      title: post.title,
-                      text: post.content,
-                      imageUrl: imageUrl,
-                      authorName: post.authorname,
-                      createdAt: post.createdAt.getDateTimeInUtc(),
-                      currentUid: uid,
-                      votes: post.votes,
-                      onVote: () {
-                        ref
-                            .read(postControllerProvider.notifier)
-                            .likeOrUnlike(post, uid);
-                        ref.invalidate(postsProvider);
+                            return CommunityPostCard(
+                              title: post.title,
+                              text: post.content,
+                              imageUrl: imageUrl,
+                              authorName: post.authorname,
+                              createdAt: post.createdAt.getDateTimeInUtc(),
+                              currentUid: uid,
+                              authorId: post.uid,
+                              upVotes: post.upVotes,
+                              downVotes: post.downVotes,
+                              onUpvote: () async {
+                                await ref
+                                    .read(postControllerProvider.notifier)
+                                    .upvote(post, uid);
+                                ref.invalidate(postsProvider);
+                              },
+                              onDownvote: () async {
+                                await ref
+                                    .read(postControllerProvider.notifier)
+                                    .downvote(post, uid);
+                                ref.invalidate(postsProvider);
+                              },
+                            );
+                          },
+                        );
                       },
                     );
                   },
-                );
-              },
-            );
-          },
-          error: (e, _) => ErrorText(error: e.toString()),
-          loading: () => const Loader(),
-        ),
-        floatingActionButton: FloatingActionButton(
-          onPressed: () => Routemaster.of(context).push('create-post'),
-          shape: const CircleBorder(),
-          child: const Icon(Icons.add),
-        ),
+                  error: (e, _) => ErrorText(error: e.toString()),
+                  loading: () => const Loader(),
+                ),
+              ),
+            ],
+          ),
+          Positioned(
+            bottom: 16 + MediaQuery.of(context).padding.bottom,
+            right: 16,
+            child: FloatingActionButton(
+              onPressed: () => Routemaster.of(context).push('create-post'),
+              shape: const CircleBorder(),
+              child: const Icon(Icons.add),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildHeader(BuildContext context) {
+    return Container(
+      height: 80 + MediaQuery.of(context).padding.top,
+      padding: EdgeInsets.only(
+        top: MediaQuery.of(context).padding.top,
+        left: 16,
+        right: 16,
+      ),
+      decoration: BoxDecoration(
+        color: Theme.of(context).appBarTheme.backgroundColor,
+        boxShadow: [
+          if (Theme.of(context).appBarTheme.elevation != null &&
+              Theme.of(context).appBarTheme.elevation! > 0)
+            const BoxShadow(
+              color: Colors.black12,
+              blurRadius: 4,
+              offset: Offset(0, 2),
+            ),
+        ],
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: _isSearching
+                ? _buildSearchBar()
+                : Text(
+                    'Community',
+                    style: Theme.of(context)
+                        .textTheme
+                        .headlineLarge
+                        ?.copyWith(fontWeight: FontWeight.bold),
+                  ),
+          ),
+          IconButton(
+            icon: Icon(_isSearching ? Icons.close : Icons.search),
+            onPressed: () {
+              setState(() {
+                _isSearching = !_isSearching;
+                if (!_isSearching) _searchController.clear();
+              });
+            },
+          ),
+        ],
       ),
     );
   }
