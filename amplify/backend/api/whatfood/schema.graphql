@@ -28,18 +28,16 @@ enum MealType {
 
 type Post @model @auth(rules: [{ allow: public, operations: [read,create,delete,update] }]){
   id: ID!
-  description: String!
-  likes: [String]!
-  username: String!
+  authorname: String!
   uid: String!
-  userImage: String!
-  type: String!
+  authorImage: String!
+  title: String!
+  content: String
+  votes: [String]!
   createdAt: AWSDateTime!
   commentCount: Int!
-  imageUrl: String!
+  imageUrl: String
   tags: [String]!
-  mealType: MealType!
-
 }
 
 type Comment @model @auth(rules: [{ allow: public, operations: [read,create,delete,update] }]){

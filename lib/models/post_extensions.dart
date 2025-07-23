@@ -3,16 +3,15 @@ import 'package:whatfood/models/Post.dart';
 extension PostGraphQLFields on Post {
   static String get graphQLFields => '''
     id
-    description
-    likes
-    username
+    content
+    votes
+    authorname
     uid
-    userImage
-    type
+    authorImage
     createdAt
     commentCount
     imageUrl
     tags
-    mealType
+    title
   ''';
 }

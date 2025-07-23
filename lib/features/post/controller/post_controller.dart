@@ -199,12 +199,12 @@ class PostController extends StateNotifier<bool> {
     return fileSize <= maxSizeInBytes;
   }
 
-  Future<void> shareimagePost({
+  Future<void> createPost({
     required BuildContext context,
-    required String description,
+    required String title,
+    required String content,
     required List<String> tags,
-    required File image,
-    required MealType mealType,
+    required File? imageFile,
   }) async {
     state = true;
     final user = _ref.read(userProvider);
@@ -218,50 +218,50 @@ class PostController extends StateNotifier<bool> {
     }
 
     String postId = const Uuid().v1();
-
     try {
-      File processedFile;
-      try {
-        processedFile = await compressImage(image);
-      } catch (e) {
-        if (context.mounted) {
-          showSnackBar(context, 'Error compressing image: ${e.toString()}');
+      final imageUrl;
+      if (imageFile != null) {
+        File processedFile;
+        try {
+          processedFile = await compressImage(imageFile);
+        } catch (e) {
+          if (context.mounted) {
+            showSnackBar(context, 'Error compressing image: ${e.toString()}');
+          }
+          state = false;
+          return;
         }
-        state = false;
-        return;
+
+        final result = await _storageRepository.uploadImage(
+          processedFile,
+          postId,
+        );
+
+        imageUrl = result;
+      } else {
+        imageUrl = null;
       }
-
-      final result = await _storageRepository.uploadImage(
-        processedFile,
-        postId,
-      );
-
-      final imageUrl = result;
 
       final Post post = Post(
         id: postId,
         uid: user.id,
-        description: description,
-        userImage: user.profilePic,
-        username: user.name,
+        title: title,
+        content: content,
+        authorImage: user.profilePic,
+        authorname: user.name,
         createdAt: TemporalDateTime.now(),
-        likes: [],
+        votes: [],
         tags: tags,
         imageUrl: imageUrl,
         commentCount: 0,
-        type: 'image',
-        mealType: mealType,
       );
 
       final res = await _postRepository.addPost(post, user.postsCount);
       res.fold(
-        (l) => ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(l.message)),
-        ),
-        (r) {
-          Routemaster.of(context).popUntil((route) => route.path == '/');
-        },
-      );
+          (l) => ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(content: Text(l.message)),
+              ),
+          (r) => null);
     } catch (e) {
       if (context.mounted) {
         showSnackBar(context, 'Error: ${e.toString()}');

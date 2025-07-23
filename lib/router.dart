@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:routemaster/routemaster.dart';
 import 'package:whatfood/features/auth/screens/login_screen.dart';
 import 'package:whatfood/features/auth/screens/signup_screen.dart';
+import 'package:whatfood/features/community/screens/create_post_screen.dart';
 import 'package:whatfood/features/onboarding/screens/onboarding_screen.dart';
 import 'package:whatfood/features/personalization/screens/allergies_screen.dart';
 import 'package:whatfood/features/personalization/screens/dislikes_screen.dart';
@@ -25,4 +26,5 @@ final loggedInRoutes = RouteMap(routes: {
   '/personalize/allergies': (_) => const MaterialPage(child: AllergiesScreen()),
   '/personalize/goals': (_) => const MaterialPage(child: GoalsScreen()),
   '/personalize/dislikes': (_) => const MaterialPage(child: DislikesScreen()),
+  '/create-post': (_) => const MaterialPage(child: CreatePostScreen()),
 });

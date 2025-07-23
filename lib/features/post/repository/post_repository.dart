@@ -4,6 +4,7 @@ import 'package:amplify_flutter/amplify_flutter.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:fpdart/fpdart.dart';
+import 'package:http/http.dart';
 import 'package:whatfood/core/failure.dart';
 import 'package:whatfood/core/type_def.dart';
 import 'package:whatfood/models/Comment.dart';
@@ -22,17 +23,16 @@ class PostRepository {
       Map<String, Object?> postMap = {
         "input": {
           "id": post.id,
-          "description": post.description,
-          "likes": post.likes,
-          "username": post.username,
+          "content": post.content,
+          "votes": post.votes,
+          "authorname": post.authorname,
           "uid": post.uid,
-          "userImage": post.userImage,
-          "type": post.type,
+          "authorImage": post.authorImage,
           "createdAt": post.createdAt.toString(),
           "commentCount": post.commentCount,
           "imageUrl": post.imageUrl,
           "tags": post.tags,
-          "mealType": post.mealType.name,
+          "title": post.title,
         }
       };
 
@@ -153,6 +153,8 @@ class PostRepository {
 
           // Sort by creation date, newest first
           posts.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+
+          debugPrint(posts.toString());
 
           controller.add(posts);
         } catch (e, stackTrace) {
@@ -300,10 +302,10 @@ class PostRepository {
 
   Future<void> likeOrUnlike(Post post, String uid) async {
     try {
-      List<String> updatedLikes = List.from(post.likes);
+      List<String> updatedLikes = List.from(post.votes);
       debugPrint(updatedLikes.toString());
 
-      if (post.likes.contains(uid)) {
+      if (post.votes.contains(uid)) {
         updatedLikes.remove(uid);
       } else {
         updatedLikes.add(uid);
@@ -311,9 +313,9 @@ class PostRepository {
       debugPrint(jsonEncode(updatedLikes).toString());
       String updateLikesMutation = '''
       mutation UpdatePost {
-        updatePost(input: { id: "${post.id}", likes: ${jsonEncode(updatedLikes)} }) {
+        updatePost(input: { id: "${post.id}", votes: ${jsonEncode(updatedLikes)} }) {
           id
-          likes
+          votes
         }
       }
       ''';

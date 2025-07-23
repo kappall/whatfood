@@ -28,17 +28,16 @@ import 'package:collection/collection.dart';
 class Post extends amplify_core.Model {
   static const classType = const _PostModelType();
   final String id;
-  final String? _description;
-  final List<String>? _likes;
-  final String? _username;
+  final String? _authorname;
   final String? _uid;
-  final String? _userImage;
-  final String? _type;
+  final String? _authorImage;
+  final String? _title;
+  final String? _content;
+  final List<String>? _votes;
   final amplify_core.TemporalDateTime? _createdAt;
   final int? _commentCount;
   final String? _imageUrl;
   final List<String>? _tags;
-  final MealType? _mealType;
   final amplify_core.TemporalDateTime? _updatedAt;
 
   @override
@@ -54,35 +53,9 @@ class Post extends amplify_core.Model {
       );
   }
   
-  String get description {
+  String get authorname {
     try {
-      return _description!;
-    } catch(e) {
-      throw amplify_core.AmplifyCodeGenModelException(
-          amplify_core.AmplifyExceptionMessages.codeGenRequiredFieldForceCastExceptionMessage,
-          recoverySuggestion:
-            amplify_core.AmplifyExceptionMessages.codeGenRequiredFieldForceCastRecoverySuggestion,
-          underlyingException: e.toString()
-          );
-    }
-  }
-  
-  List<String> get likes {
-    try {
-      return _likes!;
-    } catch(e) {
-      throw amplify_core.AmplifyCodeGenModelException(
-          amplify_core.AmplifyExceptionMessages.codeGenRequiredFieldForceCastExceptionMessage,
-          recoverySuggestion:
-            amplify_core.AmplifyExceptionMessages.codeGenRequiredFieldForceCastRecoverySuggestion,
-          underlyingException: e.toString()
-          );
-    }
-  }
-  
-  String get username {
-    try {
-      return _username!;
+      return _authorname!;
     } catch(e) {
       throw amplify_core.AmplifyCodeGenModelException(
           amplify_core.AmplifyExceptionMessages.codeGenRequiredFieldForceCastExceptionMessage,
@@ -106,9 +79,9 @@ class Post extends amplify_core.Model {
     }
   }
   
-  String get userImage {
+  String get authorImage {
     try {
-      return _userImage!;
+      return _authorImage!;
     } catch(e) {
       throw amplify_core.AmplifyCodeGenModelException(
           amplify_core.AmplifyExceptionMessages.codeGenRequiredFieldForceCastExceptionMessage,
@@ -119,9 +92,26 @@ class Post extends amplify_core.Model {
     }
   }
   
-  String get type {
+  String get title {
     try {
-      return _type!;
+      return _title!;
+    } catch(e) {
+      throw amplify_core.AmplifyCodeGenModelException(
+          amplify_core.AmplifyExceptionMessages.codeGenRequiredFieldForceCastExceptionMessage,
+          recoverySuggestion:
+            amplify_core.AmplifyExceptionMessages.codeGenRequiredFieldForceCastRecoverySuggestion,
+          underlyingException: e.toString()
+          );
+    }
+  }
+  
+  String? get content {
+    return _content;
+  }
+  
+  List<String> get votes {
+    try {
+      return _votes!;
     } catch(e) {
       throw amplify_core.AmplifyCodeGenModelException(
           amplify_core.AmplifyExceptionMessages.codeGenRequiredFieldForceCastExceptionMessage,
@@ -158,17 +148,8 @@ class Post extends amplify_core.Model {
     }
   }
   
-  String get imageUrl {
-    try {
-      return _imageUrl!;
-    } catch(e) {
-      throw amplify_core.AmplifyCodeGenModelException(
-          amplify_core.AmplifyExceptionMessages.codeGenRequiredFieldForceCastExceptionMessage,
-          recoverySuggestion:
-            amplify_core.AmplifyExceptionMessages.codeGenRequiredFieldForceCastRecoverySuggestion,
-          underlyingException: e.toString()
-          );
-    }
+  String? get imageUrl {
+    return _imageUrl;
   }
   
   List<String> get tags {
@@ -184,39 +165,25 @@ class Post extends amplify_core.Model {
     }
   }
   
-  MealType get mealType {
-    try {
-      return _mealType!;
-    } catch(e) {
-      throw amplify_core.AmplifyCodeGenModelException(
-          amplify_core.AmplifyExceptionMessages.codeGenRequiredFieldForceCastExceptionMessage,
-          recoverySuggestion:
-            amplify_core.AmplifyExceptionMessages.codeGenRequiredFieldForceCastRecoverySuggestion,
-          underlyingException: e.toString()
-          );
-    }
-  }
-  
   amplify_core.TemporalDateTime? get updatedAt {
     return _updatedAt;
   }
   
-  const Post._internal({required this.id, required description, required likes, required username, required uid, required userImage, required type, required createdAt, required commentCount, required imageUrl, required tags, required mealType, updatedAt}): _description = description, _likes = likes, _username = username, _uid = uid, _userImage = userImage, _type = type, _createdAt = createdAt, _commentCount = commentCount, _imageUrl = imageUrl, _tags = tags, _mealType = mealType, _updatedAt = updatedAt;
+  const Post._internal({required this.id, required authorname, required uid, required authorImage, required title, content, required votes, required createdAt, required commentCount, imageUrl, required tags, updatedAt}): _authorname = authorname, _uid = uid, _authorImage = authorImage, _title = title, _content = content, _votes = votes, _createdAt = createdAt, _commentCount = commentCount, _imageUrl = imageUrl, _tags = tags, _updatedAt = updatedAt;
   
-  factory Post({String? id, required String description, required List<String> likes, required String username, required String uid, required String userImage, required String type, required amplify_core.TemporalDateTime createdAt, required int commentCount, required String imageUrl, required List<String> tags, required MealType mealType}) {
+  factory Post({String? id, required String authorname, required String uid, required String authorImage, required String title, String? content, required List<String> votes, required amplify_core.TemporalDateTime createdAt, required int commentCount, String? imageUrl, required List<String> tags}) {
     return Post._internal(
       id: id == null ? amplify_core.UUID.getUUID() : id,
-      description: description,
-      likes: likes != null ? List<String>.unmodifiable(likes) : likes,
-      username: username,
+      authorname: authorname,
       uid: uid,
-      userImage: userImage,
-      type: type,
+      authorImage: authorImage,
+      title: title,
+      content: content,
+      votes: votes != null ? List<String>.unmodifiable(votes) : votes,
       createdAt: createdAt,
       commentCount: commentCount,
       imageUrl: imageUrl,
-      tags: tags != null ? List<String>.unmodifiable(tags) : tags,
-      mealType: mealType);
+      tags: tags != null ? List<String>.unmodifiable(tags) : tags);
   }
   
   bool equals(Object other) {
@@ -228,17 +195,16 @@ class Post extends amplify_core.Model {
     if (identical(other, this)) return true;
     return other is Post &&
       id == other.id &&
-      _description == other._description &&
-      DeepCollectionEquality().equals(_likes, other._likes) &&
-      _username == other._username &&
+      _authorname == other._authorname &&
       _uid == other._uid &&
-      _userImage == other._userImage &&
-      _type == other._type &&
+      _authorImage == other._authorImage &&
+      _title == other._title &&
+      _content == other._content &&
+      DeepCollectionEquality().equals(_votes, other._votes) &&
       _createdAt == other._createdAt &&
       _commentCount == other._commentCount &&
       _imageUrl == other._imageUrl &&
-      DeepCollectionEquality().equals(_tags, other._tags) &&
-      _mealType == other._mealType;
+      DeepCollectionEquality().equals(_tags, other._tags);
   }
   
   @override
@@ -250,116 +216,109 @@ class Post extends amplify_core.Model {
     
     buffer.write("Post {");
     buffer.write("id=" + "$id" + ", ");
-    buffer.write("description=" + "$_description" + ", ");
-    buffer.write("likes=" + (_likes != null ? _likes!.toString() : "null") + ", ");
-    buffer.write("username=" + "$_username" + ", ");
+    buffer.write("authorname=" + "$_authorname" + ", ");
     buffer.write("uid=" + "$_uid" + ", ");
-    buffer.write("userImage=" + "$_userImage" + ", ");
-    buffer.write("type=" + "$_type" + ", ");
+    buffer.write("authorImage=" + "$_authorImage" + ", ");
+    buffer.write("title=" + "$_title" + ", ");
+    buffer.write("content=" + "$_content" + ", ");
+    buffer.write("votes=" + (_votes != null ? _votes!.toString() : "null") + ", ");
     buffer.write("createdAt=" + (_createdAt != null ? _createdAt!.format() : "null") + ", ");
     buffer.write("commentCount=" + (_commentCount != null ? _commentCount!.toString() : "null") + ", ");
     buffer.write("imageUrl=" + "$_imageUrl" + ", ");
     buffer.write("tags=" + (_tags != null ? _tags!.toString() : "null") + ", ");
-    buffer.write("mealType=" + (_mealType != null ? amplify_core.enumToString(_mealType)! : "null") + ", ");
     buffer.write("updatedAt=" + (_updatedAt != null ? _updatedAt!.format() : "null"));
     buffer.write("}");
     
     return buffer.toString();
   }
   
-  Post copyWith({String? description, List<String>? likes, String? username, String? uid, String? userImage, String? type, amplify_core.TemporalDateTime? createdAt, int? commentCount, String? imageUrl, List<String>? tags, MealType? mealType}) {
+  Post copyWith({String? authorname, String? uid, String? authorImage, String? title, String? content, List<String>? votes, amplify_core.TemporalDateTime? createdAt, int? commentCount, String? imageUrl, List<String>? tags}) {
     return Post._internal(
       id: id,
-      description: description ?? this.description,
-      likes: likes ?? this.likes,
-      username: username ?? this.username,
+      authorname: authorname ?? this.authorname,
       uid: uid ?? this.uid,
-      userImage: userImage ?? this.userImage,
-      type: type ?? this.type,
+      authorImage: authorImage ?? this.authorImage,
+      title: title ?? this.title,
+      content: content ?? this.content,
+      votes: votes ?? this.votes,
       createdAt: createdAt ?? this.createdAt,
       commentCount: commentCount ?? this.commentCount,
       imageUrl: imageUrl ?? this.imageUrl,
-      tags: tags ?? this.tags,
-      mealType: mealType ?? this.mealType);
+      tags: tags ?? this.tags);
   }
   
   Post copyWithModelFieldValues({
-    ModelFieldValue<String>? description,
-    ModelFieldValue<List<String>?>? likes,
-    ModelFieldValue<String>? username,
+    ModelFieldValue<String>? authorname,
     ModelFieldValue<String>? uid,
-    ModelFieldValue<String>? userImage,
-    ModelFieldValue<String>? type,
+    ModelFieldValue<String>? authorImage,
+    ModelFieldValue<String>? title,
+    ModelFieldValue<String?>? content,
+    ModelFieldValue<List<String>?>? votes,
     ModelFieldValue<amplify_core.TemporalDateTime>? createdAt,
     ModelFieldValue<int>? commentCount,
-    ModelFieldValue<String>? imageUrl,
-    ModelFieldValue<List<String>?>? tags,
-    ModelFieldValue<MealType>? mealType
+    ModelFieldValue<String?>? imageUrl,
+    ModelFieldValue<List<String>?>? tags
   }) {
     return Post._internal(
       id: id,
-      description: description == null ? this.description : description.value,
-      likes: likes == null ? this.likes : likes.value,
-      username: username == null ? this.username : username.value,
+      authorname: authorname == null ? this.authorname : authorname.value,
       uid: uid == null ? this.uid : uid.value,
-      userImage: userImage == null ? this.userImage : userImage.value,
-      type: type == null ? this.type : type.value,
+      authorImage: authorImage == null ? this.authorImage : authorImage.value,
+      title: title == null ? this.title : title.value,
+      content: content == null ? this.content : content.value,
+      votes: votes == null ? this.votes : votes.value,
       createdAt: createdAt == null ? this.createdAt : createdAt.value,
       commentCount: commentCount == null ? this.commentCount : commentCount.value,
       imageUrl: imageUrl == null ? this.imageUrl : imageUrl.value,
-      tags: tags == null ? this.tags : tags.value,
-      mealType: mealType == null ? this.mealType : mealType.value
+      tags: tags == null ? this.tags : tags.value
     );
   }
   
   Post.fromJson(Map<String, dynamic> json)  
     : id = json['id'],
-      _description = json['description'],
-      _likes = json['likes']?.cast<String>(),
-      _username = json['username'],
+      _authorname = json['authorname'],
       _uid = json['uid'],
-      _userImage = json['userImage'],
-      _type = json['type'],
+      _authorImage = json['authorImage'],
+      _title = json['title'],
+      _content = json['content'],
+      _votes = json['votes']?.cast<String>(),
       _createdAt = json['createdAt'] != null ? amplify_core.TemporalDateTime.fromString(json['createdAt']) : null,
       _commentCount = (json['commentCount'] as num?)?.toInt(),
       _imageUrl = json['imageUrl'],
       _tags = json['tags']?.cast<String>(),
-      _mealType = amplify_core.enumFromString<MealType>(json['mealType'], MealType.values),
       _updatedAt = json['updatedAt'] != null ? amplify_core.TemporalDateTime.fromString(json['updatedAt']) : null;
   
   Map<String, dynamic> toJson() => {
-    'id': id, 'description': _description, 'likes': _likes, 'username': _username, 'uid': _uid, 'userImage': _userImage, 'type': _type, 'createdAt': _createdAt?.format(), 'commentCount': _commentCount, 'imageUrl': _imageUrl, 'tags': _tags, 'mealType': amplify_core.enumToString(_mealType), 'updatedAt': _updatedAt?.format()
+    'id': id, 'authorname': _authorname, 'uid': _uid, 'authorImage': _authorImage, 'title': _title, 'content': _content, 'votes': _votes, 'createdAt': _createdAt?.format(), 'commentCount': _commentCount, 'imageUrl': _imageUrl, 'tags': _tags, 'updatedAt': _updatedAt?.format()
   };
   
   Map<String, Object?> toMap() => {
     'id': id,
-    'description': _description,
-    'likes': _likes,
-    'username': _username,
+    'authorname': _authorname,
     'uid': _uid,
-    'userImage': _userImage,
-    'type': _type,
+    'authorImage': _authorImage,
+    'title': _title,
+    'content': _content,
+    'votes': _votes,
     'createdAt': _createdAt,
     'commentCount': _commentCount,
     'imageUrl': _imageUrl,
     'tags': _tags,
-    'mealType': _mealType,
     'updatedAt': _updatedAt
   };
 
   static final amplify_core.QueryModelIdentifier<PostModelIdentifier> MODEL_IDENTIFIER = amplify_core.QueryModelIdentifier<PostModelIdentifier>();
   static final ID = amplify_core.QueryField(fieldName: "id");
-  static final DESCRIPTION = amplify_core.QueryField(fieldName: "description");
-  static final LIKES = amplify_core.QueryField(fieldName: "likes");
-  static final USERNAME = amplify_core.QueryField(fieldName: "username");
+  static final AUTHORNAME = amplify_core.QueryField(fieldName: "authorname");
   static final UID = amplify_core.QueryField(fieldName: "uid");
-  static final USERIMAGE = amplify_core.QueryField(fieldName: "userImage");
-  static final TYPE = amplify_core.QueryField(fieldName: "type");
+  static final AUTHORIMAGE = amplify_core.QueryField(fieldName: "authorImage");
+  static final TITLE = amplify_core.QueryField(fieldName: "title");
+  static final CONTENT = amplify_core.QueryField(fieldName: "content");
+  static final VOTES = amplify_core.QueryField(fieldName: "votes");
   static final CREATEDAT = amplify_core.QueryField(fieldName: "createdAt");
   static final COMMENTCOUNT = amplify_core.QueryField(fieldName: "commentCount");
   static final IMAGEURL = amplify_core.QueryField(fieldName: "imageUrl");
   static final TAGS = amplify_core.QueryField(fieldName: "tags");
-  static final MEALTYPE = amplify_core.QueryField(fieldName: "mealType");
   static var schema = amplify_core.Model.defineSchema(define: (amplify_core.ModelSchemaDefinition modelSchemaDefinition) {
     modelSchemaDefinition.name = "Post";
     modelSchemaDefinition.pluralName = "Posts";
@@ -378,20 +337,7 @@ class Post extends amplify_core.Model {
     modelSchemaDefinition.addField(amplify_core.ModelFieldDefinition.id());
     
     modelSchemaDefinition.addField(amplify_core.ModelFieldDefinition.field(
-      key: Post.DESCRIPTION,
-      isRequired: true,
-      ofType: amplify_core.ModelFieldType(amplify_core.ModelFieldTypeEnum.string)
-    ));
-    
-    modelSchemaDefinition.addField(amplify_core.ModelFieldDefinition.field(
-      key: Post.LIKES,
-      isRequired: true,
-      isArray: true,
-      ofType: amplify_core.ModelFieldType(amplify_core.ModelFieldTypeEnum.collection, ofModelName: amplify_core.ModelFieldTypeEnum.string.name)
-    ));
-    
-    modelSchemaDefinition.addField(amplify_core.ModelFieldDefinition.field(
-      key: Post.USERNAME,
+      key: Post.AUTHORNAME,
       isRequired: true,
       ofType: amplify_core.ModelFieldType(amplify_core.ModelFieldTypeEnum.string)
     ));
@@ -403,15 +349,28 @@ class Post extends amplify_core.Model {
     ));
     
     modelSchemaDefinition.addField(amplify_core.ModelFieldDefinition.field(
-      key: Post.USERIMAGE,
+      key: Post.AUTHORIMAGE,
       isRequired: true,
       ofType: amplify_core.ModelFieldType(amplify_core.ModelFieldTypeEnum.string)
     ));
     
     modelSchemaDefinition.addField(amplify_core.ModelFieldDefinition.field(
-      key: Post.TYPE,
+      key: Post.TITLE,
       isRequired: true,
       ofType: amplify_core.ModelFieldType(amplify_core.ModelFieldTypeEnum.string)
+    ));
+    
+    modelSchemaDefinition.addField(amplify_core.ModelFieldDefinition.field(
+      key: Post.CONTENT,
+      isRequired: false,
+      ofType: amplify_core.ModelFieldType(amplify_core.ModelFieldTypeEnum.string)
+    ));
+    
+    modelSchemaDefinition.addField(amplify_core.ModelFieldDefinition.field(
+      key: Post.VOTES,
+      isRequired: true,
+      isArray: true,
+      ofType: amplify_core.ModelFieldType(amplify_core.ModelFieldTypeEnum.collection, ofModelName: amplify_core.ModelFieldTypeEnum.string.name)
     ));
     
     modelSchemaDefinition.addField(amplify_core.ModelFieldDefinition.field(
@@ -428,7 +387,7 @@ class Post extends amplify_core.Model {
     
     modelSchemaDefinition.addField(amplify_core.ModelFieldDefinition.field(
       key: Post.IMAGEURL,
-      isRequired: true,
+      isRequired: false,
       ofType: amplify_core.ModelFieldType(amplify_core.ModelFieldTypeEnum.string)
     ));
     
@@ -437,12 +396,6 @@ class Post extends amplify_core.Model {
       isRequired: true,
       isArray: true,
       ofType: amplify_core.ModelFieldType(amplify_core.ModelFieldTypeEnum.collection, ofModelName: amplify_core.ModelFieldTypeEnum.string.name)
-    ));
-    
-    modelSchemaDefinition.addField(amplify_core.ModelFieldDefinition.field(
-      key: Post.MEALTYPE,
-      isRequired: true,
-      ofType: amplify_core.ModelFieldType(amplify_core.ModelFieldTypeEnum.enumeration)
     ));
     
     modelSchemaDefinition.addField(amplify_core.ModelFieldDefinition.nonQueryField(

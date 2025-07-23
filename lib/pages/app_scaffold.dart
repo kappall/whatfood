@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:whatfood/features/community/screens/community_screen.dart';
 import 'package:whatfood/features/home/screens/home_screen.dart';
 import 'package:whatfood/features/ingredients/screens/ingredients_screen.dart';
 import 'package:whatfood/features/recipes/screens/recipes_screen.dart';
@@ -17,15 +18,9 @@ class _AppScaffoldState extends State<AppScaffold> {
   final List<Widget> _pages = [
     HomeScreen(),
     ScanScreen(),
+    CommunityScreen(),
     RecipesScreen(),
     IngredientsScreen(),
-  ];
-
-  final List<String> _titles = [
-    'Home',
-    'Scan Food',
-    'Recipes',
-    'Profile',
   ];
 
   void _onItemTapped(int index) {
@@ -37,10 +32,6 @@ class _AppScaffoldState extends State<AppScaffold> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text(_titles[_selectedIndex]),
-        centerTitle: true,
-      ),
       body: _pages[_selectedIndex],
       bottomNavigationBar: Theme(
         data: Theme.of(context).copyWith(
@@ -59,6 +50,10 @@ class _AppScaffoldState extends State<AppScaffold> {
             BottomNavigationBarItem(
               icon: Icon(Icons.qr_code_scanner),
               label: 'Scan',
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.people),
+              label: 'Community',
             ),
             BottomNavigationBarItem(
               icon: Icon(Icons.receipt_long),

@@ -47,7 +47,7 @@ class ForYouView extends ConsumerWidget {
                   width: MediaQuery.of(context).size.width,
                   child: FutureBuilder(
                       future: Amplify.Storage.getUrl(
-                        path: StoragePath.fromString(post.imageUrl),
+                        path: StoragePath.fromString(post.imageUrl!),
                       ).result,
                       builder: (context, snapshot) {
                         if (snapshot.connectionState ==
