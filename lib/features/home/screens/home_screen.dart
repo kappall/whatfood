@@ -1,7 +1,7 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:routemaster/routemaster.dart';
-import 'package:whatfood/core/common/loader.dart';
 import 'package:whatfood/features/post/controller/post_controller.dart';
 import 'package:whatfood/models/Post.dart';
 import 'package:amplify_flutter/amplify_flutter.dart';
@@ -22,127 +22,97 @@ class HomeScreen extends ConsumerStatefulWidget {
 }
 
 class _HomeScreenState extends ConsumerState<HomeScreen> {
-  bool _isSearching = false;
-  final TextEditingController _searchController = TextEditingController();
-  String _searchQuery = '';
+  final _searchController = TextEditingController();
 
-  @override
-  void dispose() {
-    _searchController.dispose();
-    super.dispose();
+  void _showAlternativeSheet(String query) {
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      builder: (_) {
+        return Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text('Alternative for "$query"',
+                  style: Theme.of(context).textTheme.headlineSmall),
+              const SizedBox(height: 12),
+              const Text('Hamburger'), // placeholder risposta
+              const SizedBox(height: 16),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: [
+                  IconButton(
+                      onPressed: () {}, icon: const Icon(Icons.thumb_up)),
+                  IconButton(
+                      onPressed: () {}, icon: const Icon(Icons.thumb_down)),
+                  IconButton(onPressed: () {}, icon: const Icon(Icons.report)),
+                ],
+              ),
+            ],
+          ),
+        );
+      },
+    );
   }
 
   @override
   Widget build(BuildContext context) {
-    final posts = ref.watch(viralPostsProvider);
-
     return GestureDetector(
       onTap: () => FocusScope.of(context).unfocus(),
-      child: Stack(
-        children: [
-          Column(
-            children: [
-              _buildHeader(context),
-              Expanded(
-                child: SafeArea(
-                  top: false,
-                  bottom: false,
-                  child: CustomScrollView(
-                    slivers: [
-                      const SliverToBoxAdapter(child: SizedBox(height: 16)),
-                      const SliverToBoxAdapter(child: _QuickScanSection()),
-                      const SliverToBoxAdapter(child: SizedBox(height: 24)),
-                      const SliverToBoxAdapter(
-                          child: _TrendingIngredientsSection()),
-                      const SliverToBoxAdapter(child: SizedBox(height: 24)),
-                      const SliverToBoxAdapter(
-                          child: _MealInspirationSection()),
-                      const SliverToBoxAdapter(child: SizedBox(height: 24)),
-                      SliverToBoxAdapter(
-                          child: _ViralPostsSection(posts: posts)),
-                      SliverToBoxAdapter(
-                        child: SizedBox(
-                            height: 32 + MediaQuery.of(context).padding.bottom),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
+      child: Scaffold(
+        appBar: AppBar(
+          title: const Text('Whatfood'),
+          actions: [
+            IconButton(
+              icon: const Icon(Icons.account_circle),
+              onPressed: () => Routemaster.of(context).push('/private'),
+            ),
+          ],
+        ),
+        bottomNavigationBar: CupertinoTabBar(
+          currentIndex: 0,
+          onTap: (i) {},
+          items: const [
+            BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
+            BottomNavigationBarItem(
+                icon: Icon(Icons.qr_code_scanner), label: 'Scan'),
+            BottomNavigationBarItem(
+                icon: Icon(Icons.receipt_long), label: 'Recipes'),
+            BottomNavigationBarItem(
+                icon: Icon(Icons.shopping_bag_outlined), label: 'Ingredients'),
+          ],
+        ),
+        body: SafeArea(
+          child: CustomScrollView(
+            slivers: [
+              SliverToBoxAdapter(child: SizedBox(height: 16)),
+              SliverToBoxAdapter(
+                  child: _AlternativeSection(
+                      controller: _searchController,
+                      onSubmit: _showAlternativeSheet)),
+              SliverToBoxAdapter(child: SizedBox(height: 24)),
+              SliverToBoxAdapter(child: _QuickScanSection()),
+              SliverToBoxAdapter(child: SizedBox(height: 24)),
+              SliverToBoxAdapter(child: _TrendingIngredientsSection()),
+              SliverToBoxAdapter(child: SizedBox(height: 24)),
+              SliverToBoxAdapter(child: _MealInspirationSection()),
+              SliverToBoxAdapter(child: SizedBox(height: 32)),
             ],
           ),
-        ],
+        ),
       ),
-    );
-  }
-
-  Widget _buildHeader(BuildContext context) {
-    return Container(
-      height: 80 + MediaQuery.of(context).padding.top,
-      padding: EdgeInsets.only(
-        top: MediaQuery.of(context).padding.top,
-        left: 16,
-        right: 16,
-      ),
-      decoration: BoxDecoration(
-        color: Theme.of(context).appBarTheme.backgroundColor,
-        boxShadow: [
-          if (Theme.of(context).appBarTheme.elevation != null &&
-              Theme.of(context).appBarTheme.elevation! > 0)
-            const BoxShadow(
-              color: Colors.black12,
-              blurRadius: 4,
-              offset: Offset(0, 2),
-            ),
-        ],
-      ),
-      child: Row(
-        children: [
-          Expanded(
-            child: _isSearching
-                ? Material(child: _buildSearchBar())
-                : Text(
-                    'Home',
-                    style: Theme.of(context)
-                        .textTheme
-                        .headlineLarge
-                        ?.copyWith(fontWeight: FontWeight.bold),
-                  ),
-          ),
-          IconButton(
-            icon: Icon(_isSearching ? Icons.close : Icons.search),
-            onPressed: () {
-              setState(() {
-                _isSearching = !_isSearching;
-                if (!_isSearching) _searchController.clear();
-              });
-            },
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildSearchBar() {
-    return TextField(
-      controller: _searchController,
-      autofocus: true,
-      decoration: InputDecoration(
-        hintText: 'Search posts, ingredients, recipes...',
-        border: InputBorder.none,
-        hintStyle: TextStyle(color: Colors.grey[500]),
-      ),
-      style: const TextStyle(fontSize: 18),
-      onChanged: (value) {
-        setState(() {
-          _searchQuery = value.trim().toLowerCase();
-        });
-      },
     );
   }
 }
 
-class _QuickScanSection extends StatelessWidget {
-  const _QuickScanSection();
+class _AlternativeSection extends StatelessWidget {
+  final TextEditingController controller;
+  final void Function(String) onSubmit;
+
+  const _AlternativeSection({required this.controller, required this.onSubmit});
 
   @override
   Widget build(BuildContext context) {
@@ -151,7 +121,46 @@ class _QuickScanSection extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('Quick Scan', style: context.headlineSmall),
+          Text('Looking for an alternative to...',
+              style: Theme.of(context).textTheme.titleMedium),
+          const SizedBox(height: 8),
+          Row(
+            children: [
+              Expanded(
+                child: TextField(
+                  controller: controller,
+                  decoration: InputDecoration(
+                    hintText: 'e.g. Beef',
+                    border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12)),
+                  ),
+                ),
+              ),
+              IconButton(
+                icon: const Icon(Icons.search),
+                onPressed: () {
+                  if (controller.text.trim().isNotEmpty) {
+                    onSubmit(controller.text.trim());
+                  }
+                },
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _QuickScanSection extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text('Quick Scan', style: Theme.of(context).textTheme.headlineSmall),
           const SizedBox(height: 12),
           Material(
             borderRadius: BorderRadius.circular(20),
@@ -161,7 +170,10 @@ class _QuickScanSection extends StatelessWidget {
               child: Ink(
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
-                    colors: [Colors.green.shade600, Colors.green.shade800],
+                    colors: [
+                      Theme.of(context).colorScheme.primary,
+                      Theme.of(context).colorScheme.primary.withOpacity(0.8)
+                    ],
                   ),
                   borderRadius: BorderRadius.circular(20),
                 ),
@@ -169,8 +181,12 @@ class _QuickScanSection extends StatelessWidget {
                 child: Row(
                   children: [
                     Text('Scan Product',
-                        style: context.titleMedium?.copyWith(
-                            color: Colors.white, fontWeight: FontWeight.w600)),
+                        style: Theme.of(context)
+                            .textTheme
+                            .titleMedium
+                            ?.copyWith(
+                                color: Colors.white,
+                                fontWeight: FontWeight.w600)),
                     const Spacer(),
                     const Icon(Icons.qr_code_scanner,
                         color: Colors.white, size: 32),
@@ -387,103 +403,6 @@ class _MealInspirationSection extends StatelessWidget {
           ),
         ),
       ],
-    );
-  }
-}
-
-class _ViralPostsSection extends StatelessWidget {
-  const _ViralPostsSection({required this.posts});
-  final AsyncValue<List<Post>> posts;
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Padding(
-          padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
-          child: Text('Viral Posts', style: context.headlineSmall),
-        ),
-        posts.when(
-          data: (posts) => Column(
-            children: posts
-                .map((p) => Padding(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 16, vertical: 6),
-                      child: _PostCard(post: p),
-                    ))
-                .toList(),
-          ),
-          loading: () => const Padding(
-            padding: EdgeInsets.all(16),
-            child: Center(child: CircularProgressIndicator()),
-          ),
-          error: (e, _) => Padding(
-            padding: const EdgeInsets.all(16),
-            child: Center(
-                child: Text('Error loading posts',
-                    style:
-                        context.bodyMedium?.copyWith(color: Colors.redAccent))),
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-class _PostCard extends StatelessWidget {
-  const _PostCard({required this.post});
-  final Post post;
-
-  @override
-  Widget build(BuildContext context) {
-    return Card(
-      elevation: 0,
-      margin: EdgeInsets.zero,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      child: InkWell(
-        borderRadius: BorderRadius.circular(16),
-        onTap: () => Routemaster.of(context).push('/community'),
-        child: Padding(
-          padding: const EdgeInsets.all(12),
-          child: Row(
-            children: [
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(post.title,
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                        style: context.titleMedium
-                            ?.copyWith(fontWeight: FontWeight.w600)),
-                    const SizedBox(height: 4),
-                    Text(
-                      post.content ?? '',
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                      style: context.bodyMedium
-                          ?.copyWith(color: Colors.grey.shade700),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(width: 12),
-              Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const Icon(Icons.trending_up, color: Colors.green),
-                  Text(
-                    '${post.upVotes.length - post.downVotes.length}',
-                    style: context.labelLarge
-                        ?.copyWith(fontWeight: FontWeight.bold),
-                  ),
-                ],
-              ),
-            ],
-          ),
-        ),
-      ),
     );
   }
 }

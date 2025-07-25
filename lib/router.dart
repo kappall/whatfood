@@ -11,9 +11,12 @@ import 'package:whatfood/features/personalization/screens/allergies_screen.dart'
 import 'package:whatfood/features/personalization/screens/dislikes_screen.dart';
 import 'package:whatfood/features/personalization/screens/goals_screen.dart';
 import 'package:whatfood/features/personalization/screens/preferences_screen.dart';
+import 'package:whatfood/features/private_area/screens/private_area_screen.dart';
+import 'package:whatfood/features/profile/views/profile_view.dart';
 import 'package:whatfood/features/recipes/screens/create_recipe_screen.dart';
 import 'package:whatfood/features/recipes/screens/recipes_screen.dart';
 import 'package:whatfood/features/scanner/screens/scan_screen.dart';
+import 'package:whatfood/features/settings/screens/setting_screen.dart';
 import 'package:whatfood/pages/app_scaffold.dart';
 
 final loggedOutRoutes = RouteMap(
@@ -27,13 +30,14 @@ final loggedOutRoutes = RouteMap(
 final loggedInRoutes = RouteMap(routes: {
   '/': (_) => CupertinoTabPage(
         child: AppScaffold(),
-        paths: ['/home', '/scan', '/community', '/recipes', '/ingredients'],
+        paths: ['/home', '/scan', '/recipes', '/ingredients'],
       ),
   '/home': (_) => const MaterialPage(child: HomeScreen()),
   '/scan': (_) => const MaterialPage(child: ScanScreen()),
-  '/community': (_) => const MaterialPage(child: CommunityScreen()),
   '/recipes': (_) => const MaterialPage(child: RecipesScreen()),
   '/ingredients': (_) => const MaterialPage(child: IngredientsScreen()),
+  '/private': (_) => const MaterialPage(child: PrivateAreaScreen()),
+  '/private/settings': (_) => const MaterialPage(child: SettingsScreen()),
   '/onboarding': (_) => const MaterialPage(child: OnboardingScreen()),
   '/personalize/preferences': (_) =>
       const MaterialPage(child: PreferencesScreen()),

@@ -5,14 +5,19 @@ import 'package:amplify_flutter/amplify_flutter.dart';
 import 'package:amplify_storage_s3/amplify_storage_s3.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:hive/hive.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:whatfood/amplifyconfiguration.dart';
 import 'package:whatfood/core/common/error_text.dart';
 import 'package:whatfood/core/common/loader.dart';
+import 'package:whatfood/core/services/hive_encryption_service.dart';
 import 'package:whatfood/features/auth/controller/auth_controller.dart';
 import 'package:whatfood/models/ModelProvider.dart';
+import 'package:whatfood/models/diary_entry.dart';
 import 'package:whatfood/router.dart';
 import 'package:routemaster/routemaster.dart';
-import 'package:whatfood/theme/theme.dart';
+
+final themeModeProvider = StateProvider<ThemeMode>((_) => ThemeMode.system);
 
 Future<void> configureAmplify() async {
   try {
@@ -52,6 +57,18 @@ void main() async {
   final bool loggedIn = await isUserLoggedIn();
   debugPrint('User logged in: $loggedIn');
 
+  final dir = await getApplicationDocumentsDirectory();
+  Hive.init(dir.path);
+
+  Hive.registerAdapter(DiaryEntryAdapter());
+
+  final cipher = await HiveEncryptionService.getCipher();
+
+  await Hive.openBox<List>(
+    'foodDiary',
+    encryptionCipher: cipher,
+  );
+
   runApp(ProviderScope(child: MyApp(loggedIn: loggedIn)));
 }
 
@@ -70,7 +87,9 @@ class _MyAppState extends ConsumerState<MyApp> {
           data: (user) => MaterialApp.router(
             debugShowCheckedModeBanner: false,
             title: 'Whatfood',
-            theme: darkTheme,
+            themeMode: ref.watch(themeModeProvider),
+            theme: _buildLightTheme(),
+            darkTheme: _buildDarkTheme(),
             routerDelegate: RoutemasterDelegate(
               routesBuilder: (context) {
                 if (user != null) {
@@ -94,5 +113,51 @@ class _MyAppState extends ConsumerState<MyApp> {
             ),
           ),
         );
+  }
+
+  ThemeData _buildLightTheme() {
+    final base = ThemeData.light();
+    return base.copyWith(
+      colorScheme: base.colorScheme.copyWith(
+        primary: Colors.green.shade700,
+        secondary: Colors.orangeAccent,
+        background: Colors.white,
+      ),
+      scaffoldBackgroundColor: Colors.white,
+      appBarTheme: const AppBarTheme(
+        backgroundColor: Colors.white,
+        elevation: 2,
+        iconTheme: IconThemeData(color: Colors.black87),
+        titleTextStyle: TextStyle(
+            color: Colors.black87, fontSize: 20, fontWeight: FontWeight.bold),
+      ),
+      bottomNavigationBarTheme: BottomNavigationBarThemeData(
+        selectedItemColor: Colors.green.shade700,
+        unselectedItemColor: Colors.grey,
+      ),
+    );
+  }
+
+  ThemeData _buildDarkTheme() {
+    final base = ThemeData.dark();
+    return base.copyWith(
+      colorScheme: base.colorScheme.copyWith(
+        primary: Colors.green.shade300,
+        secondary: Colors.deepOrangeAccent,
+        background: Colors.black,
+      ),
+      scaffoldBackgroundColor: Colors.black,
+      appBarTheme: const AppBarTheme(
+        backgroundColor: Colors.black,
+        elevation: 2,
+        iconTheme: IconThemeData(color: Colors.white),
+        titleTextStyle: TextStyle(
+            color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold),
+      ),
+      bottomNavigationBarTheme: BottomNavigationBarThemeData(
+        selectedItemColor: Colors.green.shade300,
+        unselectedItemColor: Colors.grey,
+      ),
+    );
   }
 }

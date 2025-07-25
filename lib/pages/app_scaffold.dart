@@ -1,7 +1,6 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:routemaster/routemaster.dart';
-import 'package:whatfood/features/community/screens/community_screen.dart';
 import 'package:whatfood/features/home/screens/home_screen.dart';
 import 'package:whatfood/features/ingredients/screens/ingredients_screen.dart';
 import 'package:whatfood/features/recipes/screens/recipes_screen.dart';
@@ -13,7 +12,6 @@ class AppScaffold extends StatefulWidget {
   static const tabs = [
     '/home',
     '/scan',
-    '/community',
     '/recipes',
     '/ingredients',
   ];
@@ -37,10 +35,8 @@ class _AppScaffoldState extends State<AppScaffold> {
           case 1:
             return const ScanScreen();
           case 2:
-            return const CommunityScreen();
-          case 3:
             return const RecipesScreen();
-          case 4:
+          case 3:
             return const IngredientsScreen();
           default:
             return const Text('Unknown Screen');
@@ -55,7 +51,6 @@ class _AppScaffoldState extends State<AppScaffold> {
           BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
           BottomNavigationBarItem(
               icon: Icon(Icons.qr_code_scanner), label: 'Scan'),
-          BottomNavigationBarItem(icon: Icon(Icons.people), label: 'Community'),
           BottomNavigationBarItem(
               icon: Icon(Icons.receipt_long), label: 'Recipes'),
           BottomNavigationBarItem(

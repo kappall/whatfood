@@ -11,6 +11,15 @@ import 'package:whatfood/features/profile/repository/user_profile_repository.dar
 import 'package:whatfood/models/Post.dart';
 import 'package:whatfood/models/User.dart';
 
+final diaryProvider =
+    StateProvider<List<FoodEntry>>((_) => []); // simple in-memory list
+
+class FoodEntry {
+  final DateTime date;
+  final String name;
+  FoodEntry(this.date, this.name);
+}
+
 final userProfileControllerProvider =
     StateNotifierProvider<UserProfileController, bool>((ref) {
   final userProfileRepository = UserProfileRepository(auth: auth);
