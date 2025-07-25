@@ -98,7 +98,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                 }
               },
               child: Text(_currentIndex == pages.length - 1 ? 'Start' : 'Next'),
-            )
+            ),
           ],
         ),
       ),

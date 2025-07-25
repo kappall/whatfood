@@ -111,8 +111,7 @@ class RecipesViewState extends ConsumerState<RecipesView> {
                               return const Loader();
                             }
                             String imageUrl = snapshot.data!.url.toString();
-                            return RecipeCard(
-                                recipe: recipe, imageUrl: imageUrl);
+                            return RecipeCard(recipe: recipe);
                           });
                     },
                   )),

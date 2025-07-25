@@ -1,118 +1,80 @@
-import 'dart:io';
-
-import 'package:amplify_flutter/amplify_flutter.dart';
-import 'package:flutter/material.dart';
+import 'dart:convert';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:routemaster/routemaster.dart';
-import 'package:whatfood/core/providers/storage_repository_provider.dart';
-import 'package:whatfood/core/utils.dart';
-import 'package:whatfood/features/ingredients/repository/ingredients_repository.dart';
-import 'package:whatfood/models/Ingredient.dart';
+import 'package:http/http.dart' as http;
 
-final IngredientControllerProvider =
-    StateNotifierProvider<IngredientController, bool>((ref) {
-  final IngredientRepository = ref.watch(ingredientRepositoryProvider);
-  final storageRepository = ref.watch(storageRepositoryProvider);
-  return IngredientController(
-    IngredientRepository: IngredientRepository,
-    ref: ref,
-    storageRepository: storageRepository,
-  );
-});
+class Ingredient {
+  Ingredient(
+      {required this.id,
+      required this.name,
+      required this.coverImage,
+      required this.description});
+  String id;
+  String name;
+  String coverImage;
+  String description;
+}
 
-final ingredientsProvider = StreamProvider((ref) {
-  final ingredientController = ref.watch(IngredientControllerProvider.notifier);
+/// Parametri per la ricerca su OpenFoodFacts
+class OpenFoodFactsParams {
+  final String query;
+  final List<String> filters;
 
-  return ingredientController.fetchIngredients();
-});
+  OpenFoodFactsParams({required this.query, this.filters = const []});
+}
 
-final ingredientByIdProvider = StreamProvider.family((ref, String id) {
-  final posController = ref.watch(IngredientControllerProvider.notifier);
-  return posController.getIngredientById(id);
-});
+/// Provider che restituisce una lista di Ingredienti da OpenFoodFacts
+final openFoodFactsProvider =
+    FutureProvider.family<List<Ingredient>, OpenFoodFactsParams>(
+        (ref, params) async {
+  final baseUrl = 'https://world.openfoodfacts.org/cgi/search.pl';
 
-class IngredientController extends StateNotifier<bool> {
-  final IngredientRepository _ingredientRepository;
-  final StorageRepository _storageRepository;
+  // Costruisci i parametri di query
+  final uri = Uri.parse(baseUrl).replace(queryParameters: {
+    'search_terms': params.query.isEmpty ? '' : params.query,
+    'search_simple': '1',
+    'action': 'process',
+    'json': '1',
+    'page_size': '40',
+    // aggiunge filtri come tag
+    ..._buildFilterParams(params.filters),
+  });
 
-  IngredientController({
-    required IngredientRepository IngredientRepository,
-    required StorageRepository storageRepository,
-    required Ref ref,
-  })  : _ingredientRepository = IngredientRepository,
-        _storageRepository = storageRepository,
-        super(false);
-  Stream<List<Ingredient>> fetchIngredients() {
-    return _ingredientRepository.fetchIngredients();
+  print('Fetching OFF: $uri');
+  final response = await http.get(uri).timeout(const Duration(seconds: 10));
+  print(response);
+
+  if (response.statusCode != 200) {
+    throw Exception('OpenFoodFacts API error: HTTP ${response.statusCode}');
   }
 
-/*
-  void likeOrUnlike(Ingredient ingredient) async {
-    final uid = _ref.read(userProvider)!.uid;
-    _IngredientRepository.likeOrUnlike(ingredient, uid);
-  }*/
+  final data = jsonDecode(response.body) as Map<String, dynamic>;
+  final products = data['products'] as List<dynamic>?;
+  if (products == null) return [];
 
-  Stream<Ingredient> getIngredientById(String id) {
-    return _ingredientRepository.getIngredientById(id);
-  }
-
-  void updateIngredient({
-    required BuildContext context,
-    required String ingredientId,
-    required String name,
-    required String description,
-    required List<String> tips,
-    required List<String> similars,
-    required List<String> shops,
-    required List<String> recipes,
-    required List<String> likes,
-    File? newImage,
-    String? existingImageUrl,
-  }) async {
-    state = true;
-
-    try {
-      String imageUrl = existingImageUrl ?? '';
-
-      if (newImage != null) {
-        final res = await _storageRepository.editFile(
-          newImage,
-          ingredientId,
-          'images',
-          name,
-          contentType: 'image/jpeg',
+  // Mappa i prodotti in Ingredient
+  return products
+      .map((p) {
+        final name = (p['product_name'] ?? p['generic_name'] ?? '').toString();
+        final imageUrl = p['image_front_small_url'] as String?;
+        final description = p['ingredients_text'] as String?;
+        return Ingredient(
+          id: p['code'] as String,
+          name: name,
+          coverImage: imageUrl ?? '',
+          description: description ?? '',
         );
+      })
+      .where((ing) => ing.name.isNotEmpty)
+      .toList();
+});
 
-        imageUrl = res;
-      }
-
-      final ingredient = Ingredient(
-        id: ingredientId,
-        name: name,
-        description: description,
-        tips: tips.where((i) => i.isNotEmpty).toList(),
-        shops: shops.where((i) => i.isNotEmpty).toList(),
-        similars: similars.where((i) => i.isNotEmpty).toList(),
-        recipes: recipes.where((i) => i.isNotEmpty).toList(),
-        coverImage: imageUrl,
-        createdAt: TemporalDateTime.now(),
-        likes: likes,
-      );
-
-      final res = await _ingredientRepository.updateIngredient(ingredient);
-
-      state = false;
-
-      res.fold(
-        (failure) => showSnackBar(context, failure.message),
-        (_) {
-          showSnackBar(context, 'Ingredient updated successfully!');
-          Routemaster.of(context).popUntil((route) => route.path == '/');
-        },
-      );
-    } catch (e) {
-      state = false;
-      if (context.mounted) showSnackBar(context, e.toString());
-    }
+/// Costruisce parametri per i filtri (labels)
+Map<String, String> _buildFilterParams(List<String> filters) {
+  final params = <String, String>{};
+  for (var i = 0; i < filters.length; i++) {
+    params['tagtype_$i'] = 'labels';
+    params['tag_contains_$i'] = 'contains';
+    params['tag_$i'] = filters[i];
   }
+  return params;
 }

@@ -229,6 +229,7 @@ class AuthController extends StateNotifier<bool> {
                   );
                   if (signInResult.isSignedIn) {
                     debugPrint('user signed in');
+                    Navigator.of(context).pop();
                     if (context.mounted) {
                       Routemaster.of(context).replace('/onboarding');
                     }

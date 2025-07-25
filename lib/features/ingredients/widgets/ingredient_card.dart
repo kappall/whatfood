@@ -4,8 +4,6 @@ import 'package:routemaster/routemaster.dart';
 import 'package:whatfood/button_styles.dart';
 import 'package:whatfood/features/ingredients/controller/ingredient_controller.dart';
 
-import 'package:whatfood/models/Ingredient.dart';
-
 class IngredientCard extends StatelessWidget {
   final Ingredient ingredient;
   final String? imageUrl;

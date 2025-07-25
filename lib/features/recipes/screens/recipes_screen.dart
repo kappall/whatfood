@@ -1,10 +1,8 @@
-import 'package:amplify_flutter/amplify_flutter.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:routemaster/routemaster.dart';
 import 'package:shimmer/shimmer.dart';
 import 'package:whatfood/core/common/error_text.dart';
-import 'package:whatfood/core/common/loader.dart';
 import 'package:whatfood/core/common/recipe_card.dart';
 import 'package:whatfood/features/recipes/controller/recipe_controller.dart';
 
@@ -31,7 +29,6 @@ class _RecipesScreenState extends ConsumerState<RecipesScreen> {
       onTap: () => FocusScope.of(context).unfocus(),
       child: Stack(
         children: [
-          // --------------- CONTENT ---------------
           Column(
             children: [
               _Header(
@@ -44,7 +41,6 @@ class _RecipesScreenState extends ConsumerState<RecipesScreen> {
               ),
             ],
           ),
-
           Positioned(
             bottom: 16 + MediaQuery.of(context).padding.bottom,
             right: 16,
