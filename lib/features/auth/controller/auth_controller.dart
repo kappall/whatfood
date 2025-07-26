@@ -110,7 +110,11 @@ class AuthController extends StateNotifier<bool> {
           showSnackBar(context, l.message);
         },
         (userModel) {
-          Routemaster.of(context).replace('/onboarding');
+          if (!userModel.isOnboarded) {
+            Routemaster.of(context).replace('/onboarding');
+          } else {
+            refreshUser();
+          }
         },
       );
     } catch (e) {
@@ -178,7 +182,7 @@ class AuthController extends StateNotifier<bool> {
     showDialog(
       context: context,
       barrierDismissible: false,
-      builder: (context) => AlertDialog(
+      builder: (dialogCtx) => AlertDialog(
         title: const Text('Email Verification'),
         content: Column(
           mainAxisSize: MainAxisSize.min,
@@ -187,24 +191,25 @@ class AuthController extends StateNotifier<bool> {
             TextField(
               controller: verificationController,
               keyboardType: TextInputType.number,
-              decoration: const InputDecoration(
-                labelText: 'Verification Code',
-              ),
+              decoration: const InputDecoration(labelText: 'Verification Code'),
             ),
           ],
         ),
         actions: [
+          // ---------- CANCEL ----------
           TextButton(
             onPressed: () async {
-              debugPrint("deleting: ${user.email}");
-              _authRepository.deleteUnconfirmedUser(user.email);
+              debugPrint('deleting: ${user.email}');
+              await _authRepository.deleteUnconfirmedUser(user.email);
               await Amplify.Auth.signOut();
-              if (context.mounted) {
-                Navigator.of(context).pop();
+              if (dialogCtx.mounted) {
+                Navigator.of(dialogCtx).pop(); // close dialog
               }
             },
             child: const Text('Cancel'),
           ),
+
+          // ---------- VERIFY ----------
           TextButton(
             onPressed: () async {
               try {
@@ -213,38 +218,41 @@ class AuthController extends StateNotifier<bool> {
                   confirmationCode: verificationController.text.trim(),
                 );
 
-                if (confirmResult.isSignUpComplete) {
-                  final email = user.email;
-                  debugPrint('svaing user $user');
-                  await _authRepository.saveUserData(user);
+                if (dialogCtx.mounted) Navigator.of(dialogCtx).pop();
 
-                  final signInResult = await Amplify.Auth.signIn(
-                    username: email,
-                    password: password,
-                  );
-                  if (signInResult.isSignedIn) {
-                    debugPrint('user signed in');
-                    Navigator.of(context).pop();
-                    if (context.mounted) {
-                      Routemaster.of(context).replace('/onboarding');
-                    }
-                    await _ref
-                        .read(authControllerProvider.notifier)
-                        .refreshUser();
-                  } else {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                          content: Text('Sign in failed after confirmation.')),
-                    );
-                  }
+                if (!confirmResult.isSignUpComplete) {
+                  throw Exception('Sign-up not complete');
                 }
-              } on AuthException catch (e) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text(e.message)),
+
+                await _authRepository.saveUserData(user);
+
+                final signInResult = await Amplify.Auth.signIn(
+                  username: user.email,
+                  password: password,
                 );
-              } catch (e) {
-                debugPrint("Exeption: ${e.toString()}");
-                _authRepository.deleteUnconfirmedUser(user.email);
+
+                if (!signInResult.isSignedIn) {
+                  throw Exception('Sign-in failed after confirmation');
+                }
+
+                if (context.mounted) {
+                  Routemaster.of(context).replace('/onboarding');
+                }
+
+                await _ref.read(authControllerProvider.notifier).refreshUser();
+              } catch (e, stack) {
+                debugPrint('Exception during verification: $e');
+                debugPrint('Stack trace: $stack');
+
+                await _authRepository.deleteUnconfirmedUser(user.email);
+
+                if (dialogCtx.mounted) Navigator.of(dialogCtx).pop();
+
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('Verification failed: $e')),
+                  );
+                }
               }
             },
             child: const Text('Verify'),

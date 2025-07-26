@@ -9,33 +9,40 @@ final diaryProvider =
     NotifierProvider<DiaryNotifier, List<DiaryEntry>>(DiaryNotifier.new);
 
 class DiaryNotifier extends Notifier<List<DiaryEntry>> {
+  late Box<DiaryEntry> _box;
+
   @override
   List<DiaryEntry> build() {
-    final box = Hive.box<List>('foodDiary');
-    final todayKey = DateFormat('yyyy-MM-dd').format(DateTime.now());
-    return box.get(todayKey)?.cast<DiaryEntry>() ?? [];
+    _box = Hive.box<DiaryEntry>('foodDiary');
+    return _box.values.toList()
+      ..sort((a, b) => b.timestamp.compareTo(a.timestamp));
   }
 
   void add(String meal) async {
     final entry = DiaryEntry(meal: meal, timestamp: DateTime.now());
-    final box = Hive.box<List>('foodDiary');
-    final todayKey = DateFormat('yyyy-MM-dd').format(DateTime.now());
-    final updated = [...state, entry];
-    await box.put(todayKey, updated);
-    state = updated;
-    debugPrint(box.get('foodDiary').toString());
+    await _box.add(entry);
+    state = [...state, entry];
   }
 }
 
 final diaryGroupedProvider = Provider<List<DayGroup>>((ref) {
-  final box = Hive.box<List>('foodDiary');
-  final map = box.toMap().cast<String, List>();
-  final groups = map.entries.map((e) {
+  final entries = ref.watch(diaryProvider);
+
+  final groupedMap = <String, List<DiaryEntry>>{};
+
+  for (final entry in entries) {
+    final dateKey = DateFormat('yyyy-MM-dd').format(entry.timestamp);
+    groupedMap.putIfAbsent(dateKey, () => []).add(entry);
+  }
+
+  final groups = groupedMap.entries.map((e) {
     final date = DateTime.parse(e.key);
-    final meals = e.value.cast<DiaryEntry>();
+    final meals = e.value;
+    meals.sort((a, b) => a.timestamp.compareTo(b.timestamp));
     return DayGroup(date, meals);
   }).toList()
     ..sort((a, b) => b.date.compareTo(a.date));
+
   return groups;
 });
 

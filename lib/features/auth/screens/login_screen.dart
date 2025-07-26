@@ -151,8 +151,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                           const SizedBox(height: 24),
                           const Divider(thickness: .5),
                           const SizedBox(height: 12),
-
-/* Google */
                           OutlinedButton.icon(
                             onPressed: loading ? null : _googleLogin,
                             icon: Image.asset('assets/icons/google.png',
@@ -171,26 +169,22 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                             OutlinedButton.icon(
                               onPressed: loading ? null : _appleLogin,
                               icon: Image.asset('assets/icons/apple.png',
-                                  height: 24, color: Colors.white),
-                              label: const Text('Login with Apple',
-                                  style: TextStyle(color: Colors.white)),
+                                  height: 24),
+                              label: const Text(
+                                'Login with Apple',
+                              ),
                               style: OutlinedButton.styleFrom(
                                 minimumSize: const Size.fromHeight(48),
-                                side: const BorderSide(color: Colors.white),
                                 shape: RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(10)),
-                                foregroundColor: Colors.white,
                               ),
                             ),
                           const SizedBox(height: 12),
-
-                          /* sign-up redirect */
                           TextButton(
                             onPressed: () =>
                                 Routemaster.of(context).replace('/signup'),
                             child: const Text(
                               "Don't have an account? Sign up",
-                              style: TextStyle(color: Colors.white),
                             ),
                           ),
                         ],

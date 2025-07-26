@@ -237,13 +237,8 @@ class AuthRepository {
           allergies
           goals
           dislikes
-          savedPosts
-          postsCount
           dailyIntake
           isOnboarded
-          followers
-          following
-          bio
         }
       }
     ''';

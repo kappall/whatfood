@@ -56,6 +56,7 @@ void main() async {
 
   final bool loggedIn = await isUserLoggedIn();
   debugPrint('User logged in: $loggedIn');
+  //Amplify.Auth.signOut();
 
   final dir = await getApplicationDocumentsDirectory();
   Hive.init(dir.path);
@@ -63,8 +64,8 @@ void main() async {
   Hive.registerAdapter(DiaryEntryAdapter());
 
   final cipher = await HiveEncryptionService.getCipher();
-
-  await Hive.openBox<List>(
+  //await Hive.deleteBoxFromDisk('foodDiary');
+  await Hive.openBox<DiaryEntry>(
     'foodDiary',
     encryptionCipher: cipher,
   );

@@ -169,7 +169,6 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
                             onPressed: () => Routemaster.of(context).pop(),
                             child: const Text(
                               'Already have an account? Log in',
-                              style: TextStyle(color: Colors.white),
                             ),
                           ),
                         ],
