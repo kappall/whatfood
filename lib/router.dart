@@ -44,6 +44,5 @@ final loggedInRoutes = RouteMap(routes: {
   '/personalize/allergies': (_) => const MaterialPage(child: AllergiesScreen()),
   '/personalize/goals': (_) => const MaterialPage(child: GoalsScreen()),
   '/personalize/dislikes': (_) => const MaterialPage(child: DislikesScreen()),
-  '/create-post': (_) => const MaterialPage(child: CreatePostScreen()),
   '/create-recipe': (_) => const MaterialPage(child: CreateRecipeScreen())
 });

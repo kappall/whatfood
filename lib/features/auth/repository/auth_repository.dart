@@ -84,7 +84,7 @@ class AuthRepository {
       if (signInResult.isSignedIn) {
         User userModel = User(
             name: 'Guest',
-            profilePic: Constants.avatarDefault,
+            profilePic: null,
             banner: Constants.bannerDefault,
             id: Uuid().v4(),
             preferences: [],
@@ -92,13 +92,8 @@ class AuthRepository {
             dislikes: [],
             goals: [],
             isOnboarded: false,
-            savedPosts: [],
-            postsCount: 0,
-            dailyIntake: 0,
-            followers: [],
-            following: [],
-            bio: '',
-            email: 'Guest email placeholder');
+            email: 'Guest email placeholder',
+            dailyIntake: 0);
 
         return right(userModel);
       } else {
@@ -198,13 +193,8 @@ class AuthRepository {
           "allergies": user.allergies.toList(),
           "goals": user.goals.toList(),
           "dislikes": user.dislikes.toList(),
-          "savedPosts": user.savedPosts.toList(),
-          "postsCount": user.postsCount,
           "dailyIntake": user.dailyIntake,
-          "followers": user.followers.toList(),
-          "following": user.following.toList(),
           "isOnboarded": user.isOnboarded,
-          "bio": user.bio,
         }
       };
 

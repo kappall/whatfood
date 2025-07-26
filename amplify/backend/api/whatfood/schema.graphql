@@ -2,18 +2,13 @@
 type User @model @auth(rules: [{ allow: public, operations: [read,create,delete,update] }]){
   id: String!
   name: String!
-  profilePic: String!
+  profilePic: String
   banner: String!
   preferences: [String]!
   allergies: [String]!
   goals: [String]!
   dislikes: [String]!
-  savedPosts: [String]!
-  bio: String!
-  postsCount: Int!
   dailyIntake: Int!
-  followers: [String]!
-  following: [String]!
   email: String!
   isOnboarded: Boolean!
 }
@@ -48,7 +43,7 @@ type Comment @model @auth(rules: [{ allow: public, operations: [read,create,dele
   username: String!
   uid: String!
   postID: String!
-  userImage: String!
+  userImage: String
   createdAt: AWSDateTime!
 
 }
@@ -65,7 +60,7 @@ type Recipe @model @auth(rules: [{ allow: public, operations: [read,create,delet
   createdAt: AWSDateTime!
   likes: [String]!
   uid: String!
-  userImage: String!
+  userImage: String
   username: String!
 }
 

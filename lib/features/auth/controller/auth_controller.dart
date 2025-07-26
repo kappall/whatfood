@@ -149,20 +149,15 @@ class AuthController extends StateNotifier<bool> {
             final userModel = User(
               name: name,
               email: email,
-              profilePic: Constants.avatarDefault,
+              profilePic: null,
               banner: Constants.bannerDefault,
               id: signUpResult.userId!,
               preferences: [],
               allergies: [],
               goals: [],
               dislikes: [],
-              savedPosts: [],
-              postsCount: 0,
               dailyIntake: 0,
-              followers: [],
-              following: [],
               isOnboarded: false,
-              bio: '',
             );
 
             _showVerificationDialog(context, userModel, password);
