@@ -2,6 +2,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:routemaster/routemaster.dart';
+import 'package:whatfood/features/ingredients/controller/ingredient_controller.dart';
 import 'package:whatfood/features/post/controller/post_controller.dart';
 import 'package:whatfood/models/Post.dart';
 import 'package:amplify_flutter/amplify_flutter.dart';
@@ -201,90 +202,109 @@ class _QuickScanSection extends StatelessWidget {
   }
 }
 
-class _TrendingIngredientsSection extends StatelessWidget {
+class _TrendingIngredientsSection extends ConsumerWidget {
   const _TrendingIngredientsSection();
 
   @override
-  Widget build(BuildContext context) {
-    final list = [
-      {'n': 'Turmeric', 'c': Colors.orangeAccent},
-      {'n': 'Quinoa', 'c': Colors.amber},
-      {'n': 'Kale', 'c': Colors.teal},
-    ];
+  Widget build(BuildContext context, WidgetRef ref) {
+    final asyncIngredients = ref.watch(openFoodFactsProvider(
+      const OpenFoodFactsParams(
+        sortBy: OpenFoodFactsSort.uniqueScansN,
+        limit: 5,
+      ),
+    ));
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Padding(
-          padding: const EdgeInsets.fromLTRB(16, 0, 16, 4),
-          child: Text('Trending Ingredients', style: context.headlineSmall),
-        ),
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16),
-          child: Text(
-            'Discover new flavours',
-            style: context.bodyMedium?.copyWith(color: Colors.grey.shade600),
-          ),
-        ),
-        const SizedBox(height: 12),
-        SizedBox(
-          height: 130,
-          child: ListView.separated(
-            scrollDirection: Axis.horizontal,
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            itemCount: list.length,
-            separatorBuilder: (_, __) => const SizedBox(width: 12),
-            itemBuilder: (_, i) {
-              final item = list[i];
-              return Material(
-                color: Colors.transparent,
-                child: InkWell(
-                  borderRadius: BorderRadius.circular(20),
-                  onTap: () {/* TODO */},
-                  child: Ink(
-                    width: 110,
-                    decoration: BoxDecoration(
-                      color: (item['c'] as Color).withOpacity(.15),
+    return asyncIngredients.when(
+      loading: () => const CircularProgressIndicator(),
+      error: (err, _) => Text('Error: $err'),
+      data: (ingredients) {
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 4),
+              child: Text('Trending Ingredients', style: context.headlineSmall),
+            ),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: Text(
+                'Discover new flavours',
+                style:
+                    context.bodyMedium?.copyWith(color: Colors.grey.shade600),
+              ),
+            ),
+            const SizedBox(height: 12),
+            SizedBox(
+              height: 130,
+              child: ListView.separated(
+                scrollDirection: Axis.horizontal,
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                itemCount: ingredients.length,
+                separatorBuilder: (_, __) => const SizedBox(width: 12),
+                itemBuilder: (_, i) {
+                  final ing = ingredients[i];
+                  return Material(
+                    color: Colors.transparent,
+                    child: InkWell(
                       borderRadius: BorderRadius.circular(20),
-                      border: Border.all(
-                          color: (item['c'] as Color).withOpacity(.3)),
-                    ),
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        CircleAvatar(
-                          radius: 24,
-                          backgroundColor: item['c'] as Color,
-                          child: Text(
-                            (item['n'] as String)[0],
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
+                      onTap: () {
+                        Routemaster.of(context).push('/ingredient/${ing.id}');
+                      },
+                      child: Ink(
+                        width: 110,
+                        decoration: BoxDecoration(
+                          color: Colors.green.withOpacity(.15),
+                          borderRadius: BorderRadius.circular(20),
+                          border:
+                              Border.all(color: Colors.green.withOpacity(.3)),
                         ),
-                        const SizedBox(height: 8),
-                        Text(item['n'] as String,
-                            style: context.labelLarge
-                                ?.copyWith(fontWeight: FontWeight.w600)),
-                      ],
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            if (ing.coverImage != null)
+                              CircleAvatar(
+                                radius: 24,
+                                backgroundImage: NetworkImage(ing.coverImage!),
+                              )
+                            else
+                              CircleAvatar(
+                                radius: 24,
+                                backgroundColor: Colors.green,
+                                child: Text(
+                                  ing.name[0].toUpperCase(),
+                                  style: const TextStyle(
+                                      color: Colors.white,
+                                      fontWeight: FontWeight.bold),
+                                ),
+                              ),
+                            const SizedBox(height: 8),
+                            Text(
+                              ing.name,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: context.labelLarge
+                                  ?.copyWith(fontWeight: FontWeight.w600),
+                            ),
+                          ],
+                        ),
+                      ),
                     ),
-                  ),
-                ),
-              );
-            },
-          ),
-        ),
-        Align(
-          alignment: Alignment.centerRight,
-          child: TextButton(
-            onPressed: () {
-              Routemaster.of(context).push('ingredients');
-            },
-            child: const Text('View all'),
-          ),
-        ),
-      ],
+                  );
+                },
+              ),
+            ),
+            Align(
+              alignment: Alignment.centerRight,
+              child: TextButton(
+                onPressed: () {
+                  Routemaster.of(context).push('/ingredients');
+                },
+                child: const Text('View all'),
+              ),
+            ),
+          ],
+        );
+      },
     );
   }
 }

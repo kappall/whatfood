@@ -4,16 +4,20 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:http/http.dart' as http;
 import 'package:whatfood/models/Ingredient.dart';
 
+enum OpenFoodFactsSort { popularity, uniqueScansN }
+
 class OpenFoodFactsParams {
   final String query;
   final List<String> categories;
   final List<String> allergensToAvoid;
   final List<String> ingredientsToAvoid;
-  final List<String> nutritionGrades; // a,b,c,d,e
-  final List<String> novaGroups; // 1,2,3,4
+  final List<String> nutritionGrades;
+  final List<String> novaGroups;
   final bool vegan;
   final bool vegetarian;
   final bool glutenFree;
+  final OpenFoodFactsSort? sortBy;
+  final int? limit;
 
   const OpenFoodFactsParams({
     this.query = '',
@@ -25,6 +29,8 @@ class OpenFoodFactsParams {
     this.vegan = false,
     this.vegetarian = false,
     this.glutenFree = false,
+    this.sortBy,
+    this.limit,
   });
 
   bool get hasActiveFilters =>
@@ -48,8 +54,13 @@ final openFoodFactsProvider =
       'search_simple': '1',
       'action': 'process',
       'json': '1',
-      'page_size': '40',
+      'page_size': (p.limit ?? 40).toString(),
       if (p.query.trim().isNotEmpty) 'search_terms': p.query.trim(),
+      if (p.sortBy != null)
+        'sort_by': switch (p.sortBy!) {
+          OpenFoodFactsSort.popularity => 'popularity',
+          OpenFoodFactsSort.uniqueScansN => 'unique_scans_n',
+        }
     };
 
     if (p.categories.isNotEmpty) {
@@ -79,10 +90,8 @@ final openFoodFactsProvider =
   }
 
   final uri = _buildUri(params);
-
-  print('Fetching OFF: $uri');
+  print(uri.toString());
   final response = await http.get(uri).timeout(const Duration(seconds: 10));
-  print(response.body);
 
   if (response.statusCode != 200) {
     throw Exception('OpenFoodFacts API error: HTTP ${response.statusCode}');

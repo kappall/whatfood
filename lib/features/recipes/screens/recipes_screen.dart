@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:routemaster/routemaster.dart';
@@ -16,6 +18,7 @@ class RecipesScreen extends ConsumerStatefulWidget {
 class _RecipesScreenState extends ConsumerState<RecipesScreen> {
   final TextEditingController _searchCtrl = TextEditingController();
   String _query = '';
+  Timer? _debounce;
 
   @override
   void dispose() {
@@ -23,36 +26,60 @@ class _RecipesScreenState extends ConsumerState<RecipesScreen> {
     super.dispose();
   }
 
+  Future<void> _search() async {
+    // TODO
+  }
+
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: () => FocusScope.of(context).unfocus(),
-      child: Stack(
-        children: [
-          Column(
-            children: [
-              _Header(
-                  searchCtrl: _searchCtrl,
-                  onChanged: (v) => setState(() => _query = v)),
-              Expanded(
-                child: _RecipeGrid(
-                  query: _query.toLowerCase(),
+      child: Material(
+        child: Stack(
+          children: [
+            Column(
+              children: [
+                _Header(
+                    searchCtrl: _searchCtrl,
+                    onChanged: (v) => setState(() => _query = v)),
+                Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: TextField(
+                    controller: _searchCtrl,
+                    decoration: InputDecoration(
+                      hintText: 'Search recipes...',
+                      prefixIcon: const Icon(Icons.search),
+                      border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(24)),
+                    ),
+                    onChanged: (v) {
+                      setState(() => _query = v);
+                      _debounce?.cancel();
+                      _debounce =
+                          Timer(const Duration(milliseconds: 500), _search);
+                    },
+                  ),
                 ),
-              ),
-            ],
-          ),
-          Positioned(
-            bottom: 16 + MediaQuery.of(context).padding.bottom,
-            right: 16,
-            child: FloatingActionButton(
-              heroTag: 'add-recipe-fab',
-              shape: const CircleBorder(),
-              backgroundColor: Colors.green,
-              onPressed: () => Routemaster.of(context).push('/create-recipe'),
-              child: const Icon(Icons.add, color: Colors.white, size: 32),
+                Expanded(
+                  child: _RecipeGrid(
+                    query: _query.toLowerCase(),
+                  ),
+                ),
+              ],
             ),
-          ),
-        ],
+            Positioned(
+              bottom: 16 + MediaQuery.of(context).padding.bottom,
+              right: 16,
+              child: FloatingActionButton(
+                heroTag: 'add-recipe-fab',
+                shape: const CircleBorder(),
+                backgroundColor: Colors.green,
+                onPressed: () => Routemaster.of(context).push('/create-recipe'),
+                child: const Icon(Icons.add, color: Colors.white, size: 32),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -93,31 +120,6 @@ class _Header extends StatelessWidget {
               ),
               const Spacer(),
             ],
-          ),
-          const SizedBox(height: 8),
-          SizedBox(
-            height: 44,
-            child: Material(
-              borderRadius: BorderRadius.circular(22),
-              child: TextField(
-                controller: searchCtrl,
-                onChanged: onChanged,
-                decoration: InputDecoration(
-                  hintText: 'Search recipes...',
-                  prefixIcon: const Icon(
-                    Icons.search,
-                    size: 24,
-                  ),
-                  filled: true,
-                  fillColor: Colors.green.withValues(alpha: 0.4),
-                  contentPadding: EdgeInsets.zero,
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(22),
-                    borderSide: BorderSide.none,
-                  ),
-                ),
-              ),
-            ),
           ),
         ],
       ),

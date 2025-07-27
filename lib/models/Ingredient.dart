@@ -31,12 +31,16 @@ class Ingredient extends amplify_core.Model {
   final String? _name;
   final String? _coverImage;
   final String? _description;
+  final double? _healthScore;
+  final String? _nutriscoreGrade;
+  final int? _novaGroup;
+  final String? _nutritionPer100g;
   final List<String>? _similars;
   final List<String>? _tips;
   final List<String>? _shops;
   final List<String>? _recipes;
-  final amplify_core.TemporalDateTime? _createdAt;
   final List<String>? _likes;
+  final amplify_core.TemporalDateTime? _createdAt;
   final amplify_core.TemporalDateTime? _updatedAt;
 
   @override
@@ -71,6 +75,22 @@ class Ingredient extends amplify_core.Model {
   
   String? get description {
     return _description;
+  }
+  
+  double? get healthScore {
+    return _healthScore;
+  }
+  
+  String? get nutriscoreGrade {
+    return _nutriscoreGrade;
+  }
+  
+  int? get novaGroup {
+    return _novaGroup;
+  }
+  
+  String? get nutritionPer100g {
+    return _nutritionPer100g;
   }
   
   List<String> get similars {
@@ -125,19 +145,6 @@ class Ingredient extends amplify_core.Model {
     }
   }
   
-  amplify_core.TemporalDateTime get createdAt {
-    try {
-      return _createdAt!;
-    } catch(e) {
-      throw amplify_core.AmplifyCodeGenModelException(
-          amplify_core.AmplifyExceptionMessages.codeGenRequiredFieldForceCastExceptionMessage,
-          recoverySuggestion:
-            amplify_core.AmplifyExceptionMessages.codeGenRequiredFieldForceCastRecoverySuggestion,
-          underlyingException: e.toString()
-          );
-    }
-  }
-  
   List<String> get likes {
     try {
       return _likes!;
@@ -151,24 +158,51 @@ class Ingredient extends amplify_core.Model {
     }
   }
   
-  amplify_core.TemporalDateTime? get updatedAt {
-    return _updatedAt;
+  amplify_core.TemporalDateTime get createdAt {
+    try {
+      return _createdAt!;
+    } catch(e) {
+      throw amplify_core.AmplifyCodeGenModelException(
+          amplify_core.AmplifyExceptionMessages.codeGenRequiredFieldForceCastExceptionMessage,
+          recoverySuggestion:
+            amplify_core.AmplifyExceptionMessages.codeGenRequiredFieldForceCastRecoverySuggestion,
+          underlyingException: e.toString()
+          );
+    }
   }
   
-  const Ingredient._internal({required this.id, required name, coverImage, description, required similars, required tips, required shops, required recipes, required createdAt, required likes, updatedAt}): _name = name, _coverImage = coverImage, _description = description, _similars = similars, _tips = tips, _shops = shops, _recipes = recipes, _createdAt = createdAt, _likes = likes, _updatedAt = updatedAt;
+  amplify_core.TemporalDateTime get updatedAt {
+    try {
+      return _updatedAt!;
+    } catch(e) {
+      throw amplify_core.AmplifyCodeGenModelException(
+          amplify_core.AmplifyExceptionMessages.codeGenRequiredFieldForceCastExceptionMessage,
+          recoverySuggestion:
+            amplify_core.AmplifyExceptionMessages.codeGenRequiredFieldForceCastRecoverySuggestion,
+          underlyingException: e.toString()
+          );
+    }
+  }
   
-  factory Ingredient({String? id, required String name, String? coverImage, String? description, required List<String> similars, required List<String> tips, required List<String> shops, required List<String> recipes, required amplify_core.TemporalDateTime createdAt, required List<String> likes}) {
+  const Ingredient._internal({required this.id, required name, coverImage, description, healthScore, nutriscoreGrade, novaGroup, nutritionPer100g, required similars, required tips, required shops, required recipes, required likes, required createdAt, required updatedAt}): _name = name, _coverImage = coverImage, _description = description, _healthScore = healthScore, _nutriscoreGrade = nutriscoreGrade, _novaGroup = novaGroup, _nutritionPer100g = nutritionPer100g, _similars = similars, _tips = tips, _shops = shops, _recipes = recipes, _likes = likes, _createdAt = createdAt, _updatedAt = updatedAt;
+  
+  factory Ingredient({String? id, required String name, String? coverImage, String? description, double? healthScore, String? nutriscoreGrade, int? novaGroup, String? nutritionPer100g, required List<String> similars, required List<String> tips, required List<String> shops, required List<String> recipes, required List<String> likes, required amplify_core.TemporalDateTime createdAt, required amplify_core.TemporalDateTime updatedAt}) {
     return Ingredient._internal(
       id: id == null ? amplify_core.UUID.getUUID() : id,
       name: name,
       coverImage: coverImage,
       description: description,
+      healthScore: healthScore,
+      nutriscoreGrade: nutriscoreGrade,
+      novaGroup: novaGroup,
+      nutritionPer100g: nutritionPer100g,
       similars: similars != null ? List<String>.unmodifiable(similars) : similars,
       tips: tips != null ? List<String>.unmodifiable(tips) : tips,
       shops: shops != null ? List<String>.unmodifiable(shops) : shops,
       recipes: recipes != null ? List<String>.unmodifiable(recipes) : recipes,
+      likes: likes != null ? List<String>.unmodifiable(likes) : likes,
       createdAt: createdAt,
-      likes: likes != null ? List<String>.unmodifiable(likes) : likes);
+      updatedAt: updatedAt);
   }
   
   bool equals(Object other) {
@@ -183,12 +217,17 @@ class Ingredient extends amplify_core.Model {
       _name == other._name &&
       _coverImage == other._coverImage &&
       _description == other._description &&
+      _healthScore == other._healthScore &&
+      _nutriscoreGrade == other._nutriscoreGrade &&
+      _novaGroup == other._novaGroup &&
+      _nutritionPer100g == other._nutritionPer100g &&
       DeepCollectionEquality().equals(_similars, other._similars) &&
       DeepCollectionEquality().equals(_tips, other._tips) &&
       DeepCollectionEquality().equals(_shops, other._shops) &&
       DeepCollectionEquality().equals(_recipes, other._recipes) &&
+      DeepCollectionEquality().equals(_likes, other._likes) &&
       _createdAt == other._createdAt &&
-      DeepCollectionEquality().equals(_likes, other._likes);
+      _updatedAt == other._updatedAt;
   }
   
   @override
@@ -203,54 +242,73 @@ class Ingredient extends amplify_core.Model {
     buffer.write("name=" + "$_name" + ", ");
     buffer.write("coverImage=" + "$_coverImage" + ", ");
     buffer.write("description=" + "$_description" + ", ");
+    buffer.write("healthScore=" + (_healthScore != null ? _healthScore!.toString() : "null") + ", ");
+    buffer.write("nutriscoreGrade=" + "$_nutriscoreGrade" + ", ");
+    buffer.write("novaGroup=" + (_novaGroup != null ? _novaGroup!.toString() : "null") + ", ");
+    buffer.write("nutritionPer100g=" + "$_nutritionPer100g" + ", ");
     buffer.write("similars=" + (_similars != null ? _similars!.toString() : "null") + ", ");
     buffer.write("tips=" + (_tips != null ? _tips!.toString() : "null") + ", ");
     buffer.write("shops=" + (_shops != null ? _shops!.toString() : "null") + ", ");
     buffer.write("recipes=" + (_recipes != null ? _recipes!.toString() : "null") + ", ");
-    buffer.write("createdAt=" + (_createdAt != null ? _createdAt!.format() : "null") + ", ");
     buffer.write("likes=" + (_likes != null ? _likes!.toString() : "null") + ", ");
+    buffer.write("createdAt=" + (_createdAt != null ? _createdAt!.format() : "null") + ", ");
     buffer.write("updatedAt=" + (_updatedAt != null ? _updatedAt!.format() : "null"));
     buffer.write("}");
     
     return buffer.toString();
   }
   
-  Ingredient copyWith({String? name, String? coverImage, String? description, List<String>? similars, List<String>? tips, List<String>? shops, List<String>? recipes, amplify_core.TemporalDateTime? createdAt, List<String>? likes}) {
+  Ingredient copyWith({String? name, String? coverImage, String? description, double? healthScore, String? nutriscoreGrade, int? novaGroup, String? nutritionPer100g, List<String>? similars, List<String>? tips, List<String>? shops, List<String>? recipes, List<String>? likes, amplify_core.TemporalDateTime? createdAt, amplify_core.TemporalDateTime? updatedAt}) {
     return Ingredient._internal(
       id: id,
       name: name ?? this.name,
       coverImage: coverImage ?? this.coverImage,
       description: description ?? this.description,
+      healthScore: healthScore ?? this.healthScore,
+      nutriscoreGrade: nutriscoreGrade ?? this.nutriscoreGrade,
+      novaGroup: novaGroup ?? this.novaGroup,
+      nutritionPer100g: nutritionPer100g ?? this.nutritionPer100g,
       similars: similars ?? this.similars,
       tips: tips ?? this.tips,
       shops: shops ?? this.shops,
       recipes: recipes ?? this.recipes,
+      likes: likes ?? this.likes,
       createdAt: createdAt ?? this.createdAt,
-      likes: likes ?? this.likes);
+      updatedAt: updatedAt ?? this.updatedAt);
   }
   
   Ingredient copyWithModelFieldValues({
     ModelFieldValue<String>? name,
     ModelFieldValue<String?>? coverImage,
     ModelFieldValue<String?>? description,
+    ModelFieldValue<double?>? healthScore,
+    ModelFieldValue<String?>? nutriscoreGrade,
+    ModelFieldValue<int?>? novaGroup,
+    ModelFieldValue<String?>? nutritionPer100g,
     ModelFieldValue<List<String>?>? similars,
     ModelFieldValue<List<String>?>? tips,
     ModelFieldValue<List<String>?>? shops,
     ModelFieldValue<List<String>?>? recipes,
+    ModelFieldValue<List<String>?>? likes,
     ModelFieldValue<amplify_core.TemporalDateTime>? createdAt,
-    ModelFieldValue<List<String>?>? likes
+    ModelFieldValue<amplify_core.TemporalDateTime>? updatedAt
   }) {
     return Ingredient._internal(
       id: id,
       name: name == null ? this.name : name.value,
       coverImage: coverImage == null ? this.coverImage : coverImage.value,
       description: description == null ? this.description : description.value,
+      healthScore: healthScore == null ? this.healthScore : healthScore.value,
+      nutriscoreGrade: nutriscoreGrade == null ? this.nutriscoreGrade : nutriscoreGrade.value,
+      novaGroup: novaGroup == null ? this.novaGroup : novaGroup.value,
+      nutritionPer100g: nutritionPer100g == null ? this.nutritionPer100g : nutritionPer100g.value,
       similars: similars == null ? this.similars : similars.value,
       tips: tips == null ? this.tips : tips.value,
       shops: shops == null ? this.shops : shops.value,
       recipes: recipes == null ? this.recipes : recipes.value,
+      likes: likes == null ? this.likes : likes.value,
       createdAt: createdAt == null ? this.createdAt : createdAt.value,
-      likes: likes == null ? this.likes : likes.value
+      updatedAt: updatedAt == null ? this.updatedAt : updatedAt.value
     );
   }
   
@@ -259,16 +317,20 @@ class Ingredient extends amplify_core.Model {
       _name = json['name'],
       _coverImage = json['coverImage'],
       _description = json['description'],
+      _healthScore = (json['healthScore'] as num?)?.toDouble(),
+      _nutriscoreGrade = json['nutriscoreGrade'],
+      _novaGroup = (json['novaGroup'] as num?)?.toInt(),
+      _nutritionPer100g = json['nutritionPer100g'],
       _similars = json['similars']?.cast<String>(),
       _tips = json['tips']?.cast<String>(),
       _shops = json['shops']?.cast<String>(),
       _recipes = json['recipes']?.cast<String>(),
-      _createdAt = json['createdAt'] != null ? amplify_core.TemporalDateTime.fromString(json['createdAt']) : null,
       _likes = json['likes']?.cast<String>(),
+      _createdAt = json['createdAt'] != null ? amplify_core.TemporalDateTime.fromString(json['createdAt']) : null,
       _updatedAt = json['updatedAt'] != null ? amplify_core.TemporalDateTime.fromString(json['updatedAt']) : null;
   
   Map<String, dynamic> toJson() => {
-    'id': id, 'name': _name, 'coverImage': _coverImage, 'description': _description, 'similars': _similars, 'tips': _tips, 'shops': _shops, 'recipes': _recipes, 'createdAt': _createdAt?.format(), 'likes': _likes, 'updatedAt': _updatedAt?.format()
+    'id': id, 'name': _name, 'coverImage': _coverImage, 'description': _description, 'healthScore': _healthScore, 'nutriscoreGrade': _nutriscoreGrade, 'novaGroup': _novaGroup, 'nutritionPer100g': _nutritionPer100g, 'similars': _similars, 'tips': _tips, 'shops': _shops, 'recipes': _recipes, 'likes': _likes, 'createdAt': _createdAt?.format(), 'updatedAt': _updatedAt?.format()
   };
   
   Map<String, Object?> toMap() => {
@@ -276,12 +338,16 @@ class Ingredient extends amplify_core.Model {
     'name': _name,
     'coverImage': _coverImage,
     'description': _description,
+    'healthScore': _healthScore,
+    'nutriscoreGrade': _nutriscoreGrade,
+    'novaGroup': _novaGroup,
+    'nutritionPer100g': _nutritionPer100g,
     'similars': _similars,
     'tips': _tips,
     'shops': _shops,
     'recipes': _recipes,
-    'createdAt': _createdAt,
     'likes': _likes,
+    'createdAt': _createdAt,
     'updatedAt': _updatedAt
   };
 
@@ -290,12 +356,17 @@ class Ingredient extends amplify_core.Model {
   static final NAME = amplify_core.QueryField(fieldName: "name");
   static final COVERIMAGE = amplify_core.QueryField(fieldName: "coverImage");
   static final DESCRIPTION = amplify_core.QueryField(fieldName: "description");
+  static final HEALTHSCORE = amplify_core.QueryField(fieldName: "healthScore");
+  static final NUTRISCOREGRADE = amplify_core.QueryField(fieldName: "nutriscoreGrade");
+  static final NOVAGROUP = amplify_core.QueryField(fieldName: "novaGroup");
+  static final NUTRITIONPER100G = amplify_core.QueryField(fieldName: "nutritionPer100g");
   static final SIMILARS = amplify_core.QueryField(fieldName: "similars");
   static final TIPS = amplify_core.QueryField(fieldName: "tips");
   static final SHOPS = amplify_core.QueryField(fieldName: "shops");
   static final RECIPES = amplify_core.QueryField(fieldName: "recipes");
-  static final CREATEDAT = amplify_core.QueryField(fieldName: "createdAt");
   static final LIKES = amplify_core.QueryField(fieldName: "likes");
+  static final CREATEDAT = amplify_core.QueryField(fieldName: "createdAt");
+  static final UPDATEDAT = amplify_core.QueryField(fieldName: "updatedAt");
   static var schema = amplify_core.Model.defineSchema(define: (amplify_core.ModelSchemaDefinition modelSchemaDefinition) {
     modelSchemaDefinition.name = "Ingredient";
     modelSchemaDefinition.pluralName = "Ingredients";
@@ -332,6 +403,30 @@ class Ingredient extends amplify_core.Model {
     ));
     
     modelSchemaDefinition.addField(amplify_core.ModelFieldDefinition.field(
+      key: Ingredient.HEALTHSCORE,
+      isRequired: false,
+      ofType: amplify_core.ModelFieldType(amplify_core.ModelFieldTypeEnum.double)
+    ));
+    
+    modelSchemaDefinition.addField(amplify_core.ModelFieldDefinition.field(
+      key: Ingredient.NUTRISCOREGRADE,
+      isRequired: false,
+      ofType: amplify_core.ModelFieldType(amplify_core.ModelFieldTypeEnum.string)
+    ));
+    
+    modelSchemaDefinition.addField(amplify_core.ModelFieldDefinition.field(
+      key: Ingredient.NOVAGROUP,
+      isRequired: false,
+      ofType: amplify_core.ModelFieldType(amplify_core.ModelFieldTypeEnum.int)
+    ));
+    
+    modelSchemaDefinition.addField(amplify_core.ModelFieldDefinition.field(
+      key: Ingredient.NUTRITIONPER100G,
+      isRequired: false,
+      ofType: amplify_core.ModelFieldType(amplify_core.ModelFieldTypeEnum.string)
+    ));
+    
+    modelSchemaDefinition.addField(amplify_core.ModelFieldDefinition.field(
       key: Ingredient.SIMILARS,
       isRequired: true,
       isArray: true,
@@ -360,22 +455,21 @@ class Ingredient extends amplify_core.Model {
     ));
     
     modelSchemaDefinition.addField(amplify_core.ModelFieldDefinition.field(
-      key: Ingredient.CREATEDAT,
-      isRequired: true,
-      ofType: amplify_core.ModelFieldType(amplify_core.ModelFieldTypeEnum.dateTime)
-    ));
-    
-    modelSchemaDefinition.addField(amplify_core.ModelFieldDefinition.field(
       key: Ingredient.LIKES,
       isRequired: true,
       isArray: true,
       ofType: amplify_core.ModelFieldType(amplify_core.ModelFieldTypeEnum.collection, ofModelName: amplify_core.ModelFieldTypeEnum.string.name)
     ));
     
-    modelSchemaDefinition.addField(amplify_core.ModelFieldDefinition.nonQueryField(
-      fieldName: 'updatedAt',
-      isRequired: false,
-      isReadOnly: true,
+    modelSchemaDefinition.addField(amplify_core.ModelFieldDefinition.field(
+      key: Ingredient.CREATEDAT,
+      isRequired: true,
+      ofType: amplify_core.ModelFieldType(amplify_core.ModelFieldTypeEnum.dateTime)
+    ));
+    
+    modelSchemaDefinition.addField(amplify_core.ModelFieldDefinition.field(
+      key: Ingredient.UPDATEDAT,
+      isRequired: true,
       ofType: amplify_core.ModelFieldType(amplify_core.ModelFieldTypeEnum.dateTime)
     ));
   });

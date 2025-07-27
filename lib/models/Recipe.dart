@@ -185,17 +185,8 @@ class Recipe extends amplify_core.Model {
     }
   }
   
-  String get userImage {
-    try {
-      return _userImage!;
-    } catch(e) {
-      throw amplify_core.AmplifyCodeGenModelException(
-          amplify_core.AmplifyExceptionMessages.codeGenRequiredFieldForceCastExceptionMessage,
-          recoverySuggestion:
-            amplify_core.AmplifyExceptionMessages.codeGenRequiredFieldForceCastRecoverySuggestion,
-          underlyingException: e.toString()
-          );
-    }
+  String? get userImage {
+    return _userImage;
   }
   
   String get username {
@@ -215,9 +206,9 @@ class Recipe extends amplify_core.Model {
     return _updatedAt;
   }
   
-  const Recipe._internal({required this.id, required title, required coverImage, required description, required ingredients, required instructions, required servings, required cookTimeMinutes, required createdAt, required likes, required uid, required userImage, required username, updatedAt}): _title = title, _coverImage = coverImage, _description = description, _ingredients = ingredients, _instructions = instructions, _servings = servings, _cookTimeMinutes = cookTimeMinutes, _createdAt = createdAt, _likes = likes, _uid = uid, _userImage = userImage, _username = username, _updatedAt = updatedAt;
+  const Recipe._internal({required this.id, required title, required coverImage, required description, required ingredients, required instructions, required servings, required cookTimeMinutes, required createdAt, required likes, required uid, userImage, required username, updatedAt}): _title = title, _coverImage = coverImage, _description = description, _ingredients = ingredients, _instructions = instructions, _servings = servings, _cookTimeMinutes = cookTimeMinutes, _createdAt = createdAt, _likes = likes, _uid = uid, _userImage = userImage, _username = username, _updatedAt = updatedAt;
   
-  factory Recipe({String? id, required String title, required String coverImage, required String description, required List<String> ingredients, required List<String> instructions, required String servings, required String cookTimeMinutes, required amplify_core.TemporalDateTime createdAt, required List<String> likes, required String uid, required String userImage, required String username}) {
+  factory Recipe({String? id, required String title, required String coverImage, required String description, required List<String> ingredients, required List<String> instructions, required String servings, required String cookTimeMinutes, required amplify_core.TemporalDateTime createdAt, required List<String> likes, required String uid, String? userImage, required String username}) {
     return Recipe._internal(
       id: id == null ? amplify_core.UUID.getUUID() : id,
       title: title,
@@ -312,7 +303,7 @@ class Recipe extends amplify_core.Model {
     ModelFieldValue<amplify_core.TemporalDateTime>? createdAt,
     ModelFieldValue<List<String>?>? likes,
     ModelFieldValue<String>? uid,
-    ModelFieldValue<String>? userImage,
+    ModelFieldValue<String?>? userImage,
     ModelFieldValue<String>? username
   }) {
     return Recipe._internal(
@@ -465,7 +456,7 @@ class Recipe extends amplify_core.Model {
     
     modelSchemaDefinition.addField(amplify_core.ModelFieldDefinition.field(
       key: Recipe.USERIMAGE,
-      isRequired: true,
+      isRequired: false,
       ofType: amplify_core.ModelFieldType(amplify_core.ModelFieldTypeEnum.string)
     ));
     

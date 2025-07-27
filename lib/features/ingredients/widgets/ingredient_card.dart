@@ -14,9 +14,6 @@ class IngredientCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    debugPrint(
-        'Current route: ${Routemaster.of(context).currentRoute.fullPath}');
-
     return GestureDetector(
       onTap: () => Routemaster.of(context).push('/ingredient/${ingredient.id}'),
       child: Material(

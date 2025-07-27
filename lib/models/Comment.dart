@@ -115,17 +115,8 @@ class Comment extends amplify_core.Model {
     }
   }
   
-  String get userImage {
-    try {
-      return _userImage!;
-    } catch(e) {
-      throw amplify_core.AmplifyCodeGenModelException(
-          amplify_core.AmplifyExceptionMessages.codeGenRequiredFieldForceCastExceptionMessage,
-          recoverySuggestion:
-            amplify_core.AmplifyExceptionMessages.codeGenRequiredFieldForceCastRecoverySuggestion,
-          underlyingException: e.toString()
-          );
-    }
+  String? get userImage {
+    return _userImage;
   }
   
   amplify_core.TemporalDateTime get createdAt {
@@ -145,9 +136,9 @@ class Comment extends amplify_core.Model {
     return _updatedAt;
   }
   
-  const Comment._internal({required this.id, required text, required likes, required username, required uid, required postID, required userImage, required createdAt, updatedAt}): _text = text, _likes = likes, _username = username, _uid = uid, _postID = postID, _userImage = userImage, _createdAt = createdAt, _updatedAt = updatedAt;
+  const Comment._internal({required this.id, required text, required likes, required username, required uid, required postID, userImage, required createdAt, updatedAt}): _text = text, _likes = likes, _username = username, _uid = uid, _postID = postID, _userImage = userImage, _createdAt = createdAt, _updatedAt = updatedAt;
   
-  factory Comment({String? id, required String text, required List<String> likes, required String username, required String uid, required String postID, required String userImage, required amplify_core.TemporalDateTime createdAt}) {
+  factory Comment({String? id, required String text, required List<String> likes, required String username, required String uid, required String postID, String? userImage, required amplify_core.TemporalDateTime createdAt}) {
     return Comment._internal(
       id: id == null ? amplify_core.UUID.getUUID() : id,
       text: text,
@@ -217,7 +208,7 @@ class Comment extends amplify_core.Model {
     ModelFieldValue<String>? username,
     ModelFieldValue<String>? uid,
     ModelFieldValue<String>? postID,
-    ModelFieldValue<String>? userImage,
+    ModelFieldValue<String?>? userImage,
     ModelFieldValue<amplify_core.TemporalDateTime>? createdAt
   }) {
     return Comment._internal(
@@ -318,7 +309,7 @@ class Comment extends amplify_core.Model {
     
     modelSchemaDefinition.addField(amplify_core.ModelFieldDefinition.field(
       key: Comment.USERIMAGE,
-      isRequired: true,
+      isRequired: false,
       ofType: amplify_core.ModelFieldType(amplify_core.ModelFieldTypeEnum.string)
     ));
     
