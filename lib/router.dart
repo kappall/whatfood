@@ -17,6 +17,7 @@ import 'package:whatfood/features/profile/views/profile_view.dart';
 import 'package:whatfood/features/recipes/screens/create_recipe_screen.dart';
 import 'package:whatfood/features/recipes/screens/recipes_screen.dart';
 import 'package:whatfood/features/scanner/screens/scan_screen.dart';
+import 'package:whatfood/features/settings/screens/privacy_policy_screen.dart';
 import 'package:whatfood/features/settings/screens/setting_screen.dart';
 import 'package:whatfood/pages/app_scaffold.dart';
 
@@ -49,4 +50,6 @@ final loggedInRoutes = RouteMap(routes: {
   '/ingredient/:id': (route) => MaterialPage(
         child: IngredientDetailScreen(id: route.pathParameters['id']!),
       ),
+  '/settings': (_) => const MaterialPage(child: SettingsScreen()),
+  '/privacy': (_) => const MaterialPage(child: PrivacyPolicyScreen()),
 });
