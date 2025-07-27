@@ -5,6 +5,7 @@ import 'package:whatfood/features/auth/screens/signup_screen.dart';
 import 'package:whatfood/features/community/screens/community_screen.dart';
 import 'package:whatfood/features/community/screens/create_post_screen.dart';
 import 'package:whatfood/features/home/screens/home_screen.dart';
+import 'package:whatfood/features/ingredients/screens/ingredient_detail_screen.dart';
 import 'package:whatfood/features/ingredients/screens/ingredients_screen.dart';
 import 'package:whatfood/features/onboarding/screens/onboarding_screen.dart';
 import 'package:whatfood/features/personalization/screens/allergies_screen.dart';
@@ -44,5 +45,8 @@ final loggedInRoutes = RouteMap(routes: {
   '/personalize/allergies': (_) => const MaterialPage(child: AllergiesScreen()),
   '/personalize/goals': (_) => const MaterialPage(child: GoalsScreen()),
   '/personalize/dislikes': (_) => const MaterialPage(child: DislikesScreen()),
-  '/create-recipe': (_) => const MaterialPage(child: CreateRecipeScreen())
+  '/create-recipe': (_) => const MaterialPage(child: CreateRecipeScreen()),
+  '/ingredient/:id': (route) => MaterialPage(
+        child: IngredientDetailScreen(id: route.pathParameters['id']!),
+      ),
 });

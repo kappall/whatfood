@@ -64,17 +64,24 @@ type Recipe @model @auth(rules: [{ allow: public, operations: [read,create,delet
   username: String!
 }
 
-type Ingredient @model @auth(rules: [{ allow: public, operations: [read,create,delete,update] }]){
+type Ingredient
+  @model
+  @auth(rules: [{ allow: public, operations: [read, create, delete, update] }]) {
   id: ID!
   name: String!
   coverImage: String
   description: String
+  healthScore: Float
+  nutriscoreGrade: String
+  novaGroup: Int
+  nutritionPer100g: AWSJSON
   similars: [String]!
   tips: [String]!
   shops: [String]!
   recipes: [String]!
-  createdAt: AWSDateTime!
   likes: [String]!
+  createdAt: AWSDateTime!
+  updatedAt: AWSDateTime!
 }
 
 type Report @model @auth(rules: [{ allow: public, operations: [read,create,delete,update] }]){
