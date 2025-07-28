@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:routemaster/routemaster.dart';
 import 'package:whatfood/features/auth/controller/auth_controller.dart';
 import 'package:whatfood/core/common/loader.dart';
+import 'package:whatfood/l10n/app_localizations.dart';
 
 class LoginScreen extends ConsumerStatefulWidget {
   const LoginScreen({super.key});
@@ -41,6 +42,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     final loading = ref.watch(authControllerProvider);
+    final l10n = AppLocalizations.of(context)!;
 
     return Scaffold(
       resizeToAvoidBottomInset: false,
@@ -80,7 +82,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                         children: [
                           const SizedBox(height: 8),
                           Text(
-                            'Welcome back',
+                            l10n.loginTitle,
                             style: Theme.of(context)
                                 .textTheme
                                 .headlineMedium
@@ -101,7 +103,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                                       BorderRadius.all(Radius.circular(12))),
                             ),
                             validator: (v) =>
-                                v!.isEmpty ? 'Enter your email' : null,
+                                v!.isEmpty ? '${l10n.enterField}email' : null,
                           ),
                           const SizedBox(height: 16),
 
@@ -123,8 +125,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                                     setState(() => _obscure = !_obscure),
                               ),
                             ),
-                            validator: (v) =>
-                                v!.isEmpty ? 'Enter your password' : null,
+                            validator: (v) => v!.isEmpty
+                                ? '${l10n.enterField}password'
+                                : null,
                           ),
                           const SizedBox(height: 34),
 
@@ -143,7 +146,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                               onPressed: loading ? null : _emailLogin,
                               child: loading
                                   ? const Loader()
-                                  : const Text('Sign in',
+                                  : const Text('Login',
                                       style:
                                           TextStyle(color: Colors.lightGreen)),
                             ),

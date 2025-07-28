@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:routemaster/routemaster.dart';
 import 'package:whatfood/features/ingredients/controller/ingredient_controller.dart';
 import 'package:whatfood/features/post/controller/post_controller.dart';
+import 'package:whatfood/l10n/app_localizations.dart';
 import 'package:whatfood/models/Post.dart';
 import 'package:amplify_flutter/amplify_flutter.dart';
 
@@ -207,6 +208,7 @@ class _TrendingIngredientsSection extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context)!;
     final asyncIngredients = ref.watch(openFoodFactsProvider(
       const OpenFoodFactsParams(
         sortBy: OpenFoodFactsSort.uniqueScansN,

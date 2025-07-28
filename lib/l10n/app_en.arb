@@ -1,0 +1,21 @@
+{
+  "@@locale": "en",
+  "loginTitle": "Welcome back!",
+  "enterField": "Enter your ",
+  "onboardingTitle1": "Understand Labels Instantly",
+  "onboardingBody1": "Scan barcodes to get clear, personalised insights on ingredients and nutrition.",
+  "onboardingTitle2": "Food Choices Just Got Easier",
+  "onboardingBody2": "Tell us your allergies, preferences, and goals for personalised recommendations.",
+  "onboardingTitle3": "Discover Recipes You'll Love",
+  "onboardingBody3": "Explore delicious recipes based on your ingredients and dietary profile.",
+  "onboardingTitle4": "Your Journey to Healthier Eating Starts Here",
+  "onboardingBody4": "Whatfood helps you make informed decisions for yourself and your family.",
+  "onboardingNext": "Next",
+  "onboardingBack": "Back",
+  "onboardingSkip": "Skip",
+  "onboardingStart": "Get started",
+  "onboardingIllustrationLabel1": "Illustration of scanning a barcode",
+  "onboardingIllustrationLabel2": "Illustration of setting preferences",
+  "onboardingIllustrationLabel3": "Illustration of discovering recipes",
+  "onboardingIllustrationLabel4": "Illustration of a happy family cooking"
+}

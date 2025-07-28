@@ -4,6 +4,7 @@ import 'package:amplify_datastore/amplify_datastore.dart';
 import 'package:amplify_flutter/amplify_flutter.dart';
 import 'package:amplify_storage_s3/amplify_storage_s3.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hive/hive.dart';
 import 'package:path_provider/path_provider.dart';
@@ -12,6 +13,7 @@ import 'package:whatfood/core/common/error_text.dart';
 import 'package:whatfood/core/common/loader.dart';
 import 'package:whatfood/core/services/hive_encryption_service.dart';
 import 'package:whatfood/features/auth/controller/auth_controller.dart';
+import 'package:whatfood/l10n/app_localizations.dart';
 import 'package:whatfood/models/ModelProvider.dart';
 import 'package:whatfood/models/diary_entry.dart';
 import 'package:whatfood/router.dart';
@@ -70,7 +72,9 @@ void main() async {
     encryptionCipher: cipher,
   );
 
-  runApp(ProviderScope(child: MyApp(loggedIn: loggedIn)));
+  runApp(
+    ProviderScope(child: MyApp(loggedIn: loggedIn)),
+  );
 }
 
 class MyApp extends ConsumerStatefulWidget {
@@ -100,6 +104,17 @@ class _MyAppState extends ConsumerState<MyApp> {
               },
             ),
             routeInformationParser: const RoutemasterParser(),
+            localizationsDelegates: const [
+              AppLocalizations.delegate,
+              GlobalMaterialLocalizations.delegate,
+              GlobalWidgetsLocalizations.delegate,
+              GlobalCupertinoLocalizations.delegate,
+            ],
+            supportedLocales: const [
+              Locale('en'),
+              Locale('it'),
+            ],
+            locale: const Locale('it'),
           ),
           error: (error, stackTrace) => MaterialApp(
             home: Scaffold(

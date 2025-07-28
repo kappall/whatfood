@@ -1,0 +1,21 @@
+{
+  "@@locale": "it",
+  "loginTitle": "Bentornato!",
+  "enterField": "Inserisci la tua ",
+  "onboardingTitle1": "Capisci le etichette all'istante",
+  "onboardingBody1": "Scansiona i codici a barre per ottenere informazioni chiare e personalizzate su ingredienti e nutrizione.",
+  "onboardingTitle2": "Le tue scelte alimentari sono più semplici",
+  "onboardingBody2": "Dicci le tue allergie, preferenze e obiettivi per ricevere raccomandazioni personalizzate.",
+  "onboardingTitle3": "Scopri ricette che amerai",
+  "onboardingBody3": "Esplora ricette deliziose basate sui tuoi ingredienti e profilo alimentare.",
+  "onboardingTitle4": "Il tuo viaggio verso un'alimentazione più sana inizia qui",
+  "onboardingBody4": "Whatfood ti aiuta a prendere decisioni informate per te e la tua famiglia.",
+  "onboardingNext": "Avanti",
+  "onboardingBack": "Indietro",
+  "onboardingSkip": "Salta",
+  "onboardingStart": "Inizia",
+  "onboardingIllustrationLabel1": "Illustrazione di scansione di un codice a barre",
+  "onboardingIllustrationLabel2": "Illustrazione dell'impostazione delle preferenze",
+  "onboardingIllustrationLabel3": "Illustrazione della scoperta delle ricette",
+  "onboardingIllustrationLabel4": "Illustrazione di una famiglia felice che cucina"
+}
