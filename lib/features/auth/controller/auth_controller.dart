@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:developer';
 
+import 'package:amplify_api/amplify_api.dart';
 import 'package:amplify_flutter/amplify_flutter.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -260,5 +261,21 @@ class AuthController extends StateNotifier<bool> {
         ],
       ),
     );
+  }
+
+  Future<void> logout() async {
+    await Amplify.Auth.signOut();
+  }
+
+  Future<void> deleteAccount() async {
+    try {
+      final user = await Amplify.Auth.getCurrentUser();
+      final userId = user.userId;
+      await _authRepository.deleteAccount(userId);
+      debugPrint('User data deleted from DynamoDB');
+    } catch (e) {
+      debugPrint('Error deleting user data: $e');
+      rethrow;
+    }
   }
 }

@@ -61,18 +61,13 @@ class SettingsScreen extends ConsumerWidget {
               title: const Text('Delete Account',
                   style: TextStyle(color: Colors.red)),
               onTap: () async {
-                final confirm = await _showConfirmDialog(context,
-                    title: 'Delete Account',
-                    message:
-                        'This action is irreversible. Are you sure you want to delete your account?');
-                if (confirm!) {
-                  try {
-                    await auth.deleteAccount();
-                    Routemaster.of(context).replace('/signup');
-                  } catch (e) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text('Error deleting account: $e')));
-                  }
+                try {
+                  deleteAccount(context, auth);
+                  ref.read(userProvider.notifier).update((state) => null);
+                  ref.invalidate(authStateChangeProvider);
+                } catch (e) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text('Error deleting account: $e')));
                 }
               },
             ),
@@ -80,6 +75,36 @@ class SettingsScreen extends ConsumerWidget {
         ),
       ),
     );
+  }
+
+  Future<void> deleteAccount(BuildContext context, AuthController auth) async {
+    try {
+      final confirmed = await showDialog<bool>(
+        context: context,
+        builder: (_) => AlertDialog(
+          title: Text('Delete Account'),
+          content: Text(
+              'Are you sure you want to delete your account? This action is irreversible.'),
+          actions: [
+            TextButton(
+                onPressed: () => Navigator.pop(context, false),
+                child: Text('Cancel')),
+            TextButton(
+                onPressed: () => Navigator.pop(context, true),
+                child: Text('Delete')),
+          ],
+        ),
+      );
+
+      if (confirmed != true) return;
+
+      auth.deleteAccount();
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text('Error: $e')));
+      }
+    }
   }
 
   Future<bool?> _showConfirmDialog(BuildContext context,
@@ -97,7 +122,10 @@ class SettingsScreen extends ConsumerWidget {
               style:
                   ElevatedButton.styleFrom(backgroundColor: Colors.redAccent),
               onPressed: () => Navigator.of(context).pop(true),
-              child: const Text('Confirm')),
+              child: const Text(
+                'Confirm',
+                style: TextStyle(color: Colors.white),
+              )),
         ],
       ),
     );

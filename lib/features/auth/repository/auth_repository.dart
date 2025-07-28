@@ -284,11 +284,30 @@ class AuthRepository {
     }
   }
 
-  Future<void> signOut() async {
+  Future<void> deleteAccount(String uid) async {
+    const String graphQLDocument = '''
+      mutation DeleteUser(\$id: ID!) {
+        deleteUser(input: { id: \$id }) {
+          id
+        }
+      }
+      ''';
     try {
-      await Amplify.Auth.signOut();
+      final response = await Amplify.API
+          .mutate(
+            request: GraphQLRequest<String>(
+              document: graphQLDocument,
+              variables: {'id': uid},
+            ),
+          )
+          .response;
+
+      if (response.hasErrors) {
+        throw Exception(response.errors.first.message);
+      }
+      await Amplify.Auth.deleteUser();
     } catch (e) {
-      debugPrint('Error signing out: $e');
+      rethrow;
     }
   }
 }
