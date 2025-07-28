@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:routemaster/routemaster.dart';
 import 'package:whatfood/features/auth/controller/auth_controller.dart';
 import 'package:whatfood/main.dart';
+//TODO handle routing after delete o logout
 
 class SettingsScreen extends ConsumerWidget {
   const SettingsScreen({super.key});
@@ -44,27 +45,24 @@ class SettingsScreen extends ConsumerWidget {
             ),
             const Divider(height: 32),
             ListTile(
-              leading: const Icon(Icons.logout),
-              title: const Text('Log Out'),
-              onTap: () async {
-                final confirm = await _showConfirmDialog(context,
-                    title: 'Log out',
-                    message: 'Are you sure you want to log out?');
-                if (confirm!) {
-                  await auth.logout();
-                  //Routemaster.of(context).replace('/login');
-                }
-              },
-            ),
+                leading: const Icon(Icons.logout),
+                title: const Text('Log Out'),
+                onTap: () async {
+                  await logout(context, auth);
+                  ref.read(userProvider.notifier).update((state) => null);
+                  ref.invalidate(authStateChangeProvider);
+                  if (context.mounted) Routemaster.of(context).push('/');
+                }),
             ListTile(
               leading: const Icon(Icons.delete_forever, color: Colors.red),
               title: const Text('Delete Account',
                   style: TextStyle(color: Colors.red)),
               onTap: () async {
                 try {
-                  deleteAccount(context, auth);
+                  await deleteAccount(context, auth);
                   ref.read(userProvider.notifier).update((state) => null);
                   ref.invalidate(authStateChangeProvider);
+                  if (context.mounted) Routemaster.of(context).push('/');
                 } catch (e) {
                   ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(content: Text('Error deleting account: $e')));
@@ -107,27 +105,32 @@ class SettingsScreen extends ConsumerWidget {
     }
   }
 
-  Future<bool?> _showConfirmDialog(BuildContext context,
-      {required String title, required String message}) {
-    return showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text(title),
-        content: Text(message),
-        actions: [
-          TextButton(
-              onPressed: () => Navigator.of(context).pop(false),
-              child: const Text('Cancel')),
-          ElevatedButton(
-              style:
-                  ElevatedButton.styleFrom(backgroundColor: Colors.redAccent),
-              onPressed: () => Navigator.of(context).pop(true),
-              child: const Text(
-                'Confirm',
-                style: TextStyle(color: Colors.white),
-              )),
-        ],
-      ),
-    );
+  Future<void> logout(BuildContext context, AuthController auth) async {
+    try {
+      final confirmed = await showDialog<bool>(
+        context: context,
+        builder: (_) => AlertDialog(
+          title: Text('Logout'),
+          content: Text('Are you sure you want to delete logout?.'),
+          actions: [
+            TextButton(
+                onPressed: () => Navigator.pop(context, false),
+                child: Text('Cancel')),
+            TextButton(
+                onPressed: () => Navigator.pop(context, true),
+                child: Text('Logout')),
+          ],
+        ),
+      );
+
+      if (confirmed != true) return;
+
+      auth.logout();
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text('Error: $e')));
+      }
+    }
   }
 }
