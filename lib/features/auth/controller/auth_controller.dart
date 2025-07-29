@@ -1,7 +1,6 @@
 import 'dart:async';
 import 'dart:developer';
 
-import 'package:amplify_api/amplify_api.dart';
 import 'package:amplify_flutter/amplify_flutter.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -20,15 +19,8 @@ final authControllerProvider = StateNotifierProvider<AuthController, bool>(
   ),
 );
 
-final authStateChangeProvider = StreamProvider((ref) {
-  final authController = ref.watch(authControllerProvider.notifier);
-  return authController.authStateChange.map((user) {
-    debugPrint('authStateChangeProvider emitted: $user');
-    if (user != null) {
-      ref.read(userProvider.notifier).update((_) => user);
-    }
-    return user;
-  });
+final authStateChangeProvider = StreamProvider<User?>((ref) {
+  return ref.watch(authControllerProvider.notifier).authStateChange;
 });
 
 final getUserDataProvider = StreamProvider.family((ref, String uid) {
@@ -48,16 +40,6 @@ class AuthController extends StateNotifier<bool> {
     _initializeAuthState();
   }
 
-  Future<void> refreshUser() async {
-    try {
-      final amplifyUser = await Amplify.Auth.getCurrentUser();
-      final user = await _authRepository.getUserData(amplifyUser.userId).first;
-      _ref.read(userProvider.notifier).update((state) => user);
-    } catch (e) {
-      _ref.read(userProvider.notifier).update((state) => null);
-    }
-  }
-
   void _initializeAuthState() {
     _authSubscription = _authRepository.authStateChange.listen(
       (user) {
@@ -75,6 +57,8 @@ class AuthController extends StateNotifier<bool> {
     _authSubscription?.cancel();
     super.dispose();
   }
+
+  User? get currentUser => _authRepository.currentUser;
 
   Stream<User?> get authStateChange => _authRepository.authStateChange;
 
@@ -114,7 +98,7 @@ class AuthController extends StateNotifier<bool> {
           if (!userModel.isOnboarded) {
             Routemaster.of(context).replace('/onboarding');
           } else {
-            refreshUser();
+            Routemaster.of(context).replace('/');
           }
         },
       );
@@ -239,8 +223,6 @@ class AuthController extends StateNotifier<bool> {
                 if (context.mounted) {
                   Routemaster.of(context).replace('/onboarding');
                 }
-
-                await _ref.read(authControllerProvider.notifier).refreshUser();
               } catch (e, stack) {
                 debugPrint('Exception during verification: $e');
                 debugPrint('Stack trace: $stack');
@@ -265,6 +247,7 @@ class AuthController extends StateNotifier<bool> {
 
   Future<void> logout() async {
     await Amplify.Auth.signOut();
+    state = false;
   }
 
   Future<void> deleteAccount() async {

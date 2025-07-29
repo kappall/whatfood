@@ -11,12 +11,21 @@ import 'package:whatfood/core/constants/costants.dart';
 import 'package:whatfood/core/type_def.dart';
 import 'package:whatfood/core/failure.dart';
 import 'package:whatfood/models/User.dart';
+import 'package:rxdart/rxdart.dart';
 
-final authRepositoryProvider = Provider(
-  (ref) => AuthRepository(),
-);
+final authRepositoryProvider = Provider((ref) {
+  final repo = AuthRepository();
+  ref.onDispose(() => repo.dispose());
+  return repo;
+});
 
 class AuthRepository {
+  final _controller = BehaviorSubject<User?>();
+  late final StreamSubscription _hubSubscription;
+  bool _initialized = false;
+
+  User? get currentUser => _controller.valueOrNull;
+
   Future<String?> getCurrentUserId() async {
     try {
       var user = await Amplify.Auth.getCurrentUser();
@@ -27,51 +36,51 @@ class AuthRepository {
   }
 
   Stream<User?> get authStateChange {
-    final controller = StreamController<User?>();
+    if (!_initialized) {
+      _init();
+      _initialized = true;
+    }
+    return _controller.stream;
+  }
 
-    // Initial check
-    isUserSignedIn().then((isSignedIn) async {
-      if (isSignedIn) {
+  void _init() {
+    isUserSignedIn().then((signedIn) async {
+      if (signedIn) {
         final userId = await getCurrentUserId();
         if (userId != null) {
           final user = await getUserData(userId).first;
-          controller.add(user);
-        } else {
-          controller.add(null);
+          _controller.add(user);
+          return;
         }
-      } else {
-        controller.add(null);
       }
+      _controller.add(null);
     });
 
-    // Listen to Amplify Hub events for auth state changes
-    final subscription = Amplify.Hub.listen(HubChannel.Auth, (event) async {
+    _hubSubscription = Amplify.Hub.listen(HubChannel.Auth, (event) async {
       switch (event.type) {
         case AuthHubEventType.signedIn:
           final userId = await getCurrentUserId();
           if (userId != null) {
             final user = await getUserData(userId).first;
-            controller.add(user);
+            _controller.add(user);
           }
           break;
         case AuthHubEventType.signedOut:
-          controller.add(null);
+          _controller.add(null);
           break;
         default:
           break;
       }
     });
+  }
 
-    // Clean up when the stream is cancelled
-    controller.onCancel = () {
-      subscription.cancel();
-      controller.close();
-    };
-
-    return controller.stream;
+  Future<void> dispose() async {
+    await _hubSubscription.cancel();
+    await _controller.close();
   }
 
   FutureEither<User> signInAsGuest() async {
+    //TODO not used feature
     try {
       final username = 'guest_user';
       final password = 'guest_placeholder_password';
@@ -165,10 +174,8 @@ class AuthRepository {
       body: jsonEncode({'username': email}),
     );
 
-    if (response.statusCode == 200) {
-      print('User deleted');
-    } else {
-      print('Failed to delete user: ${response.body}');
+    if (response.statusCode != 200) {
+      debugPrint('Failed to delete user: ${response.body}');
     }
   }
 
@@ -213,19 +220,14 @@ class AuthRepository {
       if (response.errors.isNotEmpty) {
         throw Exception(response.errors.first.message);
       }
-
-      debugPrint("User data saved successfully!");
     } catch (e) {
       debugPrint("Error saving user: $e");
       rethrow;
     }
   }
 
-  Stream<User> getUserData(String userId) {
-    final controller = StreamController<User>();
-
-    try {
-      String graphQLDocument = '''
+  Stream<User> getUserData(String userId) async* {
+    String graphQLDocument = '''
       query GetUser {
         getUser(id: "$userId") {
           id
@@ -243,35 +245,19 @@ class AuthRepository {
       }
     ''';
 
-      var operation = Amplify.API.query(
-        request: GraphQLRequest<String>(document: graphQLDocument),
-      );
+    final response = await Amplify.API
+        .query(
+          request: GraphQLRequest<String>(document: graphQLDocument),
+        )
+        .response;
+    if (response.data == null) return;
 
-      operation.response.then((response) {
-        if (response.data == null) {
-          return;
-        }
-
-        try {
-          var json = jsonDecode(response.data!)['getUser'];
-          final user = User.fromJson(json);
-          controller.add(user);
-        } catch (e) {
-          debugPrint("Error parsing user data: $e");
-          controller.addError(e);
-        }
-      }).catchError((error) {
-        debugPrint("Error fetching user: $error");
-        controller.addError(error);
-      }).whenComplete(() {
-        controller.close();
-      });
+    try {
+      final json = jsonDecode(response.data!)['getUser'];
+      yield User.fromJson(json);
     } catch (e) {
-      controller.addError(e);
-      controller.close();
+      throw Exception("Failed to parse user: $e");
     }
-
-    return controller.stream;
   }
 
   Future<bool> isUserSignedIn() async {
