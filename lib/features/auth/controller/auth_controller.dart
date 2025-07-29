@@ -255,7 +255,7 @@ class AuthController extends StateNotifier<bool> {
       final user = await Amplify.Auth.getCurrentUser();
       final userId = user.userId;
       await _authRepository.deleteAccount(userId);
-      debugPrint('User data deleted from DynamoDB');
+      state = false;
     } catch (e) {
       debugPrint('Error deleting user data: $e');
       rethrow;

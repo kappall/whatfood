@@ -55,10 +55,10 @@ Future<bool> isUserLoggedIn() async {
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await configureAmplify();
+  //Amplify.Auth.signOut();
 
   final bool loggedIn = await isUserLoggedIn();
   debugPrint('User logged in: $loggedIn');
-  //Amplify.Auth.signOut();
 
   final dir = await getApplicationDocumentsDirectory();
   Hive.init(dir.path);
@@ -97,6 +97,7 @@ class _MyAppState extends ConsumerState<MyApp> {
             darkTheme: _buildDarkTheme(),
             routerDelegate: RoutemasterDelegate(
               routesBuilder: (context) {
+                debugPrint("in delegate rebuilding with user =$user");
                 if (user != null) {
                   return loggedInRoutes;
                 }

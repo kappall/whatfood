@@ -48,10 +48,7 @@ class SettingsScreen extends ConsumerWidget {
                 leading: const Icon(Icons.logout),
                 title: const Text('Log Out'),
                 onTap: () async {
-                  await logout(context, auth);
-                  ref.read(userProvider.notifier).update((state) => null);
-                  ref.invalidate(authStateChangeProvider);
-                  if (context.mounted) Routemaster.of(context).push('/');
+                  await logout(context, auth, ref);
                 }),
             ListTile(
               leading: const Icon(Icons.delete_forever, color: Colors.red),
@@ -62,7 +59,6 @@ class SettingsScreen extends ConsumerWidget {
                   await deleteAccount(context, auth);
                   ref.read(userProvider.notifier).update((state) => null);
                   ref.invalidate(authStateChangeProvider);
-                  if (context.mounted) Routemaster.of(context).push('/');
                 } catch (e) {
                   ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(content: Text('Error deleting account: $e')));
@@ -85,10 +81,10 @@ class SettingsScreen extends ConsumerWidget {
               'Are you sure you want to delete your account? This action is irreversible.'),
           actions: [
             TextButton(
-                onPressed: () => Navigator.pop(context, false),
+                onPressed: () => Navigator.of(context).pop(true),
                 child: Text('Cancel')),
             TextButton(
-                onPressed: () => Navigator.pop(context, true),
+                onPressed: () => Navigator.of(context).pop(true),
                 child: Text('Delete')),
           ],
         ),
@@ -96,7 +92,7 @@ class SettingsScreen extends ConsumerWidget {
 
       if (confirmed != true) return;
 
-      auth.deleteAccount();
+      await auth.deleteAccount();
     } catch (e) {
       if (context.mounted) {
         ScaffoldMessenger.of(context)
@@ -105,7 +101,8 @@ class SettingsScreen extends ConsumerWidget {
     }
   }
 
-  Future<void> logout(BuildContext context, AuthController auth) async {
+  Future<void> logout(
+      BuildContext context, AuthController auth, WidgetRef ref) async {
     try {
       final confirmed = await showDialog<bool>(
         context: context,
@@ -114,10 +111,10 @@ class SettingsScreen extends ConsumerWidget {
           content: Text('Are you sure you want to delete logout?.'),
           actions: [
             TextButton(
-                onPressed: () => Navigator.pop(context, false),
+                onPressed: () => Navigator.of(context).pop(true),
                 child: Text('Cancel')),
             TextButton(
-                onPressed: () => Navigator.pop(context, true),
+                onPressed: () => Navigator.of(context).pop(true),
                 child: Text('Logout')),
           ],
         ),
@@ -125,7 +122,7 @@ class SettingsScreen extends ConsumerWidget {
 
       if (confirmed != true) return;
 
-      auth.logout();
+      await auth.logout();
     } catch (e) {
       if (context.mounted) {
         ScaffoldMessenger.of(context)

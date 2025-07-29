@@ -13,7 +13,6 @@ import 'package:whatfood/features/personalization/screens/dislikes_screen.dart';
 import 'package:whatfood/features/personalization/screens/goals_screen.dart';
 import 'package:whatfood/features/personalization/screens/preferences_screen.dart';
 import 'package:whatfood/features/private_area/screens/private_area_screen.dart';
-import 'package:whatfood/features/profile/views/profile_view.dart';
 import 'package:whatfood/features/recipes/screens/create_recipe_screen.dart';
 import 'package:whatfood/features/recipes/screens/recipes_screen.dart';
 import 'package:whatfood/features/scanner/screens/scan_screen.dart';
@@ -22,9 +21,10 @@ import 'package:whatfood/features/settings/screens/setting_screen.dart';
 import 'package:whatfood/pages/app_scaffold.dart';
 
 final loggedOutRoutes = RouteMap(
+  // do not delete this, needed for logout redirecct
+  onUnknownRoute: (_) => const MaterialPage(child: LoginScreen()),
   routes: {
     '/': (_) => const MaterialPage(child: LoginScreen()),
-    '/onboarding': (_) => const MaterialPage(child: OnboardingScreen()),
     '/signup': (_) => const MaterialPage(child: SignupScreen()),
   },
 );
@@ -34,6 +34,7 @@ final loggedInRoutes = RouteMap(routes: {
         child: AppScaffold(),
         paths: ['/home', '/scan', '/recipes', '/ingredients'],
       ),
+  '/login': (_) => MaterialPage(child: LoginScreen()),
   '/home': (_) => const MaterialPage(child: HomeScreen()),
   '/scan': (_) => const MaterialPage(child: ScanScreen()),
   '/recipes': (_) => const MaterialPage(child: RecipesScreen()),
