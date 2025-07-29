@@ -64,6 +64,7 @@ void main() async {
   Hive.init(dir.path);
 
   Hive.registerAdapter(DiaryEntryAdapter());
+  Hive.registerAdapter(MealTypeAdapter());
 
   final cipher = await HiveEncryptionService.getCipher();
   //await Hive.deleteBoxFromDisk('foodDiary');
