@@ -1,8 +1,13 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:fpdart/fpdart.dart';
 import 'package:hive/hive.dart';
 import 'package:intl/intl.dart';
+import 'package:whatfood/features/private_area/controllers/food_suggestion_controller.dart';
 import 'package:whatfood/models/diary_entry.dart';
+import 'package:whatfood/models/food_suggestion.dart';
 
 final diaryProvider =
     NotifierProvider<DiaryNotifier, List<DiaryEntry>>(DiaryNotifier.new);
@@ -21,6 +26,9 @@ class DiaryNotifier extends Notifier<List<DiaryEntry>> {
     String meal, {
     String? quantity,
     int? calories,
+    double? protein,
+    double? fat,
+    double? carbs,
     MealType type = MealType.other,
   }) async {
     final key = await _box.add(
@@ -29,6 +37,9 @@ class DiaryNotifier extends Notifier<List<DiaryEntry>> {
         timestamp: DateTime.now(),
         quantity: quantity,
         calories: calories,
+        protein: protein,
+        fat: fat,
+        carbs: carbs,
         type: type,
         key: 0,
       ),
@@ -38,6 +49,9 @@ class DiaryNotifier extends Notifier<List<DiaryEntry>> {
       timestamp: DateTime.now(),
       quantity: quantity,
       calories: calories,
+      protein: protein,
+      fat: fat,
+      carbs: carbs,
       type: type,
       key: key,
     );
@@ -80,28 +94,23 @@ class DiaryTab extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final grouped = ref.watch(diaryGroupedProvider);
 
-    return Scaffold(
-      backgroundColor: Colors.grey.shade50,
-      body: SafeArea(
-        child: Column(
-          children: [
-            const Padding(
-              padding: EdgeInsets.fromLTRB(20, 12, 20, 8),
-              child: _AddMealInput(),
-            ),
-            Expanded(
-              child: ListView.builder(
-                padding: const EdgeInsets.symmetric(horizontal: 20),
-                itemCount: grouped.length,
-                itemBuilder: (_, i) {
-                  final day = grouped[i];
-                  return _DayCard(day: day);
-                },
-              ),
-            ),
-          ],
+    return Column(
+      children: [
+        const Padding(
+          padding: EdgeInsets.fromLTRB(20, 12, 20, 8),
+          child: _AddMealInput(),
         ),
-      ),
+        Expanded(
+          child: ListView.builder(
+            padding: const EdgeInsets.symmetric(horizontal: 20),
+            itemCount: grouped.length,
+            itemBuilder: (_, i) {
+              final day = grouped[i];
+              return _DayCard(day: day);
+            },
+          ),
+        ),
+      ],
     );
   }
 }
@@ -175,14 +184,12 @@ class _DayCard extends ConsumerWidget {
                         style: TextStyle(
                             fontSize: 12, color: Colors.grey.shade500),
                       ),
-                      // delete icon only for today
                       if (isToday) ...[
                         const SizedBox(width: 8),
                         InkWell(
                           onTap: () async {
                             final box = Hive.box<DiaryEntry>('foodDiary');
-                            await box
-                                .delete(m.key); // or use index if you store it
+                            await box.delete(m.key);
                             ref.invalidate(diaryProvider);
                           },
                           borderRadius: BorderRadius.circular(12),
@@ -226,10 +233,16 @@ class _AddMealInputState extends ConsumerState<_AddMealInput> {
   final _qtyCtrl = TextEditingController();
   final _kcalCtrl = TextEditingController();
   final _focus = FocusNode();
+  final _cardKey = GlobalKey();
 
+  double? _kcalPer100g;
+  List<FoodSuggestion> _suggestions = [];
+  Timer? _debounce;
   MealType _type = MealType.breakfast;
-
   bool _showOptional = false;
+
+  final _suggestionBoxKey = GlobalKey();
+  OverlayEntry? _overlay;
 
   @override
   void initState() {
@@ -237,6 +250,7 @@ class _AddMealInputState extends ConsumerState<_AddMealInput> {
     _focus.addListener(() {
       if (_focus.hasFocus) setState(() => _showOptional = true);
     });
+    _qtyCtrl.addListener(_recalcKcal);
   }
 
   @override
@@ -245,88 +259,189 @@ class _AddMealInputState extends ConsumerState<_AddMealInput> {
     _qtyCtrl.dispose();
     _kcalCtrl.dispose();
     _focus.dispose();
+    _overlay?.remove();
     super.dispose();
   }
 
-  void _submit() {
+  void _showOverlay() {
+    if (_overlay != null) return;
+
+    final renderBox =
+        _suggestionBoxKey.currentContext!.findRenderObject() as RenderBox;
+    final offset = renderBox.localToGlobal(Offset.zero);
+    final size = renderBox.size;
+
+    _overlay = OverlayEntry(
+      builder: (context) => Positioned(
+        left: offset.dx,
+        top: offset.dy + size.height + 4,
+        width: size.width,
+        child: _buildSuggestionsCard(),
+      ),
+    );
+    Overlay.of(context, rootOverlay: true).insert(_overlay!);
+  }
+
+  void _hideOverlay() {
+    _overlay?.remove();
+    _overlay = null;
+  }
+
+  Widget _buildSuggestionsCard() {
+    return Material(
+      elevation: 4,
+      borderRadius: BorderRadius.circular(16),
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxHeight: 220),
+        child: ListView(
+          padding: EdgeInsets.zero,
+          shrinkWrap: true,
+          children: _suggestions
+              .filter((s) => s.name != '')
+              .map(
+                (s) => ListTile(
+                  title: Text(s.name),
+                  subtitle: Text('${s.kcalPer100g} kcal / 100g'),
+                  onTap: () {
+                    _ctrl.text = s.name;
+                    _kcalPer100g = s.kcalPer100g;
+                    _initDefaultFields();
+                    _recalcKcal();
+                    _hideOverlay();
+                  },
+                ),
+              )
+              .toList(),
+        ),
+      ),
+    );
+  }
+
+  void _initDefaultFields() {
+    _qtyCtrl.text = '100';
+  }
+
+  void _recalcKcal() {
+    final qty = double.tryParse(_qtyCtrl.text.replaceAll(',', '.'));
+    if (qty != null && _kcalPer100g != null) {
+      _kcalCtrl.text = ((qty / 100) * _kcalPer100g!).toStringAsFixed(0);
+    }
+  }
+
+  void _submit() async {
     final text = _ctrl.text.trim();
     if (text.isEmpty) return;
-
-    ref.read(diaryProvider.notifier).add(
-          text,
-          type: _type,
+    //usda call
+    FoodSuggestion? food = await fetchFromUSDA(text);
+    debugPrint(food?.carbsPer100g.toString());
+    if (food != null) {
+      ref.read(diaryProvider.notifier).add(text,
+          calories: food.kcalPer100g.round(),
           quantity: _qtyCtrl.text.trim().isEmpty ? null : _qtyCtrl.text.trim(),
-          calories: int.tryParse(_kcalCtrl.text.trim()),
-        );
+          carbs: food.carbsPer100g,
+          fat: food.fatPer100g,
+          protein: food.proteinPer100g,
+          type: _type);
+    } else {
+      ref.read(diaryProvider.notifier).add(
+            text,
+            type: _type,
+            quantity:
+                _qtyCtrl.text.trim().isEmpty ? null : _qtyCtrl.text.trim(),
+            calories: int.tryParse(_kcalCtrl.text.trim()),
+          );
+    }
 
-    setState(() {
-      _showOptional = false;
-      _ctrl.clear();
-      _qtyCtrl.clear();
-      _kcalCtrl.clear();
-    });
+    _ctrl.clear();
+    _qtyCtrl.clear();
+    _kcalCtrl.clear();
+    _suggestions.clear();
+    _kcalPer100g = null;
     _focus.unfocus();
   }
 
   @override
   Widget build(BuildContext context) {
-    final primary = Theme.of(context).colorScheme.primary.withOpacity(.85);
+    final primary = Theme.of(context).colorScheme.primary;
 
-    return Column(
-      children: [
-        Row(
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(20, 12, 20, 8),
+      child: Material(
+        color: Colors.white,
+        elevation: 2,
+        borderRadius: BorderRadius.circular(28),
+        child: Column(
+          key: _suggestionBoxKey,
+          mainAxisSize: MainAxisSize.min,
           children: [
-            Expanded(
-              child: TextField(
-                focusNode: _focus,
-                controller: _ctrl,
-                textInputAction: TextInputAction.next,
-                onSubmitted: (_) => _submit(),
-                decoration: InputDecoration(
-                  filled: true,
-                  fillColor: Colors.white,
-                  hintText: 'What did you eat?',
-                  hintStyle: TextStyle(color: Colors.grey.shade400),
-                  contentPadding:
-                      const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(28),
-                    borderSide: BorderSide.none,
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 6, 8, 6),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: TextField(
+                      key: _cardKey,
+                      focusNode: _focus,
+                      controller: _ctrl,
+                      onChanged: (value) {
+                        if (_debounce?.isActive ?? false) _debounce!.cancel();
+                        _debounce =
+                            Timer(const Duration(milliseconds: 50), () async {
+                          final res = await fetchSuggestions(value);
+                          setState(() => _suggestions = res);
+                          if (res.isNotEmpty) {
+                            _showOverlay();
+                          } else {
+                            _hideOverlay();
+                          }
+                        });
+                      },
+                      onSubmitted: (_) => _submit(),
+                      style: TextStyle(color: Colors.black),
+                      textInputAction: TextInputAction.next,
+                      decoration: InputDecoration(
+                        hintText: 'What did you eat?',
+                        hintStyle: TextStyle(color: Colors.grey.shade500),
+                        border: InputBorder.none,
+                        isDense: true,
+                      ),
+                    ),
                   ),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(28),
-                    borderSide: BorderSide(color: primary, width: 1.2),
+                  IconButton.filledTonal(
+                    style: IconButton.styleFrom(
+                      backgroundColor: primary.withOpacity(.9),
+                      foregroundColor: Colors.white,
+                      minimumSize: const Size(40, 40),
+                    ),
+                    icon: const Icon(Icons.send_rounded, size: 20),
+                    onPressed: _submit,
                   ),
-                ),
+                ],
               ),
             ),
-            const SizedBox(width: 12),
-            FloatingActionButton(
-              mini: true,
-              elevation: 0,
-              backgroundColor: primary,
-              onPressed: _submit,
-              child: const Icon(Icons.send, size: 22, color: Colors.white),
+            AnimatedCrossFade(
+              firstChild: const SizedBox.shrink(),
+              secondChild: _OptionalPanel(
+                type: _type,
+                onTypeChanged: (t) => setState(() => _type = t),
+                qtyCtrl: _qtyCtrl,
+                kcalCtrl: _kcalCtrl,
+                focus: _focus,
+              ),
+              crossFadeState: _showOptional
+                  ? CrossFadeState.showSecond
+                  : CrossFadeState.showFirst,
+              duration: const Duration(milliseconds: 200),
             ),
           ],
         ),
-        if (_showOptional) ...[
-          const SizedBox(height: 8),
-          _OptionalPanel(
-            type: _type,
-            onTypeChanged: (t) => setState(() => _type = t),
-            qtyCtrl: _qtyCtrl,
-            kcalCtrl: _kcalCtrl,
-            focus: _focus,
-          ),
-        ],
-      ],
+      ),
     );
   }
 }
 
 class _OptionalPanel extends StatelessWidget {
-  _OptionalPanel({
+  const _OptionalPanel({
     required this.type,
     required this.onTypeChanged,
     required this.qtyCtrl,
@@ -342,126 +457,50 @@ class _OptionalPanel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final textStyle = TextStyle(color: Colors.grey.shade700, fontSize: 13);
-    return Container(
-      margin: const EdgeInsets.only(bottom: 4),
-      padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(.03),
-            blurRadius: 6,
-            offset: const Offset(0, 1),
-          ),
-        ],
-      ),
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('Optional', style: textStyle.copyWith(fontSize: 11)),
-          const SizedBox(height: 8),
-          // scrollable chips
           SingleChildScrollView(
             scrollDirection: Axis.horizontal,
             child: Row(
-              children: MealType.values
-                  .map(
-                    (t) => Padding(
-                      padding: const EdgeInsets.only(right: 6),
-                      child: ChoiceChip(
-                        label: Text(t.name),
-                        selected: type == t,
-                        materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                        labelStyle: TextStyle(
-                          fontSize: 12,
-                          color:
-                              type == t ? Colors.white : Colors.grey.shade700,
-                        ),
-                        selectedColor: Theme.of(context)
-                            .colorScheme
-                            .primary
-                            .withOpacity(.85),
-                        side: BorderSide.none,
-                        onSelected: (_) => onTypeChanged(t),
-                      ),
+              children: MealType.values.map((t) {
+                final selected = t == type;
+                return Padding(
+                  padding: const EdgeInsets.only(right: 6),
+                  child: FilterChip(
+                    label: Text(t.name.capitalize()),
+                    selected: selected,
+                    showCheckmark: false,
+                    labelStyle: TextStyle(
+                      fontSize: 14,
+                      color: selected ? Colors.green : null,
                     ),
-                  )
-                  .toList(),
+                    onSelected: (_) => onTypeChanged(t),
+                  ),
+                );
+              }).toList(),
             ),
           ),
           const SizedBox(height: 8),
-          //TODO: focus not working on first tap
+          // Quantity + kcal row
           Row(
             children: [
               Expanded(
-                child: TextField(
+                child: _SmallField(
                   controller: qtyCtrl,
-                  onTap: () => focus.unfocus(),
-                  keyboardType: TextInputType.text,
-                  decoration: InputDecoration(
-                    isDense: true,
-                    hintText: 'Quantity',
-                    filled: true,
-                    fillColor: Colors.grey.shade100,
-                    contentPadding: const EdgeInsets.symmetric(
-                        horizontal: 12, vertical: 10),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(10),
-                      borderSide: BorderSide(color: Colors.grey.shade300),
-                    ),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(10),
-                      borderSide: BorderSide(color: Colors.grey.shade300),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(10),
-                      borderSide: BorderSide(
-                        color: Theme.of(context)
-                            .colorScheme
-                            .primary
-                            .withOpacity(.85),
-                        width: 1.4,
-                      ),
-                    ),
-                  ),
-                  style: textStyle,
+                  hint: 'Quantity',
+                  icon: Icons.scale_outlined,
                 ),
               ),
               const SizedBox(width: 12),
               Expanded(
-                child: TextField(
+                child: _SmallField(
                   controller: kcalCtrl,
-                  onTap: () => focus.unfocus(),
+                  hint: 'kcal',
+                  icon: Icons.local_fire_department_outlined,
                   keyboardType: TextInputType.number,
-                  decoration: InputDecoration(
-                    isDense: true,
-                    hintText: 'kcal',
-                    filled: true,
-                    fillColor: Colors.grey.shade100,
-                    contentPadding: const EdgeInsets.symmetric(
-                        horizontal: 12, vertical: 10),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(10),
-                      borderSide: BorderSide(color: Colors.grey.shade300),
-                    ),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(10),
-                      borderSide: BorderSide(color: Colors.grey.shade300),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(10),
-                      borderSide: BorderSide(
-                        color: Theme.of(context)
-                            .colorScheme
-                            .primary
-                            .withOpacity(.85),
-                        width: 1.4,
-                      ),
-                    ),
-                  ),
-                  style: textStyle,
                 ),
               ),
             ],
@@ -470,4 +509,54 @@ class _OptionalPanel extends StatelessWidget {
       ),
     );
   }
+}
+
+class _SmallField extends StatelessWidget {
+  const _SmallField({
+    required this.controller,
+    required this.hint,
+    this.icon,
+    this.keyboardType,
+  });
+
+  final TextEditingController controller;
+  final String hint;
+  final IconData? icon;
+  final TextInputType? keyboardType;
+
+  @override
+  Widget build(BuildContext context) {
+    return TextField(
+      controller: controller,
+      keyboardType: keyboardType,
+      style: TextStyle(color: Colors.black),
+      decoration: InputDecoration(
+        hintText: hint,
+        prefixIcon: icon != null ? Icon(icon, size: 18) : null,
+        isDense: true,
+        filled: true,
+        fillColor: Colors.grey.shade100,
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(color: Colors.grey.shade300),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(color: Colors.grey.shade300),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(
+            color: Theme.of(context).colorScheme.primary,
+            width: 1.4,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+extension on String {
+  String capitalize() =>
+      length > 0 ? '${this[0].toUpperCase()}${substring(1)}' : this;
 }

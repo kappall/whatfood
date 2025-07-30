@@ -14,14 +14,12 @@ class ProfileTab extends ConsumerWidget {
 
     return ref.watch(getUserDataProvider(uid)).when(
           data: (user) {
-            // Helper to avoid null/empty noise
             String _safeList(List<String>? list) =>
                 (list == null || list.isEmpty) ? '—' : list.join(', ');
 
             return ListView(
               padding: const EdgeInsets.all(24),
               children: [
-                // --- AVATAR ---
                 CircleAvatar(
                   radius: 48,
                   backgroundImage: user.profilePic != null
@@ -41,20 +39,14 @@ class ProfileTab extends ConsumerWidget {
                   ),
                 ),
                 Center(child: Text(user.email)),
-
                 const SizedBox(height: 24),
                 const Divider(),
-
-                // --- BASIC INFO ---
                 _SectionHeader('Basic info'),
                 _Tile('Name', user.name),
                 _Tile('Email', user.email),
                 _Tile('Daily intake (kcal)', user.dailyIntake.toString()),
-
                 const SizedBox(height: 8),
                 const Divider(),
-
-                // --- LISTS ---
                 _SectionHeader('Preferences'),
                 _Tile(null, _safeList(user.preferences)),
                 _SectionHeader('Allergies'),
@@ -63,15 +55,11 @@ class ProfileTab extends ConsumerWidget {
                 _Tile(null, _safeList(user.goals)),
                 _SectionHeader('Dislikes'),
                 _Tile(null, _safeList(user.dislikes)),
-
                 const SizedBox(height: 8),
                 const Divider(),
-
-                // --- METADATA ---
                 _SectionHeader('Metadata'),
                 _Tile('Created at', user.createdAt?.format() ?? '-'),
                 _Tile('Updated at', user.updatedAt?.format() ?? '-'),
-
                 const SizedBox(height: 24),
                 ElevatedButton.icon(
                   onPressed: () => _openEditDialog(context),
