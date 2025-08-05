@@ -59,9 +59,10 @@ type Recipe @model @auth(rules: [{ allow: public, operations: [read,create,delet
   cookTimeMinutes: String!
   createdAt: AWSDateTime!
   likes: [String]!
-  uid: String!
+  fromUser: Boolean!
+  uid: String
   userImage: String
-  username: String!
+  username: String
 }
 
 type Ingredient

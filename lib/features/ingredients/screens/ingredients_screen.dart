@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:whatfood/features/ingredients/controller/ingredient_controller.dart';
 import 'package:whatfood/features/ingredients/widgets/ingredient_card.dart';
+import 'package:whatfood/l10n/app_localizations.dart';
 import 'package:whatfood/models/Ingredient.dart';
 
 class IngredientsScreen extends ConsumerStatefulWidget {
@@ -52,6 +53,8 @@ class _IngredientsScreenState extends ConsumerState<IngredientsScreen>
   void initState() {
     super.initState();
     _tabCtrl = TabController(length: 2, vsync: this);
+    _query = 'pasta';
+    _searchCtrl.text = _query;
     _search();
   }
 
@@ -65,39 +68,43 @@ class _IngredientsScreenState extends ConsumerState<IngredientsScreen>
 
   @override
   Widget build(BuildContext context) {
-    return DefaultTabController(
-      length: 2,
-      child: Scaffold(
-        appBar: AppBar(
-          title: const Text('Ingredients'),
-          bottom: TabBar(
+    final l10n = AppLocalizations.of(context)!;
+    return Padding(
+      padding: EdgeInsets.only(bottom: MediaQuery.of(context).padding.bottom),
+      child: DefaultTabController(
+        length: 2,
+        child: Scaffold(
+          appBar: AppBar(
+            title: Text(l10n.ingredientsLabel),
+            bottom: TabBar(
+              controller: _tabCtrl,
+              tabs: [
+                Tab(icon: Icon(Icons.list), text: l10n.ingredientsLabel),
+                Tab(icon: Icon(Icons.shopping_cart), text: l10n.cartLabel),
+              ],
+            ),
+          ),
+          body: TabBarView(
             controller: _tabCtrl,
-            tabs: const [
-              Tab(icon: Icon(Icons.list), text: 'Ingredients'),
-              Tab(icon: Icon(Icons.shopping_cart), text: 'Cart'),
+            children: [
+              _buildIngredientsTab(),
+              const Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(Icons.shopping_cart_outlined, size: 48),
+                    SizedBox(height: 8),
+                    Text('Your cart is empty'),
+                    SizedBox(height: 16),
+                    Text(
+                      'Here you will add ingredients later',
+                      style: TextStyle(color: Colors.grey),
+                    ),
+                  ],
+                ),
+              ),
             ],
           ),
-        ),
-        body: TabBarView(
-          controller: _tabCtrl,
-          children: [
-            _buildIngredientsTab(),
-            const Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(Icons.shopping_cart_outlined, size: 48),
-                  SizedBox(height: 8),
-                  Text('Your cart is empty'),
-                  SizedBox(height: 16),
-                  Text(
-                    'Here you will add ingredients later',
-                    style: TextStyle(color: Colors.grey),
-                  ),
-                ],
-              ),
-            ),
-          ],
         ),
       ),
     );

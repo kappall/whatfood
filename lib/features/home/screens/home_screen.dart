@@ -1,9 +1,12 @@
+import 'dart:math';
+
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:routemaster/routemaster.dart';
 import 'package:whatfood/features/ingredients/controller/ingredient_controller.dart';
 import 'package:whatfood/features/post/controller/post_controller.dart';
+import 'package:whatfood/features/recipes/controller/recipe_controller.dart';
 import 'package:whatfood/l10n/app_localizations.dart';
 import 'package:whatfood/models/Post.dart';
 import 'package:amplify_flutter/amplify_flutter.dart';
@@ -66,7 +69,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       onTap: () => FocusScope.of(context).unfocus(),
       child: Scaffold(
         appBar: AppBar(
-          title: const Text('Whatfood'),
+          title: Image.asset(
+            'assets/icons/logo_green.png',
+            height: 50,
+          ),
+          centerTitle: true,
           actions: [
             IconButton(
               icon: const Icon(Icons.account_circle),
@@ -114,41 +121,56 @@ class _AlternativeSection extends StatelessWidget {
   final TextEditingController controller;
   final void Function(String) onSubmit;
 
-  const _AlternativeSection({required this.controller, required this.onSubmit});
+  const _AlternativeSection({
+    required this.controller,
+    required this.onSubmit,
+  });
 
   @override
   Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text('Looking for an alternative to...',
-              style: Theme.of(context).textTheme.titleMedium),
-          const SizedBox(height: 8),
-          Row(
-            children: [
-              Expanded(
-                child: TextField(
-                  controller: controller,
-                  decoration: InputDecoration(
-                    hintText: 'e.g. Beef',
-                    border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12)),
-                  ),
+      child: Container(
+        height: 60,
+        padding: const EdgeInsets.symmetric(horizontal: 16),
+        decoration: BoxDecoration(
+          color: Colors.black87,
+          borderRadius: BorderRadius.circular(25),
+        ),
+        child: Row(
+          children: [
+            Expanded(
+              child: TextField(
+                controller: controller,
+                textAlign: TextAlign.center,
+                style: TextStyle(color: Colors.white),
+                decoration: const InputDecoration(
+                  hintText: 'Digita un prodotto',
+                  hintStyle: TextStyle(color: Colors.grey),
+                  border: InputBorder.none,
+                  isCollapsed: true,
                 ),
-              ),
-              IconButton(
-                icon: const Icon(Icons.search),
-                onPressed: () {
-                  if (controller.text.trim().isNotEmpty) {
-                    onSubmit(controller.text.trim());
+                onSubmitted: (value) {
+                  if (value.trim().isNotEmpty) {
+                    onSubmit(value.trim());
                   }
                 },
               ),
-            ],
-          ),
-        ],
+            ),
+            IconButton(
+              icon: const Icon(
+                Icons.search,
+                color: Colors.white,
+              ),
+              onPressed: () {
+                final text = controller.text.trim();
+                if (text.isNotEmpty) {
+                  onSubmit(text);
+                }
+              },
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -212,36 +234,35 @@ class _TrendingIngredientsSection extends ConsumerWidget {
     final asyncIngredients = ref.watch(openFoodFactsProvider(
       const OpenFoodFactsParams(
         sortBy: OpenFoodFactsSort.uniqueScansN,
-        limit: 5,
+        limit: 40,
       ),
     ));
 
-    return asyncIngredients.when(
-      loading: () => const CircularProgressIndicator(),
-      error: (err, _) => Text('Error: $err'),
-      data: (ingredients) {
-        return Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 0, 16, 4),
-              child: Text('Trending Ingredients', style: context.headlineSmall),
-            ),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: Text(
-                'Discover new flavours',
-                style:
-                    context.bodyMedium?.copyWith(color: Colors.grey.shade600),
-              ),
-            ),
-            const SizedBox(height: 12),
-            SizedBox(
-              height: 130,
-              child: ListView.separated(
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 0, 16, 4),
+          child: Text('Trending Ingredients', style: context.headlineSmall),
+        ),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          child: Text(
+            'Discover new flavours',
+            style: context.bodyMedium?.copyWith(color: Colors.grey.shade600),
+          ),
+        ),
+        const SizedBox(height: 12),
+        SizedBox(
+          height: 130,
+          child: asyncIngredients.when(
+            loading: () => const CircularProgressIndicator(),
+            error: (err, _) => Text('Error: $err'),
+            data: (ingredients) {
+              return ListView.separated(
                 scrollDirection: Axis.horizontal,
                 padding: const EdgeInsets.symmetric(horizontal: 16),
-                itemCount: ingredients.length,
+                itemCount: min(ingredients.length, 5),
                 separatorBuilder: (_, __) => const SizedBox(width: 12),
                 itemBuilder: (_, i) {
                   final ing = ingredients[i];
@@ -255,10 +276,10 @@ class _TrendingIngredientsSection extends ConsumerWidget {
                       child: Ink(
                         width: 110,
                         decoration: BoxDecoration(
-                          color: Colors.green.withOpacity(.15),
+                          color: Colors.green.withValues(alpha: .15),
                           borderRadius: BorderRadius.circular(20),
-                          border:
-                              Border.all(color: Colors.green.withOpacity(.3)),
+                          border: Border.all(
+                              color: Colors.green.withValues(alpha: .3)),
                         ),
                         child: Column(
                           mainAxisAlignment: MainAxisAlignment.center,
@@ -293,33 +314,31 @@ class _TrendingIngredientsSection extends ConsumerWidget {
                     ),
                   );
                 },
-              ),
-            ),
-            Align(
-              alignment: Alignment.centerRight,
-              child: TextButton(
-                onPressed: () {
-                  Routemaster.of(context).push('/ingredients');
-                },
-                child: const Text('View all'),
-              ),
-            ),
-          ],
-        );
-      },
+              );
+            },
+          ),
+        ),
+        Align(
+          alignment: Alignment.centerRight,
+          child: TextButton(
+            onPressed: () {
+              Routemaster.of(context).push('/ingredients');
+            },
+            child: const Text('View all'),
+          ),
+        ),
+      ],
     );
   }
 }
 
-class _MealInspirationSection extends StatelessWidget {
+class _MealInspirationSection extends ConsumerWidget {
   const _MealInspirationSection();
 
   @override
-  Widget build(BuildContext context) {
-    final meals = [
-      {'t': 'Gnocco Fritto', 'i': '🥟', 'time': '1 h', 'lvl': 'Easy'},
-      {'t': 'Frisella', 'i': '🥖', 'time': '10 m', 'lvl': 'Easy'},
-    ];
+  Widget build(BuildContext context, WidgetRef ref) {
+    final asyncMeals = ref.watch(
+        mealInspirationProvider(MealFilter(mealType: "lunch", maxMinutes: 20)));
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -328,89 +347,98 @@ class _MealInspirationSection extends StatelessWidget {
           padding: const EdgeInsets.fromLTRB(16, 0, 16, 4),
           child: Text('Daily Meal Inspiration', style: context.headlineSmall),
         ),
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16),
-          child: Text(
-            'Based on your pantry',
-            style: context.bodyMedium?.copyWith(color: Colors.grey.shade600),
-          ),
-        ),
         const SizedBox(height: 12),
         SizedBox(
           height: 140,
-          child: ListView.separated(
-            scrollDirection: Axis.horizontal,
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            itemCount: meals.length,
-            separatorBuilder: (_, __) => const SizedBox(width: 12),
-            itemBuilder: (_, i) {
-              final m = meals[i];
-              return Material(
-                borderRadius: BorderRadius.circular(20),
-                child: InkWell(
-                  borderRadius: BorderRadius.circular(20),
-                  onTap: () {/* TODO */},
-                  child: Ink(
-                    width: 200,
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      color: Colors.blueAccent,
+          child: asyncMeals.when(
+            loading: () => const Center(child: CircularProgressIndicator()),
+            error: (err, _) => Padding(
+              padding: const EdgeInsets.all(16),
+              child: Text('Error loading meal inspiration: $err'),
+            ),
+            data: (meals) {
+              if (meals.isEmpty) {
+                return Center(
+                  child: Text("No recipes availabel yet"),
+                );
+              }
+              return ListView.separated(
+                scrollDirection: Axis.horizontal,
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                itemCount: meals.length,
+                separatorBuilder: (_, __) => const SizedBox(width: 12),
+                itemBuilder: (_, i) {
+                  final m = meals[i];
+                  return Material(
+                    borderRadius: BorderRadius.circular(20),
+                    child: InkWell(
                       borderRadius: BorderRadius.circular(20),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withOpacity(.05),
-                          blurRadius: 8,
-                          offset: const Offset(0, 4),
-                        ),
-                      ],
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          children: [
-                            Text(m['i']!, style: const TextStyle(fontSize: 28)),
-                            const SizedBox(width: 8),
-                            Expanded(
-                              child: Text(
-                                m['t']!,
-                                style: context.titleMedium
-                                    ?.copyWith(fontWeight: FontWeight.w600),
-                                maxLines: 2,
-                                overflow: TextOverflow.ellipsis,
-                              ),
+                      onTap: () {/* TODO */},
+                      child: Ink(
+                        width: 200,
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color: Colors.blueAccent,
+                          borderRadius: BorderRadius.circular(20),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(.05),
+                              blurRadius: 8,
+                              offset: const Offset(0, 4),
                             ),
                           ],
                         ),
-                        const Spacer(),
-                        Row(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Icon(Icons.timer,
-                                size: 16, color: Colors.grey.shade600),
-                            const SizedBox(width: 4),
-                            Text(m['time']!, style: context.bodyMedium),
-                            const Spacer(),
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 8, vertical: 2),
-                              decoration: BoxDecoration(
-                                color: Colors.greenAccent.withOpacity(.2),
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                              child: Text(
-                                m['lvl']!,
-                                style: context.labelLarge?.copyWith(
-                                  color: Colors.green.shade800,
-                                  fontWeight: FontWeight.w600,
+                            Row(
+                              children: [
+                                Text('🍽️',
+                                    style: const TextStyle(fontSize: 28)),
+                                const SizedBox(width: 8),
+                                Expanded(
+                                  child: Text(
+                                    m.title,
+                                    style: context.titleMedium
+                                        ?.copyWith(fontWeight: FontWeight.w600),
+                                    maxLines: 2,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
                                 ),
-                              ),
+                              ],
+                            ),
+                            const Spacer(),
+                            Row(
+                              children: [
+                                Icon(Icons.timer,
+                                    size: 16, color: Colors.grey.shade600),
+                                const SizedBox(width: 4),
+                                Text('Reasy in${m.cookTimeMinutes} min',
+                                    style: context.bodyMedium),
+                                const Spacer(),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 8, vertical: 2),
+                                  decoration: BoxDecoration(
+                                    color: Colors.greenAccent.withOpacity(.2),
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                  child: Text(
+                                    'Easy',
+                                    style: context.labelLarge?.copyWith(
+                                      color: Colors.green.shade800,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                ),
+                              ],
                             ),
                           ],
                         ),
-                      ],
+                      ),
                     ),
-                  ),
-                ),
+                  );
+                },
               );
             },
           ),

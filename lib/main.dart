@@ -98,7 +98,6 @@ class _MyAppState extends ConsumerState<MyApp> {
             darkTheme: _buildDarkTheme(),
             routerDelegate: RoutemasterDelegate(
               routesBuilder: (context) {
-                debugPrint("in delegate rebuilding with user =$user");
                 if (user != null) {
                   return loggedInRoutes;
                 }

@@ -1,6 +1,8 @@
 import 'dart:convert';
 import 'package:amplify_flutter/amplify_flutter.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:fpdart/fpdart.dart';
 import 'package:http/http.dart' as http;
 import 'package:whatfood/models/Ingredient.dart';
 
@@ -101,11 +103,17 @@ final openFoodFactsProvider =
   final products = data['products'] as List<dynamic>?;
   if (products == null) return [];
 
-  return products
+  final blacklist = ['water', 'oil'];
+
+  final res = products
+      .where((p) => !blacklist.any((word) {
+            final keywords = List<String>.from(p['_keywords'] ?? []);
+            return keywords.contains(word);
+          }))
       .map((p) {
         final name =
             (p['product_name_en'] ?? p['product_name'] ?? '').toString();
-        final imageUrl = p['image_front_small_url'] as String?;
+        final imageUrl = p['image_url'] as String?;
         final description = p['ingredients_text'] as String?;
         return Ingredient(
           id: p['code'] as String,
@@ -123,4 +131,5 @@ final openFoodFactsProvider =
       })
       .where((ing) => ing.name.isNotEmpty)
       .toList();
+  return res;
 });

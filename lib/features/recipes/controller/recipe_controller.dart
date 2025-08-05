@@ -1,8 +1,10 @@
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:amplify_flutter/amplify_flutter.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:http/http.dart' as http;
 import 'package:routemaster/routemaster.dart';
 import 'package:uuid/uuid.dart';
 import 'package:whatfood/core/providers/storage_repository_provider.dart';
@@ -26,6 +28,35 @@ final recipesProvider = StreamProvider((ref) {
   final recipeController = ref.watch(recipeControllerProvider.notifier);
 
   return recipeController.fetchRecipes();
+});
+
+class MealFilter {
+  final String mealType;
+  final int maxMinutes;
+
+  const MealFilter({
+    required this.mealType,
+    required this.maxMinutes,
+  });
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is MealFilter &&
+          runtimeType == other.runtimeType &&
+          mealType == other.mealType &&
+          maxMinutes == other.maxMinutes;
+
+  @override
+  int get hashCode => mealType.hashCode ^ maxMinutes.hashCode;
+}
+
+final mealInspirationProvider =
+    FutureProvider.family<List<Recipe>, MealFilter>((ref, filter) {
+  return fetchRecipes(
+    query: filter.mealType,
+    maxMinutes: filter.maxMinutes,
+  );
 });
 
 final recipeByIdProvider = StreamProvider.family((ref, String id) {
@@ -89,6 +120,7 @@ class RecipeController extends StateNotifier<bool> {
           servings: servings,
           cookTimeMinutes: cookTimeMinutes,
           userImage: user.profilePic,
+          fromUser: true,
           username: user.name);
 
       final res = await _recipeRepository.addRecipe(recipe);
@@ -167,6 +199,7 @@ class RecipeController extends StateNotifier<bool> {
         cookTimeMinutes: cookTimeMinutes,
         coverImage: imageUrl,
         uid: user.id,
+        fromUser: true,
         createdAt: TemporalDateTime.now(),
         likes: likes,
       );
@@ -187,4 +220,54 @@ class RecipeController extends StateNotifier<bool> {
       if (context.mounted) showSnackBar(context, e.toString());
     }
   }
+}
+
+Future<List<Recipe>> fetchRecipes({String? query, int? maxMinutes}) async {
+  final res = await http.post(
+    Uri.parse(
+        'https://bnjocjlpl1.execute-api.eu-north-1.amazonaws.com/dev/recipeApiCall'),
+    headers: {'Content-Type': 'application/json'},
+    body: jsonEncode({
+      'query': query,
+      if (maxMinutes != null) 'maxReadyInMinutes': maxMinutes,
+    }),
+  );
+
+  if (res.statusCode != 200) return [];
+  final List results = jsonDecode(res.body);
+
+  debugPrint(results.toString());
+
+  return results.map((r) => fromSpoonacular(r)).toList();
+}
+
+final apiRecipesProvider =
+    FutureProvider.family<List<Recipe>, String>((ref, query) {
+  return fetchRecipes(query: query);
+});
+
+Recipe fromSpoonacular(Map<String, dynamic> data) {
+  return Recipe(
+    id: data['id'].toString(),
+    title: data['title'] ?? 'Untitled',
+    coverImage: data['image'] ?? '',
+    description: _stripHtml(data['summary'] ?? ''),
+    ingredients: [],
+    instructions: [],
+    servings: (data['servings'] ?? '').toString(),
+    cookTimeMinutes: (data['readyInMinutes'] ?? '').toString(),
+    createdAt: TemporalDateTime.now(),
+    likes: [],
+    fromUser: false,
+    uid: null,
+    userImage: null,
+    username: null,
+  );
+}
+
+String _stripHtml(String htmlString) {
+  return htmlString
+      .replaceAll(RegExp(r'<[^>]*>'), '')
+      .replaceAll('&nbsp;', ' ')
+      .trim();
 }
