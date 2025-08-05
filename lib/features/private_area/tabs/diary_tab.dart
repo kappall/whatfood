@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_heatmap_calendar/flutter_heatmap_calendar.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:fpdart/fpdart.dart';
 import 'package:hive/hive.dart';
@@ -87,30 +88,97 @@ class DayGroup {
   DayGroup(this.date, this.meals);
 }
 
-class DiaryTab extends ConsumerWidget {
+class DiaryTab extends ConsumerStatefulWidget {
   const DiaryTab({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<DiaryTab> createState() => _DiaryTabState();
+}
+
+class _DiaryTabState extends ConsumerState<DiaryTab> {
+  bool _showCalendar = true;
+
+  @override
+  Widget build(BuildContext context) {
     final grouped = ref.watch(diaryGroupedProvider);
 
-    return Column(
-      children: [
-        const Padding(
-          padding: EdgeInsets.fromLTRB(20, 12, 20, 8),
-          child: _AddMealInput(),
+    final activityMap = <DateTime, int>{};
+    for (final e in ref.watch(diaryProvider)) {
+      final d = DateTime(e.timestamp.year, e.timestamp.month, e.timestamp.day);
+      activityMap[d] = (activityMap[d] ?? 0) + 1;
+    }
+
+    return SingleChildScrollView(
+      child: Padding(
+        padding:
+            EdgeInsets.only(bottom: MediaQuery.of(context).padding.bottom + 80),
+        child: Column(
+          children: [
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  TextButton.icon(
+                    icon: Icon(
+                      _showCalendar
+                          ? Icons.expand_less
+                          : Icons.expand_more,
+                    ),
+                    label: Text(_showCalendar ? 'Hide calendar' : 'Show calendar'),
+                    onPressed: () {
+                      setState(() => _showCalendar = !_showCalendar);
+                    },
+                  ),
+                ],
+              ),
+            ),
+            if (_showCalendar)
+              Padding(
+                padding: const EdgeInsets.fromLTRB(20, 0, 20, 12),
+                child: Card(
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16)),
+                  elevation: 2,
+                  child: Padding(
+                    padding: const EdgeInsets.all(12),
+                    child: HeatMapCalendar(
+                      datasets: activityMap,
+                      colorMode: ColorMode.opacity,
+                      defaultColor: Colors.grey.shade300,
+                      textColor: Colors.black87,
+                      showColorTip: false,
+                      size: 30,
+                      weekTextColor: Colors.grey.shade600,
+                      monthFontSize: 12,
+                      borderRadius: 6,
+                      fontSize: 10,
+                      colorTipCount: 3,
+                      colorsets: {
+                        1: Colors.green.shade100,
+                        2: Colors.green.shade300,
+                        3: Colors.green.shade600,
+                        4: Colors.green.shade900,
+                      },
+                    ),
+                  ),
+                ),
+              ),
+            const Padding(
+              padding: EdgeInsets.fromLTRB(20, 12, 20, 8),
+              child: _AddMealInput(),
+            ),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20),
+              child: Column(
+                children: [
+                  ...grouped.map((day) => _DayCard(day: day)).toList(),
+                ],
+              ),
+            ),
+          ],
         ),
-        Expanded(
-          child: ListView.builder(
-            padding: const EdgeInsets.symmetric(horizontal: 20),
-            itemCount: grouped.length,
-            itemBuilder: (_, i) {
-              final day = grouped[i];
-              return _DayCard(day: day);
-            },
-          ),
-        ),
-      ],
+      ),
     );
   }
 }
