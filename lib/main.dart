@@ -133,47 +133,53 @@ class _MyAppState extends ConsumerState<MyApp> {
   }
 
   ThemeData _buildLightTheme() {
-    final base = ThemeData.light();
-    return base.copyWith(
-      colorScheme: base.colorScheme.copyWith(
-        primary: Colors.green.shade700,
-        secondary: Colors.orangeAccent,
-        background: Colors.white,
-      ),
-      scaffoldBackgroundColor: Colors.white,
-      appBarTheme: const AppBarTheme(
-        backgroundColor: Colors.white,
+    final scheme = ColorScheme.fromSeed(
+      seedColor: Colors.green.shade700,
+      brightness: Brightness.light,
+    );
+
+    return ThemeData(
+      colorScheme: scheme,
+      scaffoldBackgroundColor: scheme.background,
+      appBarTheme: AppBarTheme(
+        backgroundColor: scheme.surface,
         elevation: 2,
-        iconTheme: IconThemeData(color: Colors.black87),
+        iconTheme: IconThemeData(color: scheme.onSurface),
         titleTextStyle: TextStyle(
-            color: Colors.black87, fontSize: 20, fontWeight: FontWeight.bold),
+          color: scheme.onSurface,
+          fontSize: 20,
+          fontWeight: FontWeight.bold,
+        ),
       ),
       bottomNavigationBarTheme: BottomNavigationBarThemeData(
-        selectedItemColor: Colors.green.shade700,
-        unselectedItemColor: Colors.grey,
+        selectedItemColor: scheme.primary,
+        unselectedItemColor: scheme.onSurface.withOpacity(0.6),
       ),
     );
   }
 
   ThemeData _buildDarkTheme() {
-    final base = ThemeData.dark();
-    return base.copyWith(
-      colorScheme: base.colorScheme.copyWith(
-        primary: Colors.green.shade300,
-        secondary: Colors.deepOrangeAccent,
-        background: Colors.black,
-      ),
-      scaffoldBackgroundColor: Colors.black,
-      appBarTheme: const AppBarTheme(
-        backgroundColor: Colors.black,
+    final scheme = ColorScheme.fromSeed(
+      seedColor: Colors.green.shade300,
+      brightness: Brightness.dark,
+    );
+
+    return ThemeData(
+      colorScheme: scheme,
+      scaffoldBackgroundColor: scheme.background,
+      appBarTheme: AppBarTheme(
+        backgroundColor: scheme.surface,
         elevation: 2,
-        iconTheme: IconThemeData(color: Colors.white),
+        iconTheme: IconThemeData(color: scheme.onSurface),
         titleTextStyle: TextStyle(
-            color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold),
+          color: scheme.onSurface,
+          fontSize: 20,
+          fontWeight: FontWeight.bold,
+        ),
       ),
       bottomNavigationBarTheme: BottomNavigationBarThemeData(
-        selectedItemColor: Colors.green.shade300,
-        unselectedItemColor: Colors.grey,
+        selectedItemColor: scheme.primary,
+        unselectedItemColor: scheme.onSurface.withOpacity(0.6),
       ),
     );
   }

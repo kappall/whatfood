@@ -3,7 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:routemaster/routemaster.dart';
 import 'package:whatfood/features/auth/controller/auth_controller.dart';
 import 'package:whatfood/main.dart';
-//TODO handle routing after delete o logout
 
 class SettingsScreen extends ConsumerWidget {
   const SettingsScreen({super.key});

@@ -50,7 +50,7 @@ class _AppScaffoldState extends State<AppScaffold> {
           Routemaster.of(context).push(AppScaffold.tabs[index]);
         },
         height: 70,
-        backgroundColor: Colors.white.withValues(alpha: 0.7),
+        backgroundColor: Theme.of(context).colorScheme.surfaceContainerLow,
         items: List.generate(4, (index) {
           final icons = [
             Icons.home,
@@ -77,9 +77,12 @@ class _AppScaffoldState extends State<AppScaffold> {
                   labels[index],
                   style: TextStyle(
                       fontSize: 12,
-                      fontWeight: FontWeight.bold,
-                      color:
-                          index == currentIndex ? Colors.black : Colors.grey),
+                      fontWeight: index == currentIndex
+                          ? FontWeight.bold
+                          : FontWeight.normal,
+                      color: index == currentIndex
+                          ? Theme.of(context).colorScheme.onPrimaryContainer
+                          : Theme.of(context).colorScheme.onPrimaryContainer),
                 ),
               ],
             ),
@@ -103,7 +106,9 @@ class _CircleIcon extends StatelessWidget {
       height: 50,
       decoration: BoxDecoration(
         shape: BoxShape.circle,
-        color: isActive ? Colors.black : Colors.white,
+        color: isActive
+            ? Theme.of(context).colorScheme.onSurface
+            : Theme.of(context).colorScheme.onInverseSurface,
         boxShadow: [
           BoxShadow(
             color: Colors.black12,
@@ -115,7 +120,9 @@ class _CircleIcon extends StatelessWidget {
       child: Icon(
         icon,
         size: 22,
-        color: isActive ? Colors.white : Colors.black,
+        color: isActive
+            ? Theme.of(context).colorScheme.onPrimary
+            : Theme.of(context).colorScheme.onSurface,
       ),
     );
   }

@@ -5,11 +5,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:routemaster/routemaster.dart';
 import 'package:whatfood/features/ingredients/controller/ingredient_controller.dart';
-import 'package:whatfood/features/post/controller/post_controller.dart';
 import 'package:whatfood/features/recipes/controller/recipe_controller.dart';
 import 'package:whatfood/l10n/app_localizations.dart';
-import 'package:whatfood/models/Post.dart';
-import 'package:amplify_flutter/amplify_flutter.dart';
 
 extension AppText on BuildContext {
   TextStyle? get displaySmall => Theme.of(this).textTheme.displaySmall;
@@ -81,19 +78,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             ),
           ],
         ),
-        bottomNavigationBar: CupertinoTabBar(
-          currentIndex: 0,
-          onTap: (i) {},
-          items: const [
-            BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
-            BottomNavigationBarItem(
-                icon: Icon(Icons.qr_code_scanner), label: 'Scan'),
-            BottomNavigationBarItem(
-                icon: Icon(Icons.receipt_long), label: 'Recipes'),
-            BottomNavigationBarItem(
-                icon: Icon(Icons.shopping_bag_outlined), label: 'Ingredients'),
-          ],
-        ),
         body: SafeArea(
           child: CustomScrollView(
             slivers: [
@@ -134,7 +118,7 @@ class _AlternativeSection extends StatelessWidget {
         height: 60,
         padding: const EdgeInsets.symmetric(horizontal: 16),
         decoration: BoxDecoration(
-          color: Colors.black87,
+          color: Theme.of(context).colorScheme.surfaceContainerHighest,
           borderRadius: BorderRadius.circular(25),
         ),
         child: Row(
@@ -143,10 +127,11 @@ class _AlternativeSection extends StatelessWidget {
               child: TextField(
                 controller: controller,
                 textAlign: TextAlign.center,
-                style: TextStyle(color: Colors.white),
-                decoration: const InputDecoration(
+                style:
+                    TextStyle(color: Theme.of(context).colorScheme.onSurface),
+                decoration: InputDecoration(
                   hintText: 'Digita un prodotto',
-                  hintStyle: TextStyle(color: Colors.grey),
+                  hintStyle: TextStyle(color: Theme.of(context).hintColor),
                   border: InputBorder.none,
                   isCollapsed: true,
                 ),
@@ -158,9 +143,9 @@ class _AlternativeSection extends StatelessWidget {
               ),
             ),
             IconButton(
-              icon: const Icon(
+              icon: Icon(
                 Icons.search,
-                color: Colors.white,
+                color: Theme.of(context).colorScheme.onSurface,
               ),
               onPressed: () {
                 final text = controller.text.trim();
@@ -256,7 +241,7 @@ class _TrendingIngredientsSection extends ConsumerWidget {
         SizedBox(
           height: 130,
           child: asyncIngredients.when(
-            loading: () => const CircularProgressIndicator(),
+            loading: () => Center(child: const CircularProgressIndicator()),
             error: (err, _) => Text('Error: $err'),
             data: (ingredients) {
               return ListView.separated(
