@@ -17,7 +17,6 @@ class UserProfileRepository {
   Future<Either<Failure, void>> markOnboardingComplete(User user) async {
     try {
       // La mutation updateUser aggiorna i campi dell'utente.
-      debugPrint(user.bio);
       final Map<String, dynamic> variables = {
         "input": {"id": user.id, "isOnboarded": true}
       };
@@ -66,12 +65,7 @@ class UserProfileRepository {
           "allergies": user.allergies.toList(),
           "goals": user.goals.toList(),
           "dislikes": user.dislikes.toList(),
-          "savedPosts": user.savedPosts.toList(),
-          "postsCount": user.postsCount,
           "dailyIntake": user.dailyIntake,
-          "followers": user.followers.toList(),
-          "following": user.following.toList(),
-          "bio": user.bio,
         }
       };
       String updateMutation = '''
@@ -303,41 +297,6 @@ class UserProfileRepository {
       return left(Failure(e.message));
     } catch (e) {
       return left(Failure(e.toString()));
-    }
-  }
-
-  // Segui o smetti di seguire un utente tramite le rispettive mutation GraphQL
-  Future<void> followOrUnfollowUser(String uid, User userToFollow) async {
-    final isFollowing = userToFollow.followers.contains(uid);
-
-    if (isFollowing) {
-      // Mutation per smettere di seguire
-      String unfollowMutation = '''
-        mutation UnfollowUser(\$followerId: ID!, \$followeeId: ID!) {
-          unfollowUser(input: { followerId: \$followerId, followeeId: \$followeeId }) {
-            followerId
-          }
-        }
-      ''';
-      final requestUnfollow = GraphQLRequest<String>(
-        document: unfollowMutation,
-        variables: {'followerId': uid, 'followeeId': userToFollow.id},
-      );
-      await Amplify.API.mutate(request: requestUnfollow).response;
-    } else {
-      // Mutation per seguire
-      String followMutation = '''
-        mutation FollowUser(\$followerId: ID!, \$followeeId: ID!) {
-          followUser(input: { followerId: \$followerId, followeeId: \$followeeId }) {
-            followerId
-          }
-        }
-      ''';
-      final requestFollow = GraphQLRequest<String>(
-        document: followMutation,
-        variables: {'followerId': uid, 'followeeId': userToFollow.id},
-      );
-      await Amplify.API.mutate(request: requestFollow).response;
     }
   }
 }

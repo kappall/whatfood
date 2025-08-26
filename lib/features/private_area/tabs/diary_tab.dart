@@ -121,11 +121,10 @@ class _DiaryTabState extends ConsumerState<DiaryTab> {
                 children: [
                   TextButton.icon(
                     icon: Icon(
-                      _showCalendar
-                          ? Icons.expand_less
-                          : Icons.expand_more,
+                      _showCalendar ? Icons.expand_less : Icons.expand_more,
                     ),
-                    label: Text(_showCalendar ? 'Hide calendar' : 'Show calendar'),
+                    label:
+                        Text(_showCalendar ? 'Hide calendar' : 'Show calendar'),
                     onPressed: () {
                       setState(() => _showCalendar = !_showCalendar);
                     },

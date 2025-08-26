@@ -35,13 +35,6 @@ final getUserPostsProvider = StreamProvider.family((ref, String uid) {
   return ref.read(userProfileControllerProvider.notifier).getUserPosts(uid);
 });
 
-final getUserSavedPostsProvider =
-    FutureProvider.family<List<Post>, User>((ref, user) {
-  final userProfileController =
-      ref.read(userProfileControllerProvider.notifier);
-  return userProfileController.getUserSavedPosts(user.savedPosts);
-});
-
 class UserProfileController extends StateNotifier<bool> {
   final UserProfileRepository _userProfileRepository;
   final StorageRepository _storageRepository;
@@ -85,7 +78,6 @@ class UserProfileController extends StateNotifier<bool> {
 
     currentUser = currentUser.copyWith(
       name: name ?? currentUser.name,
-      bio: bio ?? currentUser.bio,
       dailyIntake: dailyIntake ?? currentUser.dailyIntake,
       preferences: preferences ?? currentUser.preferences,
       allergies: allergies ?? currentUser.allergies,
@@ -131,7 +123,6 @@ class UserProfileController extends StateNotifier<bool> {
         return showSnackBar(context, l.message);
       },
       (_) async {
-        await _ref.read(authControllerProvider.notifier).refreshUser();
         if (context.mounted) {
           Routemaster.of(context).replace('/personalize/preferences');
         }
@@ -164,10 +155,5 @@ class UserProfileController extends StateNotifier<bool> {
       _ref.read(userProvider.notifier).update((state) => null);
       Routemaster.of(context).replace('/');
     });
-  }
-
-  void followOrUnfollowUser(BuildContext context, User user) {
-    final uid = _ref.read(userProvider)!.id;
-    _userProfileRepository.followOrUnfollowUser(uid, user);
   }
 }

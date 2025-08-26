@@ -12,7 +12,7 @@ Future<List<FoodSuggestion>> fetchSuggestions(String query) async {
   if (query.trim().isEmpty) return [];
 
   final url = Uri.parse(
-    'https://world.openfoodfacts.org/cgi/search.pl?search_terms=${Uri.encodeComponent(query)}&search_simple=1&action=process&json=1&page_size=4', //TODO change with usda call
+    'https://world.openfoodfacts.org/cgi/search.pl?search_terms=${Uri.encodeComponent(query)}&search_simple=1&action=process&json=1&page_size=4',
   );
 
   final res = await http.get(url);
