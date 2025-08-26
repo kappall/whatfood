@@ -24,37 +24,40 @@ class ZoomControl extends StatelessWidget {
         alignment: Alignment.bottomCenter,
         child: SizedBox(
           width: 250,
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              Expanded(
-                child: Slider(
-                  value: currentZoomLevel,
-                  min: minAvailableZoom,
-                  max: maxAvailableZoom,
-                  activeColor: Colors.white,
-                  inactiveColor: Colors.white30,
-                  onChanged: onZoomChanged,
+          child: Material(
+            color: Colors.transparent,
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                Expanded(
+                  child: Slider(
+                    value: currentZoomLevel,
+                    min: minAvailableZoom,
+                    max: maxAvailableZoom,
+                    activeColor: Colors.white,
+                    inactiveColor: Colors.white30,
+                    onChanged: onZoomChanged,
+                  ),
                 ),
-              ),
-              Container(
-                width: 50,
-                decoration: BoxDecoration(
-                  color: Colors.black54,
-                  borderRadius: BorderRadius.circular(10.0),
-                ),
-                child: Padding(
-                  padding: const EdgeInsets.all(8.0),
-                  child: Center(
-                    child: Text(
-                      '${currentZoomLevel.toStringAsFixed(1)}x',
-                      style: const TextStyle(color: Colors.white),
+                Container(
+                  width: 50,
+                  decoration: BoxDecoration(
+                    color: Colors.black54,
+                    borderRadius: BorderRadius.circular(10.0),
+                  ),
+                  child: Padding(
+                    padding: const EdgeInsets.all(8.0),
+                    child: Center(
+                      child: Text(
+                        '${currentZoomLevel.toStringAsFixed(1)}x',
+                        style: const TextStyle(color: Colors.white),
+                      ),
                     ),
                   ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),
