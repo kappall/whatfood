@@ -5,7 +5,7 @@ import 'package:url_launcher/url_launcher.dart';
 class PrivacyPolicyScreen extends StatelessWidget {
   const PrivacyPolicyScreen({super.key});
 
-  final String _privacyUrl = 'https://www.what-food.com/privacy';
+  final String _privacyUrl = 'https://www.what-food.com/privacy-policy-it';
 
   Future<void> _launchUrl() async {
     final uri = Uri.parse(_privacyUrl);

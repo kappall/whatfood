@@ -32,13 +32,10 @@ class StatsTab extends ConsumerWidget {
     final dailyKcal = _dailyCalories(grouped, period);
 
     return Scaffold(
-      backgroundColor:
-          Theme.of(context).colorScheme.surfaceVariant.withOpacity(.25),
       body: CustomScrollView(
         slivers: [
           SliverAppBar(
-            title: const Text('Statistics'),
-            pinned: true,
+            automaticallyImplyLeading: false,
             bottom: PreferredSize(
               preferredSize: const Size.fromHeight(48),
               child: Padding(
