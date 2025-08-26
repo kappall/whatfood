@@ -31,7 +31,7 @@ class Recipe extends amplify_core.Model {
   final String? _title;
   final String? _coverImage;
   final String? _description;
-  final List<String>? _ingredients;
+  final List<RecipeIngredient>? _ingredients;
   final List<String>? _instructions;
   final String? _servings;
   final String? _cookTimeMinutes;
@@ -95,7 +95,7 @@ class Recipe extends amplify_core.Model {
     }
   }
   
-  List<String> get ingredients {
+  List<RecipeIngredient> get ingredients {
     try {
       return _ingredients!;
     } catch(e) {
@@ -204,13 +204,13 @@ class Recipe extends amplify_core.Model {
   
   const Recipe._internal({required this.id, required title, required coverImage, required description, required ingredients, required instructions, required servings, required cookTimeMinutes, required createdAt, required likes, required fromUser, uid, userImage, username, updatedAt}): _title = title, _coverImage = coverImage, _description = description, _ingredients = ingredients, _instructions = instructions, _servings = servings, _cookTimeMinutes = cookTimeMinutes, _createdAt = createdAt, _likes = likes, _fromUser = fromUser, _uid = uid, _userImage = userImage, _username = username, _updatedAt = updatedAt;
   
-  factory Recipe({String? id, required String title, required String coverImage, required String description, required List<String> ingredients, required List<String> instructions, required String servings, required String cookTimeMinutes, required amplify_core.TemporalDateTime createdAt, required List<String> likes, required bool fromUser, String? uid, String? userImage, String? username}) {
+  factory Recipe({String? id, required String title, required String coverImage, required String description, required List<RecipeIngredient> ingredients, required List<String> instructions, required String servings, required String cookTimeMinutes, required amplify_core.TemporalDateTime createdAt, required List<String> likes, required bool fromUser, String? uid, String? userImage, String? username}) {
     return Recipe._internal(
       id: id == null ? amplify_core.UUID.getUUID() : id,
       title: title,
       coverImage: coverImage,
       description: description,
-      ingredients: ingredients != null ? List<String>.unmodifiable(ingredients) : ingredients,
+      ingredients: ingredients != null ? List<RecipeIngredient>.unmodifiable(ingredients) : ingredients,
       instructions: instructions != null ? List<String>.unmodifiable(instructions) : instructions,
       servings: servings,
       cookTimeMinutes: cookTimeMinutes,
@@ -274,7 +274,7 @@ class Recipe extends amplify_core.Model {
     return buffer.toString();
   }
   
-  Recipe copyWith({String? title, String? coverImage, String? description, List<String>? ingredients, List<String>? instructions, String? servings, String? cookTimeMinutes, amplify_core.TemporalDateTime? createdAt, List<String>? likes, bool? fromUser, String? uid, String? userImage, String? username}) {
+  Recipe copyWith({String? title, String? coverImage, String? description, List<RecipeIngredient>? ingredients, List<String>? instructions, String? servings, String? cookTimeMinutes, amplify_core.TemporalDateTime? createdAt, List<String>? likes, bool? fromUser, String? uid, String? userImage, String? username}) {
     return Recipe._internal(
       id: id,
       title: title ?? this.title,
@@ -296,7 +296,7 @@ class Recipe extends amplify_core.Model {
     ModelFieldValue<String>? title,
     ModelFieldValue<String>? coverImage,
     ModelFieldValue<String>? description,
-    ModelFieldValue<List<String>?>? ingredients,
+    ModelFieldValue<List<RecipeIngredient>?>? ingredients,
     ModelFieldValue<List<String>?>? instructions,
     ModelFieldValue<String>? servings,
     ModelFieldValue<String>? cookTimeMinutes,
@@ -330,7 +330,12 @@ class Recipe extends amplify_core.Model {
       _title = json['title'],
       _coverImage = json['coverImage'],
       _description = json['description'],
-      _ingredients = json['ingredients']?.cast<String>(),
+      _ingredients = json['ingredients'] is List
+        ? (json['ingredients'] as List)
+          .where((e) => e != null)
+          .map((e) => RecipeIngredient.fromJson(new Map<String, dynamic>.from(e['serializedData'] ?? e)))
+          .toList()
+        : null,
       _instructions = json['instructions']?.cast<String>(),
       _servings = json['servings'],
       _cookTimeMinutes = json['cookTimeMinutes'],
@@ -343,7 +348,7 @@ class Recipe extends amplify_core.Model {
       _updatedAt = json['updatedAt'] != null ? amplify_core.TemporalDateTime.fromString(json['updatedAt']) : null;
   
   Map<String, dynamic> toJson() => {
-    'id': id, 'title': _title, 'coverImage': _coverImage, 'description': _description, 'ingredients': _ingredients, 'instructions': _instructions, 'servings': _servings, 'cookTimeMinutes': _cookTimeMinutes, 'createdAt': _createdAt?.format(), 'likes': _likes, 'fromUser': _fromUser, 'uid': _uid, 'userImage': _userImage, 'username': _username, 'updatedAt': _updatedAt?.format()
+    'id': id, 'title': _title, 'coverImage': _coverImage, 'description': _description, 'ingredients': _ingredients?.map((RecipeIngredient? e) => e?.toJson()).toList(), 'instructions': _instructions, 'servings': _servings, 'cookTimeMinutes': _cookTimeMinutes, 'createdAt': _createdAt?.format(), 'likes': _likes, 'fromUser': _fromUser, 'uid': _uid, 'userImage': _userImage, 'username': _username, 'updatedAt': _updatedAt?.format()
   };
   
   Map<String, Object?> toMap() => {
@@ -414,11 +419,11 @@ class Recipe extends amplify_core.Model {
       ofType: amplify_core.ModelFieldType(amplify_core.ModelFieldTypeEnum.string)
     ));
     
-    modelSchemaDefinition.addField(amplify_core.ModelFieldDefinition.field(
-      key: Recipe.INGREDIENTS,
+    modelSchemaDefinition.addField(amplify_core.ModelFieldDefinition.embedded(
+      fieldName: 'ingredients',
       isRequired: true,
       isArray: true,
-      ofType: amplify_core.ModelFieldType(amplify_core.ModelFieldTypeEnum.collection, ofModelName: amplify_core.ModelFieldTypeEnum.string.name)
+      ofType: amplify_core.ModelFieldType(amplify_core.ModelFieldTypeEnum.embeddedCollection, ofCustomTypeName: 'RecipeIngredient')
     ));
     
     modelSchemaDefinition.addField(amplify_core.ModelFieldDefinition.field(

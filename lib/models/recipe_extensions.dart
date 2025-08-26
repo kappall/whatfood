@@ -6,7 +6,12 @@ extension RecipeGraphQLFields on Recipe {
     title
     coverImage
     description
-    ingredients
+    ingredients {
+      name
+      offId
+      quantity
+      unit
+    }
     instructions
     servings
     cookTimeMinutes

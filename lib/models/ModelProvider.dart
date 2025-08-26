@@ -26,22 +26,24 @@ import 'Post.dart';
 import 'Recipe.dart';
 import 'Report.dart';
 import 'User.dart';
+import 'RecipeIngredient.dart';
 
 export 'Comment.dart';
 export 'Ingredient.dart';
 export 'MealType.dart';
 export 'Post.dart';
 export 'Recipe.dart';
+export 'RecipeIngredient.dart';
 export 'Report.dart';
 export 'User.dart';
 
 class ModelProvider implements amplify_core.ModelProviderInterface {
   @override
-  String version = "aeaba2a5a94b9217d3d97b651227db80";
+  String version = "044486a2691e7b3812c695d1f1e156d4";
   @override
   List<amplify_core.ModelSchema> modelSchemas = [Comment.schema, Ingredient.schema, Post.schema, Recipe.schema, Report.schema, User.schema];
   @override
-  List<amplify_core.ModelSchema> customTypeSchemas = [];
+  List<amplify_core.ModelSchema> customTypeSchemas = [RecipeIngredient.schema];
   static final ModelProvider _instance = ModelProvider();
 
   static ModelProvider get instance => _instance;
