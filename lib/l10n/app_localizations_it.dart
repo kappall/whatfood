@@ -12,7 +12,7 @@ class AppLocalizationsIt extends AppLocalizations {
   String get loginTitle => 'Bentornato!';
 
   @override
-  String get enterField => 'Inserisci la tua';
+  String get enterField => 'Inserisci la tua ';
 
   @override
   String get onboardingTitle1 => 'Capisci le etichette all\'istante';
@@ -61,4 +61,13 @@ class AppLocalizationsIt extends AppLocalizations {
 
   @override
   String get onboardingIllustrationLabel4 => 'Illustrazione di una famiglia felice che cucina';
+
+  @override
+  String get recipesLabel => 'Ricette';
+
+  @override
+  String get ingredientsLabel => 'Ingredienti';
+
+  @override
+  String get cartLabel => 'Carrello';
 }

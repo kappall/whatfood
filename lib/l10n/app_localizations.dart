@@ -202,6 +202,24 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Illustration of a happy family cooking'**
   String get onboardingIllustrationLabel4;
+
+  /// No description provided for @recipesLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Recipes'**
+  String get recipesLabel;
+
+  /// No description provided for @ingredientsLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Ingredients'**
+  String get ingredientsLabel;
+
+  /// No description provided for @cartLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Carrello'**
+  String get cartLabel;
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {

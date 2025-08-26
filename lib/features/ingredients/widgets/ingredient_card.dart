@@ -23,7 +23,6 @@ class IngredientCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            // Image
             Expanded(
               child: Image.network(
                 imageUrl ?? '',

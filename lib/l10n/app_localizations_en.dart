@@ -61,4 +61,13 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get onboardingIllustrationLabel4 => 'Illustration of a happy family cooking';
+
+  @override
+  String get recipesLabel => 'Recipes';
+
+  @override
+  String get ingredientsLabel => 'Ingredients';
+
+  @override
+  String get cartLabel => 'Carrello';
 }

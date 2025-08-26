@@ -46,7 +46,7 @@ class _IngredientsScreenState extends ConsumerState<IngredientsScreen>
       glutenFree: _glutenFree,
     );
     final res = await ref.read(openFoodFactsProvider(params).future);
-    if (mounted) setState(() => _lastResult = AsyncValue.data(res));
+    setState(() => _lastResult = AsyncValue.data(res));
   }
 
   @override

@@ -16,7 +16,7 @@ val keystoreProperties = Properties().apply {
 
 android {
     namespace = "it.whatfood.whatfood"
-    compileSdk = 34
+    compileSdk = 35
 
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
@@ -32,9 +32,14 @@ android {
     defaultConfig {
         applicationId = "it.whatfood.whatfood"
         minSdk = 26
-        targetSdk = 34
+        targetSdk = 35
         versionCode = 1
         versionName = "1.0"
+
+        // Force ML Kit to bundle models in the APK (avoids first-run download delays)
+        aaptOptions {
+            noCompress("tflite")
+        }
     }
 
     signingConfigs {

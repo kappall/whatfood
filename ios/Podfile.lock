@@ -85,6 +85,11 @@ PODS:
   - google_mlkit_commons (0.9.0):
     - Flutter
     - MLKitVision
+  - google_mlkit_image_labeling (0.13.0):
+    - Flutter
+    - google_mlkit_commons
+    - GoogleMLKit/ImageLabeling (~> 7.0.0)
+    - GoogleMLKit/ImageLabelingCustom (~> 7.0.0)
   - google_sign_in_ios (0.0.1):
     - Flutter
     - FlutterMacOS
@@ -96,6 +101,12 @@ PODS:
   - GoogleMLKit/BarcodeScanning (7.0.0):
     - GoogleMLKit/MLKitCore
     - MLKitBarcodeScanning (~> 6.0.0)
+  - GoogleMLKit/ImageLabeling (7.0.0):
+    - GoogleMLKit/MLKitCore
+    - MLKitImageLabeling (~> 6.0.0)
+  - GoogleMLKit/ImageLabelingCustom (7.0.0):
+    - GoogleMLKit/MLKitCore
+    - MLKitImageLabelingCustom (~> 6.0.0)
   - GoogleMLKit/MLKitCore (7.0.0):
     - MLKitCommon (~> 12.0.0)
   - GoogleSignIn (9.0.0):
@@ -138,12 +149,33 @@ PODS:
     - GoogleUtilities/Logger (~> 8.0)
     - GoogleUtilities/UserDefaults (~> 8.0)
     - GTMSessionFetcher/Core (< 4.0, >= 3.3.2)
+  - MLKitImageLabeling (6.0.0):
+    - MLKitCommon (~> 12.0)
+    - MLKitImageLabelingCommon (~> 8.0)
+    - MLKitVision (~> 8.0)
+    - MLKitVisionKit (~> 9.0)
+  - MLKitImageLabelingCommon (8.0.0):
+    - MLKitCommon (~> 12.0)
+    - MLKitVision (~> 8.0)
+  - MLKitImageLabelingCustom (6.0.0):
+    - MLKitCommon (~> 12.0)
+    - MLKitImageLabelingCommon (~> 8.0)
+    - MLKitVision (~> 8.0)
+    - MLKitVisionKit (~> 9.0)
+  - MLKitObjectDetectionCommon (8.0.0):
+    - MLKitCommon (~> 12.0)
+    - MLKitVision (~> 8.0)
   - MLKitVision (8.0.0):
     - GoogleToolboxForMac/Logger (< 5.0, >= 4.2.1)
     - "GoogleToolboxForMac/NSData+zlib (< 5.0, >= 4.2.1)"
     - GTMSessionFetcher/Core (< 4.0, >= 3.3.2)
     - MLImage (= 1.0.0-beta6)
     - MLKitCommon (~> 12.0)
+  - MLKitVisionKit (9.0.0):
+    - MLKitCommon (~> 12.0)
+    - MLKitImageLabelingCommon (~> 8.0)
+    - MLKitObjectDetectionCommon (~> 8.0)
+    - MLKitVision (~> 8.0)
   - nanopb (3.30910.0):
     - nanopb/decode (= 3.30910.0)
     - nanopb/encode (= 3.30910.0)
@@ -189,6 +221,7 @@ DEPENDENCIES:
   - flutter_secure_storage (from `.symlinks/plugins/flutter_secure_storage/ios`)
   - google_mlkit_barcode_scanning (from `.symlinks/plugins/google_mlkit_barcode_scanning/ios`)
   - google_mlkit_commons (from `.symlinks/plugins/google_mlkit_commons/ios`)
+  - google_mlkit_image_labeling (from `.symlinks/plugins/google_mlkit_image_labeling/ios`)
   - google_sign_in_ios (from `.symlinks/plugins/google_sign_in_ios/darwin`)
   - image_picker_ios (from `.symlinks/plugins/image_picker_ios/ios`)
   - package_info_plus (from `.symlinks/plugins/package_info_plus/ios`)
@@ -215,7 +248,12 @@ SPEC REPOS:
     - MLImage
     - MLKitBarcodeScanning
     - MLKitCommon
+    - MLKitImageLabeling
+    - MLKitImageLabelingCommon
+    - MLKitImageLabelingCustom
+    - MLKitObjectDetectionCommon
     - MLKitVision
+    - MLKitVisionKit
     - nanopb
     - PromisesObjC
     - SDWebImage
@@ -248,6 +286,8 @@ EXTERNAL SOURCES:
     :path: ".symlinks/plugins/google_mlkit_barcode_scanning/ios"
   google_mlkit_commons:
     :path: ".symlinks/plugins/google_mlkit_commons/ios"
+  google_mlkit_image_labeling:
+    :path: ".symlinks/plugins/google_mlkit_image_labeling/ios"
   google_sign_in_ios:
     :path: ".symlinks/plugins/google_sign_in_ios/darwin"
   image_picker_ios:
@@ -284,6 +324,7 @@ SPEC CHECKSUMS:
   flutter_secure_storage: d33dac7ae2ea08509be337e775f6b59f1ff45f12
   google_mlkit_barcode_scanning: 1a409f86a4c7df45e6dee9ba06e520357b2c7110
   google_mlkit_commons: 384e4e206e122b6dad430d3158205e0b2fac6789
+  google_mlkit_image_labeling: d5b60af262f4920caa9e860c5a1b674c17d2ada4
   google_sign_in_ios: 4bb0e529b167cadc6ac785b6ed943c0a0a4cc1c9
   GoogleDataTransport: aae35b7ea0c09004c3797d53c8c41f66f219d6a7
   GoogleMLKit: eff9e23ec1d90ea4157a1ee2e32a4f610c5b3318
@@ -296,7 +337,12 @@ SPEC CHECKSUMS:
   MLImage: 0ad1c5f50edd027672d8b26b0fee78a8b4a0fc56
   MLKitBarcodeScanning: 0a3064da0a7f49ac24ceb3cb46a5bc67496facd2
   MLKitCommon: 07c2c33ae5640e5380beaaa6e4b9c249a205542d
+  MLKitImageLabeling: 7f052589de9ffde213bc2c26854d212ea4dde17a
+  MLKitImageLabelingCommon: 23f0c9037c2c6433784db594bd1bb87173172fe9
+  MLKitImageLabelingCustom: 594c49fa1bb809ec05215bb4ac1c15729c7a601a
+  MLKitObjectDetectionCommon: 0198709a728984e3b6fac98a5fa53a8042880336
   MLKitVision: 45e79d68845a2de77e2dd4d7f07947f0ed157b0e
+  MLKitVisionKit: 8a7abd5f11aeb1add2942a694c2685eca422a849
   nanopb: fad817b59e0457d11a5dfbde799381cd727c1275
   package_info_plus: c0502532a26c7662a62a356cebe2692ec5fe4ec4
   path_provider_foundation: 2b6b4c569c0fb62ec74538f866245ac84301af46

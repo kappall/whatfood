@@ -17,5 +17,8 @@
   "onboardingIllustrationLabel1": "Illustrazione di scansione di un codice a barre",
   "onboardingIllustrationLabel2": "Illustrazione dell'impostazione delle preferenze",
   "onboardingIllustrationLabel3": "Illustrazione della scoperta delle ricette",
-  "onboardingIllustrationLabel4": "Illustrazione di una famiglia felice che cucina"
+  "onboardingIllustrationLabel4": "Illustrazione di una famiglia felice che cucina",
+  "recipesLabel": "Ricette",
+  "ingredientsLabel": "Ingredienti",
+  "cartLabel": "Carrello"
 }
