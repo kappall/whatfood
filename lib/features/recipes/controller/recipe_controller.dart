@@ -12,6 +12,7 @@ import 'package:whatfood/core/utils.dart';
 import 'package:whatfood/features/auth/controller/auth_controller.dart';
 import 'package:whatfood/features/recipes/repository/recipe_repository.dart';
 import 'package:whatfood/models/Recipe.dart';
+import 'package:whatfood/models/RecipeIngredient.dart';
 
 final recipeControllerProvider =
     StateNotifierProvider<RecipeController, bool>((ref) {
@@ -23,6 +24,25 @@ final recipeControllerProvider =
     storageRepository: storageRepository,
   );
 });
+
+final recipeMemoryProvider =
+    StateNotifierProvider<RecipeMemoryNotifier, Map<String, Recipe>>((ref) {
+  return RecipeMemoryNotifier();
+});
+
+class RecipeMemoryNotifier extends StateNotifier<Map<String, Recipe>> {
+  RecipeMemoryNotifier() : super({});
+
+  void addRecipe(Recipe recipe) {
+    state = {...state, recipe.id!: recipe};
+  }
+
+  List<Recipe> getRecipes() {
+    return state.values.toList();
+  }
+
+  Recipe? getRecipe(String id) => state[id];
+}
 
 final recipesProvider = StreamProvider((ref) {
   final recipeController = ref.watch(recipeControllerProvider.notifier);
@@ -54,14 +74,19 @@ class MealFilter {
 final mealInspirationProvider =
     FutureProvider.family<List<Recipe>, MealFilter>((ref, filter) {
   return fetchRecipes(
+    ref: ref,
     query: filter.mealType,
     maxMinutes: filter.maxMinutes,
   );
 });
 
-final recipeByIdProvider = StreamProvider.family((ref, String id) {
-  final posController = ref.watch(recipeControllerProvider.notifier);
-  return posController.getRecipeById(id);
+final recipeByIdProvider = StreamProvider.family<Recipe, String>((ref, id) {
+  final cachedRecipe = ref.read(recipeMemoryProvider.notifier).getRecipe(id);
+  if (cachedRecipe != null) {
+    return Stream.value(cachedRecipe);
+  }
+  final recipeController = ref.watch(recipeControllerProvider.notifier);
+  return recipeController.getRecipeById(id);
 });
 
 class RecipeController extends StateNotifier<bool> {
@@ -86,7 +111,7 @@ class RecipeController extends StateNotifier<bool> {
     required String title,
     required String description,
     required List<String> instructions,
-    required List<String> ingredients,
+    required List<Map<String, dynamic>> ingredients,
     required String servings,
     required String cookTimeMinutes,
     required File image,
@@ -106,6 +131,14 @@ class RecipeController extends StateNotifier<bool> {
       final imageUrl = result;
 
       coverImageUrl = imageUrl;
+      final recipeIngredients = ingredients.map((i) {
+        return RecipeIngredient(
+          name: i['name'] as String,
+          offId: i['offId'] as String,
+          quantity: (i['quantity'] as num).toDouble(),
+          unit: i['unit'] as String,
+        );
+      }).toList();
 
       final Recipe recipe = Recipe(
           id: recipeId,
@@ -115,7 +148,7 @@ class RecipeController extends StateNotifier<bool> {
           createdAt: TemporalDateTime.now(),
           likes: [],
           description: description,
-          ingredients: ingredients,
+          ingredients: recipeIngredients,
           instructions: instructions,
           servings: servings,
           cookTimeMinutes: cookTimeMinutes,
@@ -162,7 +195,7 @@ class RecipeController extends StateNotifier<bool> {
     required String title,
     required String description,
     required List<String> instructions,
-    required List<String> ingredients,
+    required List<Map<String, dynamic>> ingredients,
     required String servings,
     required String cookTimeMinutes,
     required List<String> likes,
@@ -187,6 +220,15 @@ class RecipeController extends StateNotifier<bool> {
       }
       final user = _ref.watch(userProvider)!;
 
+      final recipeIngredients = ingredients.map((i) {
+        return RecipeIngredient(
+          name: i['name'] as String,
+          offId: i['offId'] as String,
+          quantity: (i['quantity'] as num).toDouble(),
+          unit: i['unit'] as String,
+        );
+      }).toList();
+
       final recipe = Recipe(
         id: recipeId,
         title: title,
@@ -194,7 +236,7 @@ class RecipeController extends StateNotifier<bool> {
         userImage: user.profilePic,
         username: user.name,
         instructions: instructions.where((i) => i.isNotEmpty).toList(),
-        ingredients: ingredients.where((i) => i.isNotEmpty).toList(),
+        ingredients: recipeIngredients,
         servings: servings,
         cookTimeMinutes: cookTimeMinutes,
         coverImage: imageUrl,
@@ -222,7 +264,13 @@ class RecipeController extends StateNotifier<bool> {
   }
 }
 
-Future<List<Recipe>> fetchRecipes({String? query, int? maxMinutes}) async {
+Future<List<Recipe>> fetchRecipes(
+    {required Ref ref, String? query, int? maxMinutes}) async {
+  if (query == null || query.isEmpty) {
+    List<Recipe> cachedRecipes =
+        ref.read(recipeMemoryProvider.notifier).getRecipes();
+    if (cachedRecipes.isNotEmpty) return cachedRecipes;
+  }
   final res = await http.post(
     Uri.parse(
         'https://bnjocjlpl1.execute-api.eu-north-1.amazonaws.com/dev/recipeApiCall'),
@@ -236,14 +284,16 @@ Future<List<Recipe>> fetchRecipes({String? query, int? maxMinutes}) async {
   if (res.statusCode != 200) return [];
   final List results = jsonDecode(res.body);
 
-  debugPrint(results.toString());
-
-  return results.map((r) => fromSpoonacular(r)).toList();
+  return results.map((r) {
+    final recipe = fromSpoonacular(r);
+    ref.read(recipeMemoryProvider.notifier).addRecipe(recipe);
+    return recipe;
+  }).toList();
 }
 
 final apiRecipesProvider =
     FutureProvider.family<List<Recipe>, String>((ref, query) {
-  return fetchRecipes(query: query);
+  return fetchRecipes(ref: ref, query: query);
 });
 
 Recipe fromSpoonacular(Map<String, dynamic> data) {

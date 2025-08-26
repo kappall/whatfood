@@ -2,8 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:routemaster/routemaster.dart';
 import 'package:whatfood/features/auth/screens/login_screen.dart';
 import 'package:whatfood/features/auth/screens/signup_screen.dart';
-import 'package:whatfood/features/community/screens/community_screen.dart';
-import 'package:whatfood/features/community/screens/create_post_screen.dart';
 import 'package:whatfood/features/home/screens/home_screen.dart';
 import 'package:whatfood/features/ingredients/screens/ingredient_detail_screen.dart';
 import 'package:whatfood/features/ingredients/screens/ingredients_screen.dart';
@@ -14,6 +12,7 @@ import 'package:whatfood/features/personalization/screens/goals_screen.dart';
 import 'package:whatfood/features/personalization/screens/preferences_screen.dart';
 import 'package:whatfood/features/private_area/screens/private_area_screen.dart';
 import 'package:whatfood/features/recipes/screens/create_recipe_screen.dart';
+import 'package:whatfood/features/recipes/screens/recipe_detail_page.dart';
 import 'package:whatfood/features/recipes/screens/recipes_screen.dart';
 import 'package:whatfood/features/scanner/screens/scan_screen.dart';
 import 'package:whatfood/features/settings/screens/privacy_policy_screen.dart';
@@ -48,6 +47,10 @@ final loggedInRoutes = RouteMap(routes: {
   '/personalize/goals': (_) => const MaterialPage(child: GoalsScreen()),
   '/personalize/dislikes': (_) => const MaterialPage(child: DislikesScreen()),
   '/create-recipe': (_) => const MaterialPage(child: CreateRecipeScreen()),
+  '/recipe-details/:id': (route) => MaterialPage(
+        child: RecipeDetailPage(
+            recipeId: Uri.decodeComponent(route.pathParameters['id']!)),
+      ),
   '/ingredient/:id': (route) => MaterialPage(
         child: IngredientDetailScreen(id: route.pathParameters['id']!),
       ),

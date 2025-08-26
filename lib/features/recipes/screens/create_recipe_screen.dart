@@ -23,7 +23,7 @@ class _CreateRecipeScreenState extends ConsumerState<CreateRecipeScreen> {
   final _cookTimeCtrl = TextEditingController();
 
   File? _image;
-  final List<TextEditingController> _ingredientCtrls = [];
+  final List<IngredientInput> _ingredients = [];
   final List<TextEditingController> _instructionCtrls = [];
 
   @override
@@ -39,8 +39,20 @@ class _CreateRecipeScreenState extends ConsumerState<CreateRecipeScreen> {
     _descCtrl.dispose();
     _servingsCtrl.dispose();
     _cookTimeCtrl.dispose();
-    for (final c in [..._ingredientCtrls, ..._instructionCtrls]) c.dispose();
+    for (final c in [..._ingredients, ..._instructionCtrls]) {}
     super.dispose();
+  }
+
+  void _addIngredient() {
+    setState(() {
+      _ingredients.add(IngredientInput());
+    });
+  }
+
+  void _removeIngredient(int i) {
+    _ingredients[i].dispose();
+    _ingredients.removeAt(i);
+    setState(() {});
   }
 
   Future<void> _pickImage() async {
@@ -48,14 +60,7 @@ class _CreateRecipeScreenState extends ConsumerState<CreateRecipeScreen> {
     if (picked != null) setState(() => _image = File(picked.path));
   }
 
-  void _addIngredient() => _ingredientCtrls.add(TextEditingController());
   void _addInstruction() => _instructionCtrls.add(TextEditingController());
-
-  void _removeIngredient(int i) {
-    _ingredientCtrls[i].dispose();
-    _ingredientCtrls.removeAt(i);
-    setState(() {});
-  }
 
   void _removeInstruction(int i) {
     _instructionCtrls[i].dispose();
@@ -69,14 +74,26 @@ class _CreateRecipeScreenState extends ConsumerState<CreateRecipeScreen> {
       showSnackBar(context, 'Pick a cover image');
       return;
     }
-    if (_ingredientCtrls.any((c) => c.text.trim().isEmpty)) {
-      showSnackBar(context, 'Fill every ingredient');
-      return;
-    }
     if (_instructionCtrls.any((c) => c.text.trim().isEmpty)) {
       showSnackBar(context, 'Fill every step');
       return;
     }
+    if (_ingredients.any((ing) =>
+        ing.nameCtrl.text.trim().isEmpty ||
+        ing.quantityCtrl.text.trim().isEmpty ||
+        ing.unitCtrl.text.trim().isEmpty)) {
+      showSnackBar(
+          context, 'Fill every ingredient with name, quantity and unit');
+      return;
+    }
+
+    final ingredientInputs = _ingredients
+        .map((ing) => {
+              'name': ing.nameCtrl.text.trim(),
+              'quantity': double.tryParse(ing.quantityCtrl.text.trim()) ?? 0,
+              'unit': ing.unitCtrl.text.trim(),
+            })
+        .toList();
 
     ref
         .read(recipeControllerProvider.notifier)
@@ -85,7 +102,7 @@ class _CreateRecipeScreenState extends ConsumerState<CreateRecipeScreen> {
           title: _titleCtrl.text.trim(),
           description: _descCtrl.text.trim(),
           instructions: _instructionCtrls.map((c) => c.text.trim()).toList(),
-          ingredients: _ingredientCtrls.map((c) => c.text.trim()).toList(),
+          ingredients: ingredientInputs,
           servings: _servingsCtrl.text.trim(),
           cookTimeMinutes: _cookTimeCtrl.text.trim(),
           image: _image!,
@@ -138,21 +155,14 @@ class _CreateRecipeScreenState extends ConsumerState<CreateRecipeScreen> {
               ),
               const SizedBox(height: 24),
               _SectionTitle(title: 'Ingredients', onAdd: _addIngredient),
-              ReorderableListView.builder(
+              _SectionTitle(title: 'Ingredients', onAdd: _addIngredient),
+              ListView.builder(
                 shrinkWrap: true,
                 physics: const NeverScrollableScrollPhysics(),
-                itemCount: _ingredientCtrls.length,
-                onReorder: (oldIndex, newIndex) {
-                  setState(() {
-                    if (newIndex > oldIndex) newIndex -= 1;
-                    final item = _ingredientCtrls.removeAt(oldIndex);
-                    _ingredientCtrls.insert(newIndex, item);
-                  });
-                },
-                itemBuilder: (_, i) => _Row(
+                itemCount: _ingredients.length,
+                itemBuilder: (_, i) => _IngredientRow(
                   key: ValueKey('ing-$i'),
-                  ctrl: _ingredientCtrls[i],
-                  hint: 'Ingredient ${i + 1}',
+                  input: _ingredients[i],
                   onDelete: () => _removeIngredient(i),
                 ),
               ),
@@ -300,5 +310,91 @@ class _Row extends StatelessWidget {
         ],
       ),
     );
+  }
+}
+
+class _IngredientRow extends ConsumerWidget {
+  const _IngredientRow({
+    super.key,
+    required this.input,
+    required this.onDelete,
+  });
+
+  final IngredientInput input;
+  final VoidCallback onDelete;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4),
+      child: Row(
+        children: [
+          Expanded(
+            flex: 4,
+            child: TextFormField(
+              controller: input.nameCtrl,
+              decoration: const InputDecoration(
+                hintText: 'Search ingredient (OFF)',
+                border: OutlineInputBorder(),
+              ),
+              onChanged: (value) {
+                // TODO: hook to OFF search provider
+              },
+              validator: (v) =>
+                  v == null || v.trim().isEmpty ? 'Required' : null,
+            ),
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            flex: 2,
+            child: TextFormField(
+              controller: input.quantityCtrl,
+              keyboardType: TextInputType.number,
+              decoration: const InputDecoration(
+                hintText: 'Qty',
+                border: OutlineInputBorder(),
+              ),
+              validator: (v) =>
+                  v == null || v.trim().isEmpty ? 'Required' : null,
+            ),
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            flex: 2,
+            child: TextFormField(
+              controller: input.unitCtrl,
+              decoration: const InputDecoration(
+                hintText: 'Unit',
+                border: OutlineInputBorder(),
+              ),
+              validator: (v) =>
+                  v == null || v.trim().isEmpty ? 'Required' : null,
+            ),
+          ),
+          const SizedBox(width: 8),
+          IconButton(
+            icon: const Icon(Icons.remove_circle_outline, color: Colors.red),
+            onPressed: onDelete,
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class IngredientInput {
+  final TextEditingController nameCtrl;
+  final TextEditingController quantityCtrl;
+  final TextEditingController unitCtrl;
+
+  IngredientInput()
+      : nameCtrl = TextEditingController(),
+        quantityCtrl = TextEditingController(),
+        unitCtrl = TextEditingController();
+
+  void dispose() {
+    nameCtrl.dispose();
+    quantityCtrl.dispose();
+    unitCtrl.dispose();
   }
 }

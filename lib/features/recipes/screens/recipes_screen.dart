@@ -169,9 +169,16 @@ class _RecipeGrid extends ConsumerWidget {
                         scrollDirection: Axis.horizontal,
                         itemCount: filtered.length,
                         separatorBuilder: (_, __) => const SizedBox(width: 16),
-                        itemBuilder: (_, i) => SizedBox(
-                          width: 200,
-                          child: RecipeCard(recipe: filtered[i]),
+                        itemBuilder: (_, i) => GestureDetector(
+                          onTap: () {
+                            print('User recipe tapped: ${filtered[i].id}');
+                            Routemaster.of(context).push(
+                                '/recipe-details/${Uri.encodeComponent(filtered[i].id)}');
+                          },
+                          child: SizedBox(
+                            width: 200,
+                            child: RecipeCard(recipe: filtered[i]),
+                          ),
                         ),
                       ),
                     );
@@ -218,34 +225,43 @@ class _RecipeGrid extends ConsumerWidget {
                     separatorBuilder: (_, __) => const SizedBox(width: 16),
                     itemBuilder: (context, i) {
                       final recipe = recipes[i];
-                      return SizedBox(
-                        width: 160,
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.center,
-                          children: [
-                            ClipRRect(
-                              borderRadius: BorderRadius.circular(12),
-                              child: Image.network(
-                                recipe.coverImage,
-                                height: 140,
-                                width: 160,
-                                fit: BoxFit.cover,
-                                errorBuilder: (_, __, ___) => Container(
-                                  color: Colors.grey,
-                                  height: 140,
-                                  width: 160,
+                      return GestureDetector(
+                        onTap: () => Routemaster.of(context).push(
+                            '/recipe-details/${Uri.encodeComponent(recipe.id)}'),
+                        child: SizedBox(
+                          width: 160,
+                          child: Material(
+                            color: Theme.of(context)
+                                .colorScheme
+                                .surfaceContainerHighest,
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.center,
+                              children: [
+                                ClipRRect(
+                                  borderRadius: BorderRadius.circular(12),
+                                  child: Image.network(
+                                    recipe.coverImage,
+                                    height: 140,
+                                    width: 160,
+                                    fit: BoxFit.cover,
+                                    errorBuilder: (_, __, ___) => Container(
+                                      color: Colors.grey,
+                                      height: 140,
+                                      width: 160,
+                                    ),
+                                  ),
                                 ),
-                              ),
+                                const SizedBox(height: 8),
+                                Text(
+                                  recipe.title,
+                                  textAlign: TextAlign.center,
+                                  style: Theme.of(context).textTheme.bodyMedium,
+                                  maxLines: 2,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ],
                             ),
-                            const SizedBox(height: 8),
-                            Text(
-                              recipe.title,
-                              textAlign: TextAlign.center,
-                              style: Theme.of(context).textTheme.bodyMedium,
-                              maxLines: 2,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ],
+                          ),
                         ),
                       );
                     },

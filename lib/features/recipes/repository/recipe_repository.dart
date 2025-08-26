@@ -171,18 +171,17 @@ class RecipeRepository {
           }
         }
       ''';
-      final request = GraphQLRequest<String>(document: query);
+      final request =
+          GraphQLRequest<String>(document: query, variables: {'id': id});
       Amplify.API.query(request: request).response.then((response) {
         if (response.data == null) {
           return;
         }
         try {
-          debugPrint(response.data);
           var json = jsonDecode(response.data!)['getRecipe'];
           final recipe = Recipe.fromJson(json);
           controller.add(recipe);
         } catch (e) {
-          debugPrint("Error parsing recipe data: $e");
           controller.addError(e);
         }
       }).catchError((error) {
