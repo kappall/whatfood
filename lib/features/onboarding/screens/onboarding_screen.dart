@@ -5,7 +5,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:whatfood/core/common/loader.dart';
 import 'package:whatfood/features/auth/controller/auth_controller.dart';
-import 'package:whatfood/features/profile/controller/user_profile_controller.dart';
+import 'package:whatfood/features/private_area/controllers/user_profile_controller.dart';
 import 'package:whatfood/l10n/app_localizations.dart';
 
 /// A widget that wraps every onboarding page so we only have to

@@ -7,7 +7,7 @@ import 'package:whatfood/core/providers/aws_providers.dart';
 import 'package:whatfood/core/providers/storage_repository_provider.dart';
 import 'package:whatfood/core/utils.dart';
 import 'package:whatfood/features/auth/controller/auth_controller.dart';
-import 'package:whatfood/features/profile/repository/user_profile_repository.dart';
+import 'package:whatfood/features/private_area/repository/user_profile_repository.dart';
 import 'package:whatfood/models/Post.dart';
 import 'package:whatfood/models/User.dart';
 

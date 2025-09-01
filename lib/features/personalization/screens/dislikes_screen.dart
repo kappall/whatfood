@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:whatfood/features/auth/controller/auth_controller.dart';
-import 'package:whatfood/features/profile/controller/user_profile_controller.dart';
+import 'package:whatfood/features/private_area/controllers/user_profile_controller.dart';
 
 class DislikesScreen extends ConsumerStatefulWidget {
   const DislikesScreen({super.key});
