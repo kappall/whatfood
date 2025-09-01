@@ -6,6 +6,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:fpdart/fpdart.dart';
 import 'package:hive/hive.dart';
 import 'package:intl/intl.dart';
+import 'package:whatfood/core/common/loader.dart';
+import 'package:whatfood/features/auth/controller/auth_controller.dart';
 import 'package:whatfood/features/private_area/controllers/food_suggestion_controller.dart';
 import 'package:whatfood/models/diary_entry.dart';
 import 'package:whatfood/models/food_suggestion.dart';
@@ -194,18 +196,13 @@ class _DayCard extends ConsumerWidget {
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: Theme.of(context).colorScheme.surfaceContainerHigh,
         borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(.04),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
       ),
       child: Theme(
-        data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
+        data: Theme.of(context).copyWith(
+            dividerColor: Colors.transparent,
+            splashFactory: NoSplash.splashFactory),
         child: ExpansionTile(
           tilePadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
           childrenPadding:
@@ -215,12 +212,14 @@ class _DayCard extends ConsumerWidget {
           title: Text(
             dateLabel,
             style: TextStyle(
-              fontWeight: FontWeight.w600,
-              fontSize: 15,
-              color: isToday
-                  ? Theme.of(context).colorScheme.primary
-                  : Colors.grey.shade800,
-            ),
+                fontWeight: FontWeight.w600,
+                fontSize: 15,
+                color: isToday
+                    ? Theme.of(context).colorScheme.onSurface
+                    : Theme.of(context)
+                        .colorScheme
+                        .onSurface
+                        .withValues(alpha: 0.8)),
           ),
           children: day.meals.map((m) {
             final subtitle = [
@@ -240,16 +239,16 @@ class _DayCard extends ConsumerWidget {
                       Expanded(
                         child: Text(
                           m.meal,
-                          style: const TextStyle(
-                            fontSize: 14,
-                            color: Color(0xFF333333),
-                          ),
+                          style: TextStyle(
+                              fontSize: 14,
+                              color: Theme.of(context).colorScheme.onSurface),
                         ),
                       ),
                       Text(
                         DateFormat.Hm().format(m.timestamp),
                         style: TextStyle(
-                            fontSize: 12, color: Colors.grey.shade500),
+                            fontSize: 12,
+                            color: Theme.of(context).colorScheme.onSurface),
                       ),
                       if (isToday) ...[
                         const SizedBox(width: 8),
@@ -275,7 +274,9 @@ class _DayCard extends ConsumerWidget {
                       child: Text(
                         subtitle,
                         style: TextStyle(
-                            fontSize: 11, color: Colors.grey.shade600),
+                            fontSize: 11,
+                            color:
+                                Theme.of(context).colorScheme.onSurfaceVariant),
                       ),
                     ),
                 ],
@@ -307,9 +308,9 @@ class _AddMealInputState extends ConsumerState<_AddMealInput> {
   Timer? _debounce;
   MealType _type = MealType.breakfast;
   bool _showOptional = false;
+  bool _submitting = false;
 
-  final _suggestionBoxKey = GlobalKey();
-  OverlayEntry? _overlay;
+  FoodSuggestion? suggestionSelected;
 
   @override
   void initState() {
@@ -326,62 +327,7 @@ class _AddMealInputState extends ConsumerState<_AddMealInput> {
     _qtyCtrl.dispose();
     _kcalCtrl.dispose();
     _focus.dispose();
-    _overlay?.remove();
     super.dispose();
-  }
-
-  void _showOverlay() {
-    if (_overlay != null) return;
-
-    final renderBox =
-        _suggestionBoxKey.currentContext!.findRenderObject() as RenderBox;
-    final offset = renderBox.localToGlobal(Offset.zero);
-    final size = renderBox.size;
-
-    _overlay = OverlayEntry(
-      builder: (context) => Positioned(
-        left: offset.dx,
-        top: offset.dy + size.height + 4,
-        width: size.width,
-        child: _buildSuggestionsCard(),
-      ),
-    );
-    Overlay.of(context, rootOverlay: true).insert(_overlay!);
-  }
-
-  void _hideOverlay() {
-    _overlay?.remove();
-    _overlay = null;
-  }
-
-  Widget _buildSuggestionsCard() {
-    return Material(
-      elevation: 4,
-      borderRadius: BorderRadius.circular(16),
-      child: ConstrainedBox(
-        constraints: const BoxConstraints(maxHeight: 220),
-        child: ListView(
-          padding: EdgeInsets.zero,
-          shrinkWrap: true,
-          children: _suggestions
-              .filter((s) => s.name != '')
-              .map(
-                (s) => ListTile(
-                  title: Text(s.name),
-                  subtitle: Text('${s.kcalPer100g} kcal / 100g'),
-                  onTap: () {
-                    _ctrl.text = s.name;
-                    _kcalPer100g = s.kcalPer100g;
-                    _initDefaultFields();
-                    _recalcKcal();
-                    _hideOverlay();
-                  },
-                ),
-              )
-              .toList(),
-        ),
-      ),
-    );
   }
 
   void _initDefaultFields() {
@@ -396,19 +342,33 @@ class _AddMealInputState extends ConsumerState<_AddMealInput> {
   }
 
   void _submit() async {
+    FocusScope.of(context).unfocus();
+    setState(() {
+      _submitting = true;
+    });
     final text = _ctrl.text.trim();
     if (text.isEmpty) return;
-    //usda call
-    FoodSuggestion? food = await fetchFromUSDA(text);
-    debugPrint(food?.carbsPer100g.toString());
+
+    final jwt = await getCognitoJwt();
+
+    FoodSuggestion? food = suggestionSelected ?? await fetchFromUSDA(text);
+
+    if (food == null && jwt != null) {
+      food = await fetchNutritionFromAi(text, jwt);
+    }
+
     if (food != null) {
-      ref.read(diaryProvider.notifier).add(text,
-          calories: food.kcalPer100g.round(),
-          quantity: _qtyCtrl.text.trim().isEmpty ? null : _qtyCtrl.text.trim(),
-          carbs: food.carbsPer100g,
-          fat: food.fatPer100g,
-          protein: food.proteinPer100g,
-          type: _type);
+      _kcalPer100g = food.kcalPer100g;
+      ref.read(diaryProvider.notifier).add(
+            text,
+            calories: food.kcalPer100g.round(),
+            quantity:
+                _qtyCtrl.text.trim().isEmpty ? null : _qtyCtrl.text.trim(),
+            carbs: food.carbsPer100g,
+            fat: food.fatPer100g,
+            protein: food.proteinPer100g,
+            type: _type,
+          );
     } else {
       ref.read(diaryProvider.notifier).add(
             text,
@@ -425,12 +385,13 @@ class _AddMealInputState extends ConsumerState<_AddMealInput> {
     _suggestions.clear();
     _kcalPer100g = null;
     _focus.unfocus();
+    setState(() {
+      _submitting = false;
+    });
   }
 
   @override
   Widget build(BuildContext context) {
-    final primary = Theme.of(context).colorScheme.primary;
-
     return Padding(
       padding: const EdgeInsets.fromLTRB(20, 12, 20, 8),
       child: Material(
@@ -438,7 +399,6 @@ class _AddMealInputState extends ConsumerState<_AddMealInput> {
         elevation: 2,
         borderRadius: BorderRadius.circular(28),
         child: Column(
-          key: _suggestionBoxKey,
           mainAxisSize: MainAxisSize.min,
           children: [
             Padding(
@@ -449,17 +409,19 @@ class _AddMealInputState extends ConsumerState<_AddMealInput> {
                     child: TextField(
                       key: _cardKey,
                       focusNode: _focus,
+                      onTapOutside: (event) {
+                        _focus.unfocus();
+                      },
                       controller: _ctrl,
                       onChanged: (value) {
                         if (_debounce?.isActive ?? false) _debounce!.cancel();
                         _debounce =
-                            Timer(const Duration(milliseconds: 50), () async {
-                          final res = await fetchSuggestions(value);
-                          setState(() => _suggestions = res);
-                          if (res.isNotEmpty) {
-                            _showOverlay();
-                          } else {
-                            _hideOverlay();
+                            Timer(const Duration(milliseconds: 1000), () async {
+                          //debugPrint("fetching suggestions for ${value}");
+                          final res = await fetchNutritionFromAi(value, null);
+                          //debugPrint("suggestions are ${res.toString()}");
+                          if (res != null) {
+                            setState(() => _suggestions = [res]);
                           }
                         });
                       },
@@ -474,15 +436,25 @@ class _AddMealInputState extends ConsumerState<_AddMealInput> {
                       ),
                     ),
                   ),
-                  IconButton.filledTonal(
-                    style: IconButton.styleFrom(
-                      backgroundColor: primary.withOpacity(.9),
-                      foregroundColor: Colors.white,
-                      minimumSize: const Size(40, 40),
+                  if (_submitting)
+                    SizedBox(
+                      width: 35,
+                      height: 35,
+                      child: CircularProgressIndicator(
+                        color: Theme.of(context).colorScheme.primary,
+                      ),
                     ),
-                    icon: const Icon(Icons.send_rounded, size: 20),
-                    onPressed: _submit,
-                  ),
+                  if (!_submitting)
+                    IconButton.filledTonal(
+                      style: IconButton.styleFrom(
+                        backgroundColor:
+                            Theme.of(context).colorScheme.surfaceContainerLow,
+                        foregroundColor: Theme.of(context).colorScheme.primary,
+                        minimumSize: const Size(40, 40),
+                      ),
+                      icon: const Icon(Icons.send_rounded, size: 20),
+                      onPressed: _submit,
+                    ),
                 ],
               ),
             ),
@@ -494,6 +466,17 @@ class _AddMealInputState extends ConsumerState<_AddMealInput> {
                 qtyCtrl: _qtyCtrl,
                 kcalCtrl: _kcalCtrl,
                 focus: _focus,
+                suggestions: _suggestions,
+                onSuggestionSelected: (s) {
+                  setState(() {
+                    suggestionSelected = s;
+                    _ctrl.text = s.name;
+                    _kcalPer100g = s.kcalPer100g;
+                    _suggestions.clear();
+                    _initDefaultFields();
+                    _recalcKcal();
+                  });
+                },
               ),
               crossFadeState: _showOptional
                   ? CrossFadeState.showSecond
@@ -514,6 +497,8 @@ class _OptionalPanel extends StatelessWidget {
     required this.qtyCtrl,
     required this.kcalCtrl,
     required this.focus,
+    required this.suggestions,
+    required this.onSuggestionSelected,
   });
 
   final MealType type;
@@ -521,6 +506,8 @@ class _OptionalPanel extends StatelessWidget {
   final TextEditingController qtyCtrl;
   final TextEditingController kcalCtrl;
   final FocusNode focus;
+  final List<FoodSuggestion> suggestions;
+  final ValueChanged<FoodSuggestion> onSuggestionSelected;
 
   @override
   Widget build(BuildContext context) {
@@ -529,6 +516,30 @@ class _OptionalPanel extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          if (suggestions.isNotEmpty) ...[
+            SizedBox(
+              height: suggestions.length * 80,
+              child: Card(
+                elevation: 0,
+                color: Theme.of(context).colorScheme.surfaceVariant,
+                child: ListView(
+                  padding: EdgeInsets.zero,
+                  shrinkWrap: true,
+                  children: suggestions
+                      .where((s) => s.name.isNotEmpty)
+                      .map(
+                        (s) => ListTile(
+                          title: Text(s.name),
+                          subtitle: Text('${s.kcalPer100g} kcal / 100g'),
+                          onTap: () => {onSuggestionSelected(s)},
+                        ),
+                      )
+                      .toList(),
+                ),
+              ),
+            ),
+            const SizedBox(height: 8),
+          ],
           SingleChildScrollView(
             scrollDirection: Axis.horizontal,
             child: Row(
@@ -542,7 +553,9 @@ class _OptionalPanel extends StatelessWidget {
                     showCheckmark: false,
                     labelStyle: TextStyle(
                       fontSize: 14,
-                      color: selected ? Colors.green : null,
+                      color: selected
+                          ? Theme.of(context).colorScheme.primary
+                          : Theme.of(context).colorScheme.secondary,
                     ),
                     onSelected: (_) => onTypeChanged(t),
                   ),
@@ -551,7 +564,6 @@ class _OptionalPanel extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 8),
-          // Quantity + kcal row
           Row(
             children: [
               Expanded(

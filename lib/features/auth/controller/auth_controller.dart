@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:developer';
 
+import 'package:amplify_auth_cognito/amplify_auth_cognito.dart';
 import 'package:amplify_flutter/amplify_flutter.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -27,6 +28,21 @@ final getUserDataProvider = StreamProvider.family((ref, String uid) {
   final authController = ref.watch(authControllerProvider.notifier);
   return authController.getUserData(uid);
 });
+
+Future<String?> getCognitoJwt() async {
+  try {
+    final session = await Amplify.Auth.fetchAuthSession(
+      options: FetchAuthSessionOptions(forceRefresh: false),
+    ) as CognitoAuthSession;
+
+    if (session.isSignedIn) {
+      return session.identityIdResult.valueOrNull;
+    }
+  } catch (e) {
+    debugPrint("Failed to get Cognito JWT: $e");
+  }
+  return null;
+}
 
 class AuthController extends StateNotifier<bool> {
   final AuthRepository _authRepository;

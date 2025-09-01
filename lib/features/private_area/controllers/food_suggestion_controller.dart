@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:flutter/widgets.dart';
 import 'package:http/http.dart' as http;
 import 'package:whatfood/models/food_suggestion.dart';
 
@@ -68,4 +69,66 @@ Future<FoodSuggestion?> fetchFromUSDA(String query) async {
     carbsPer100g: (json['carbohydrates'] as num).toDouble(),
     fatPer100g: (json['fat'] as num).toDouble(),
   );
+}
+
+Future<Map<String, dynamic>?> normalizeFromAi(String query, String? jwt) async {
+  try {
+    debugPrint("normalizeFromAi called");
+    final response = await http.post(
+      Uri.parse(
+          'https://lbpcnp99x3.execute-api.eu-north-1.amazonaws.com/foodAiApiCall'),
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": "Bearer $jwt",
+      },
+      body: jsonEncode({
+        "action": "normalize",
+        "query": query,
+      }),
+    );
+
+    debugPrint("response:${response.body}");
+
+    if (response.statusCode != 200) return null;
+
+    final data = jsonDecode(response.body);
+    return data;
+  } catch (e) {
+    debugPrint("AI fetch error: $e");
+    return null;
+  }
+}
+
+Future<FoodSuggestion?> fetchNutritionFromAi(String query, String? jwt) async {
+  try {
+    debugPrint("fetchFromAi called");
+    final response = await http.post(
+      Uri.parse(
+          'https://lbpcnp99x3.execute-api.eu-north-1.amazonaws.com/foodAiApiCall'),
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": "Bearer $jwt",
+      },
+      body: jsonEncode({
+        "action": "nutrition",
+        "query": query,
+      }),
+    );
+
+    debugPrint("response:${response.body}");
+
+    if (response.statusCode != 200) return null;
+
+    final data = jsonDecode(response.body);
+    return FoodSuggestion(
+      name: data['english_name'] ?? query,
+      kcalPer100g: (data['calories'] as num?)?.toDouble() ?? 0,
+      proteinPer100g: (data['protein_g'] as num?)?.toDouble() ?? 0,
+      carbsPer100g: (data['carbs_g'] as num?)?.toDouble() ?? 0,
+      fatPer100g: (data['fat_g'] as num?)?.toDouble() ?? 0,
+    );
+  } catch (e) {
+    debugPrint("AI fetch error: $e");
+    return null;
+  }
 }
