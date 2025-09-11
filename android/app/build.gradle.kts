@@ -15,7 +15,7 @@ val keystoreProperties = Properties().apply {
 }
 
 android {
-    namespace = "it.whatfood.whatfood"
+    namespace = "com.what-food.whatfood"
     compileSdk = 35
 
     compileOptions {
@@ -30,7 +30,7 @@ android {
     }
 
     defaultConfig {
-        applicationId = "it.whatfood.whatfood"
+        applicationId = "com.what-food.whatfood"
         minSdk = 26
         targetSdk = 35
         versionCode = 1

@@ -1,5 +1,5 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="it.whatfood.whatfood">
+    package="com.what-food.whatfood">
 
     <!-- Permissions and features must be direct children of <manifest> -->
     <uses-feature android:name="android.hardware.camera.autofocus" android:required="false" />

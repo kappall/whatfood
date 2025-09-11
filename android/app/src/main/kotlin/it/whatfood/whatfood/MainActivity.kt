@@ -1,4 +1,4 @@
-package it.whatfood.whatfood
+package com.what-food.whatfood
 
 import io.flutter.embedding.android.FlutterActivity
 
