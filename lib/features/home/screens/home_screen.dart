@@ -4,8 +4,9 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:routemaster/routemaster.dart';
-import 'package:whatfood/features/ingredients/controller/ingredient_controller.dart';
-import 'package:whatfood/features/recipes/controller/recipe_controller.dart';
+import 'package:whatfood/features/food/controllers/ingredient_controller.dart';
+import 'package:whatfood/features/food/controllers/recipe_controller.dart';
+import 'package:whatfood/features/home/utils/alternativeFood_util.dart';
 import 'package:whatfood/l10n/app_localizations.dart';
 
 extension AppText on BuildContext {
@@ -26,35 +27,71 @@ class HomeScreen extends ConsumerStatefulWidget {
 class _HomeScreenState extends ConsumerState<HomeScreen> {
   final _searchController = TextEditingController();
 
-  void _showAlternativeSheet(String query) {
+  void _showAlternativeSheet(String query) async {
     showModalBottomSheet(
       context: context,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
       ),
       builder: (_) {
-        return Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text('Alternative for "$query"',
-                  style: Theme.of(context).textTheme.headlineSmall),
-              const SizedBox(height: 12),
-              const Text('Hamburger'), // placeholder risposta
-              const SizedBox(height: 16),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+        return FutureBuilder<List<dynamic>>(
+          future: getFoodAlternative(query, null, ref),
+          builder: (context, snapshot) {
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return Padding(
+                padding: const EdgeInsets.all(32.0),
+                child: Center(child: CircularProgressIndicator()),
+              );
+            }
+            final alternatives = snapshot.data ?? [];
+            return Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  IconButton(
-                      onPressed: () {}, icon: const Icon(Icons.thumb_up)),
-                  IconButton(
-                      onPressed: () {}, icon: const Icon(Icons.thumb_down)),
-                  IconButton(onPressed: () {}, icon: const Icon(Icons.report)),
+                  Text('Alternative for "$query"',
+                      style: Theme.of(context).textTheme.headlineSmall),
+                  const SizedBox(height: 12),
+                  if (alternatives.isEmpty)
+                    const Text('No alternatives found.')
+                  else ...[
+                    for (var alt in alternatives)
+                      Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 4.0),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Expanded(
+                              child: Text(
+                                alt.name,
+                                style: Theme.of(context).textTheme.titleMedium,
+                              ),
+                            ),
+                            Text(
+                              "${alt.kcal_per_100g.toStringAsFixed(0)} kcal/100g",
+                              style: Theme.of(context).textTheme.bodyMedium,
+                            ),
+                          ],
+                        ),
+                      ),
+                  ],
+                  const SizedBox(height: 16),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                    children: [
+                      IconButton(
+                          onPressed: () {}, icon: const Icon(Icons.thumb_up)),
+                      IconButton(
+                          onPressed: () {}, icon: const Icon(Icons.thumb_down)),
+                      IconButton(
+                          onPressed: () {}, icon: const Icon(Icons.report)),
+                    ],
+                  ),
                 ],
               ),
-            ],
-          ),
+            );
+          },
         );
       },
     );
@@ -244,6 +281,7 @@ class _TrendingIngredientsSection extends ConsumerWidget {
             loading: () => Center(child: const CircularProgressIndicator()),
             error: (err, _) => Text('Error: $err'),
             data: (ingredients) {
+              debugPrint("recived ingredints: ${ingredients}");
               return ListView.separated(
                 scrollDirection: Axis.horizontal,
                 padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -323,7 +361,8 @@ class _MealInspirationSection extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final asyncMeals = ref.watch(
-        mealInspirationProvider(MealFilter(mealType: "lunch", maxMinutes: 20)));
+      mealInspirationProvider(MealFilter(mealType: "lunch", maxMinutes: 20)),
+    );
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -334,7 +373,7 @@ class _MealInspirationSection extends ConsumerWidget {
         ),
         const SizedBox(height: 12),
         SizedBox(
-          height: 140,
+          height: 180,
           child: asyncMeals.when(
             loading: () => const Center(child: CircularProgressIndicator()),
             error: (err, _) => Padding(
@@ -343,9 +382,7 @@ class _MealInspirationSection extends ConsumerWidget {
             ),
             data: (meals) {
               if (meals.isEmpty) {
-                return Center(
-                  child: Text("No recipes availabel yet"),
-                );
+                return const Center(child: Text("No recipes available yet"));
               }
               return ListView.separated(
                 scrollDirection: Axis.horizontal,
@@ -354,69 +391,98 @@ class _MealInspirationSection extends ConsumerWidget {
                 separatorBuilder: (_, __) => const SizedBox(width: 12),
                 itemBuilder: (_, i) {
                   final m = meals[i];
-                  return Material(
-                    borderRadius: BorderRadius.circular(20),
-                    child: InkWell(
+                  return GestureDetector(
+                    onTap: () {
+                      // Navigate to recipe details
+                    },
+                    child: Material(
+                      elevation: 3,
                       borderRadius: BorderRadius.circular(20),
-                      onTap: () {/* TODO */},
-                      child: Ink(
+                      clipBehavior: Clip.antiAlias,
+                      child: Container(
                         width: 200,
-                        padding: const EdgeInsets.all(16),
                         decoration: BoxDecoration(
-                          color: Colors.blueAccent,
-                          borderRadius: BorderRadius.circular(20),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withOpacity(.05),
-                              blurRadius: 8,
-                              offset: const Offset(0, 4),
-                            ),
-                          ],
+                          gradient: LinearGradient(
+                            colors: [
+                              Colors.white,
+                              Colors.white.withOpacity(0.95),
+                            ],
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                          ),
                         ),
                         child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
                           children: [
-                            Row(
-                              children: [
-                                Text('🍽️',
-                                    style: const TextStyle(fontSize: 28)),
-                                const SizedBox(width: 8),
-                                Expanded(
-                                  child: Text(
-                                    m.title,
-                                    style: context.titleMedium
-                                        ?.copyWith(fontWeight: FontWeight.w600),
-                                    maxLines: 2,
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
-                                ),
-                              ],
-                            ),
-                            const Spacer(),
-                            Row(
-                              children: [
-                                Icon(Icons.timer,
-                                    size: 16, color: Colors.grey.shade600),
-                                const SizedBox(width: 4),
-                                Text('Reasy in${m.cookTimeMinutes} min',
-                                    style: context.bodyMedium),
-                                const Spacer(),
-                                Container(
-                                  padding: const EdgeInsets.symmetric(
-                                      horizontal: 8, vertical: 2),
-                                  decoration: BoxDecoration(
-                                    color: Colors.greenAccent.withOpacity(.2),
-                                    borderRadius: BorderRadius.circular(8),
-                                  ),
-                                  child: Text(
-                                    'Easy',
-                                    style: context.labelLarge?.copyWith(
-                                      color: Colors.green.shade800,
-                                      fontWeight: FontWeight.w600,
+                            // Cover Image
+                            SizedBox(
+                              height: 90,
+                              child: m.coverImage.isNotEmpty
+                                  ? Image.network(
+                                      m.coverImage,
+                                      fit: BoxFit.cover,
+                                    )
+                                  : Container(
+                                      color: Colors.grey.shade300,
+                                      child: const Icon(Icons.fastfood,
+                                          size: 40, color: Colors.white70),
                                     ),
-                                  ),
+                            ),
+                            Expanded(
+                              child: Padding(
+                                padding: const EdgeInsets.all(12),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Flexible(
+                                      child: Text(
+                                        m.title,
+                                        maxLines: 2,
+                                        overflow: TextOverflow.ellipsis,
+                                        style: context.titleMedium?.copyWith(
+                                            fontWeight: FontWeight.w600),
+                                      ),
+                                    ),
+                                    const SizedBox(height: 8),
+                                    Row(
+                                      children: [
+                                        Icon(Icons.timer,
+                                            size: 16,
+                                            color: Colors.grey.shade600),
+                                        const SizedBox(width: 4),
+                                        Flexible(
+                                          child: Text(
+                                            '${m.cookTimeMinutes} min',
+                                            style: context.bodyMedium?.copyWith(
+                                                color: Colors.grey.shade700),
+                                          ),
+                                        ),
+                                        const Spacer(),
+                                        Container(
+                                          padding: const EdgeInsets.symmetric(
+                                              horizontal: 8, vertical: 2),
+                                          decoration: BoxDecoration(
+                                            color: Colors.greenAccent
+                                                .withOpacity(.2),
+                                            borderRadius:
+                                                BorderRadius.circular(8),
+                                          ),
+                                          child: Flexible(
+                                            child: Text(
+                                              'Easy',
+                                              style:
+                                                  context.labelLarge?.copyWith(
+                                                color: Colors.green.shade800,
+                                                fontWeight: FontWeight.w600,
+                                              ),
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ],
                                 ),
-                              ],
+                              ),
                             ),
                           ],
                         ),
@@ -432,7 +498,7 @@ class _MealInspirationSection extends ConsumerWidget {
           alignment: Alignment.centerRight,
           child: TextButton(
             onPressed: () {
-              Routemaster.of(context).push('recipes');
+              Routemaster.of(context).push('food');
             },
             child: const Text('Explore recipes'),
           ),

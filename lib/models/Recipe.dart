@@ -31,6 +31,7 @@ class Recipe extends amplify_core.Model {
   final String? _title;
   final String? _coverImage;
   final String? _description;
+  final String? _category;
   final List<RecipeIngredient>? _ingredients;
   final List<String>? _instructions;
   final String? _servings;
@@ -93,6 +94,10 @@ class Recipe extends amplify_core.Model {
           underlyingException: e.toString()
           );
     }
+  }
+  
+  String? get category {
+    return _category;
   }
   
   List<RecipeIngredient> get ingredients {
@@ -202,14 +207,15 @@ class Recipe extends amplify_core.Model {
     return _updatedAt;
   }
   
-  const Recipe._internal({required this.id, required title, required coverImage, required description, required ingredients, required instructions, required servings, required cookTimeMinutes, required createdAt, required likes, required fromUser, uid, userImage, username, updatedAt}): _title = title, _coverImage = coverImage, _description = description, _ingredients = ingredients, _instructions = instructions, _servings = servings, _cookTimeMinutes = cookTimeMinutes, _createdAt = createdAt, _likes = likes, _fromUser = fromUser, _uid = uid, _userImage = userImage, _username = username, _updatedAt = updatedAt;
+  const Recipe._internal({required this.id, required title, required coverImage, required description, category, required ingredients, required instructions, required servings, required cookTimeMinutes, required createdAt, required likes, required fromUser, uid, userImage, username, updatedAt}): _title = title, _coverImage = coverImage, _description = description, _category = category, _ingredients = ingredients, _instructions = instructions, _servings = servings, _cookTimeMinutes = cookTimeMinutes, _createdAt = createdAt, _likes = likes, _fromUser = fromUser, _uid = uid, _userImage = userImage, _username = username, _updatedAt = updatedAt;
   
-  factory Recipe({String? id, required String title, required String coverImage, required String description, required List<RecipeIngredient> ingredients, required List<String> instructions, required String servings, required String cookTimeMinutes, required amplify_core.TemporalDateTime createdAt, required List<String> likes, required bool fromUser, String? uid, String? userImage, String? username}) {
+  factory Recipe({String? id, required String title, required String coverImage, required String description, String? category, required List<RecipeIngredient> ingredients, required List<String> instructions, required String servings, required String cookTimeMinutes, required amplify_core.TemporalDateTime createdAt, required List<String> likes, required bool fromUser, String? uid, String? userImage, String? username}) {
     return Recipe._internal(
       id: id == null ? amplify_core.UUID.getUUID() : id,
       title: title,
       coverImage: coverImage,
       description: description,
+      category: category,
       ingredients: ingredients != null ? List<RecipeIngredient>.unmodifiable(ingredients) : ingredients,
       instructions: instructions != null ? List<String>.unmodifiable(instructions) : instructions,
       servings: servings,
@@ -234,6 +240,7 @@ class Recipe extends amplify_core.Model {
       _title == other._title &&
       _coverImage == other._coverImage &&
       _description == other._description &&
+      _category == other._category &&
       DeepCollectionEquality().equals(_ingredients, other._ingredients) &&
       DeepCollectionEquality().equals(_instructions, other._instructions) &&
       _servings == other._servings &&
@@ -258,6 +265,7 @@ class Recipe extends amplify_core.Model {
     buffer.write("title=" + "$_title" + ", ");
     buffer.write("coverImage=" + "$_coverImage" + ", ");
     buffer.write("description=" + "$_description" + ", ");
+    buffer.write("category=" + "$_category" + ", ");
     buffer.write("ingredients=" + (_ingredients != null ? _ingredients!.toString() : "null") + ", ");
     buffer.write("instructions=" + (_instructions != null ? _instructions!.toString() : "null") + ", ");
     buffer.write("servings=" + "$_servings" + ", ");
@@ -274,12 +282,13 @@ class Recipe extends amplify_core.Model {
     return buffer.toString();
   }
   
-  Recipe copyWith({String? title, String? coverImage, String? description, List<RecipeIngredient>? ingredients, List<String>? instructions, String? servings, String? cookTimeMinutes, amplify_core.TemporalDateTime? createdAt, List<String>? likes, bool? fromUser, String? uid, String? userImage, String? username}) {
+  Recipe copyWith({String? title, String? coverImage, String? description, String? category, List<RecipeIngredient>? ingredients, List<String>? instructions, String? servings, String? cookTimeMinutes, amplify_core.TemporalDateTime? createdAt, List<String>? likes, bool? fromUser, String? uid, String? userImage, String? username}) {
     return Recipe._internal(
       id: id,
       title: title ?? this.title,
       coverImage: coverImage ?? this.coverImage,
       description: description ?? this.description,
+      category: category ?? this.category,
       ingredients: ingredients ?? this.ingredients,
       instructions: instructions ?? this.instructions,
       servings: servings ?? this.servings,
@@ -296,6 +305,7 @@ class Recipe extends amplify_core.Model {
     ModelFieldValue<String>? title,
     ModelFieldValue<String>? coverImage,
     ModelFieldValue<String>? description,
+    ModelFieldValue<String?>? category,
     ModelFieldValue<List<RecipeIngredient>?>? ingredients,
     ModelFieldValue<List<String>?>? instructions,
     ModelFieldValue<String>? servings,
@@ -312,6 +322,7 @@ class Recipe extends amplify_core.Model {
       title: title == null ? this.title : title.value,
       coverImage: coverImage == null ? this.coverImage : coverImage.value,
       description: description == null ? this.description : description.value,
+      category: category == null ? this.category : category.value,
       ingredients: ingredients == null ? this.ingredients : ingredients.value,
       instructions: instructions == null ? this.instructions : instructions.value,
       servings: servings == null ? this.servings : servings.value,
@@ -330,6 +341,7 @@ class Recipe extends amplify_core.Model {
       _title = json['title'],
       _coverImage = json['coverImage'],
       _description = json['description'],
+      _category = json['category'],
       _ingredients = json['ingredients'] is List
         ? (json['ingredients'] as List)
           .where((e) => e != null)
@@ -348,7 +360,7 @@ class Recipe extends amplify_core.Model {
       _updatedAt = json['updatedAt'] != null ? amplify_core.TemporalDateTime.fromString(json['updatedAt']) : null;
   
   Map<String, dynamic> toJson() => {
-    'id': id, 'title': _title, 'coverImage': _coverImage, 'description': _description, 'ingredients': _ingredients?.map((RecipeIngredient? e) => e?.toJson()).toList(), 'instructions': _instructions, 'servings': _servings, 'cookTimeMinutes': _cookTimeMinutes, 'createdAt': _createdAt?.format(), 'likes': _likes, 'fromUser': _fromUser, 'uid': _uid, 'userImage': _userImage, 'username': _username, 'updatedAt': _updatedAt?.format()
+    'id': id, 'title': _title, 'coverImage': _coverImage, 'description': _description, 'category': _category, 'ingredients': _ingredients?.map((RecipeIngredient? e) => e?.toJson()).toList(), 'instructions': _instructions, 'servings': _servings, 'cookTimeMinutes': _cookTimeMinutes, 'createdAt': _createdAt?.format(), 'likes': _likes, 'fromUser': _fromUser, 'uid': _uid, 'userImage': _userImage, 'username': _username, 'updatedAt': _updatedAt?.format()
   };
   
   Map<String, Object?> toMap() => {
@@ -356,6 +368,7 @@ class Recipe extends amplify_core.Model {
     'title': _title,
     'coverImage': _coverImage,
     'description': _description,
+    'category': _category,
     'ingredients': _ingredients,
     'instructions': _instructions,
     'servings': _servings,
@@ -374,6 +387,7 @@ class Recipe extends amplify_core.Model {
   static final TITLE = amplify_core.QueryField(fieldName: "title");
   static final COVERIMAGE = amplify_core.QueryField(fieldName: "coverImage");
   static final DESCRIPTION = amplify_core.QueryField(fieldName: "description");
+  static final CATEGORY = amplify_core.QueryField(fieldName: "category");
   static final INGREDIENTS = amplify_core.QueryField(fieldName: "ingredients");
   static final INSTRUCTIONS = amplify_core.QueryField(fieldName: "instructions");
   static final SERVINGS = amplify_core.QueryField(fieldName: "servings");
@@ -416,6 +430,12 @@ class Recipe extends amplify_core.Model {
     modelSchemaDefinition.addField(amplify_core.ModelFieldDefinition.field(
       key: Recipe.DESCRIPTION,
       isRequired: true,
+      ofType: amplify_core.ModelFieldType(amplify_core.ModelFieldTypeEnum.string)
+    ));
+    
+    modelSchemaDefinition.addField(amplify_core.ModelFieldDefinition.field(
+      key: Recipe.CATEGORY,
+      isRequired: false,
       ofType: amplify_core.ModelFieldType(amplify_core.ModelFieldTypeEnum.string)
     ));
     
