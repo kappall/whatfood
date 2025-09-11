@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:routemaster/routemaster.dart';
-import 'package:whatfood/features/recipes/controller/recipe_controller.dart';
+import 'package:whatfood/features/food/controllers/recipe_controller.dart';
 import 'package:whatfood/models/Recipe.dart';
 
 class RecipeDetailPage extends ConsumerStatefulWidget {

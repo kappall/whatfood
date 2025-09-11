@@ -1,6 +1,8 @@
 import 'dart:convert';
+import 'dart:ffi';
 import 'package:flutter/widgets.dart';
 import 'package:http/http.dart' as http;
+import 'package:whatfood/models/diary_entry.dart';
 import 'package:whatfood/models/food_suggestion.dart';
 
 double? _parse(dynamic value) {
@@ -9,7 +11,7 @@ double? _parse(dynamic value) {
   return null;
 }
 
-Future<List<FoodSuggestion>> fetchSuggestions(String query) async {
+Future<List<DiaryEntry>> fetchSuggestions(String query) async {
   if (query.trim().isEmpty) return [];
 
   final url = Uri.parse(
@@ -40,19 +42,22 @@ Future<List<FoodSuggestion>> fetchSuggestions(String query) async {
           return null;
         }
 
-        return FoodSuggestion(
-          name: name,
-          kcalPer100g: kcal,
-          proteinPer100g: protein,
-          carbsPer100g: carbs,
-          fatPer100g: fat,
+        return DiaryEntry(
+          meal: name,
+          timestamp: DateTime.now(),
+          quantity: '100g',
+          calories: kcal.toInt(),
+          protein: protein,
+          carbs: carbs,
+          fat: fat,
+          key: 0,
         );
       })
-      .whereType<FoodSuggestion>()
+      .whereType<DiaryEntry>()
       .toList();
 }
 
-Future<FoodSuggestion?> fetchFromUSDA(String query) async {
+Future<DiaryEntry?> fetchFromUSDA(String query) async {
   final res = await http.post(
     Uri.parse(
         'https://0xiiuk1qrh.execute-api.eu-north-1.amazonaws.com/usdaAPICall'),
@@ -62,16 +67,20 @@ Future<FoodSuggestion?> fetchFromUSDA(String query) async {
 
   if (res.statusCode != 200) return null;
   final json = jsonDecode(res.body);
-  return FoodSuggestion(
-    name: json['name'], //TODO is it for 100g? add other nutrients?
-    kcalPer100g: (json['calories'] as num).toDouble(),
-    proteinPer100g: (json['protein'] as num).toDouble(),
-    carbsPer100g: (json['carbohydrates'] as num).toDouble(),
-    fatPer100g: (json['fat'] as num).toDouble(),
+
+  return DiaryEntry(
+    meal: json['name'] ?? query,
+    timestamp: DateTime.now(),
+    quantity: '100g',
+    calories: (json['calories'] as num).toInt(),
+    protein: (json['protein'] as num).toDouble(),
+    carbs: (json['carbohydrates'] as num).toDouble(),
+    fat: (json['fat'] as num).toDouble(),
+    key: 0,
   );
 }
 
-Future<Map<String, dynamic>?> normalizeFromAi(String query, String? jwt) async {
+Future<List<FoodSuggestion>> normalizeFromAi(String query, String? jwt) async {
   try {
     debugPrint("normalizeFromAi called");
     final response = await http.post(
@@ -87,19 +96,25 @@ Future<Map<String, dynamic>?> normalizeFromAi(String query, String? jwt) async {
       }),
     );
 
-    debugPrint("response:${response.body}");
+    debugPrint("response from normalization: ${response.body}");
 
-    if (response.statusCode != 200) return null;
+    if (response.statusCode != 200) return [];
 
     final data = jsonDecode(response.body);
-    return data;
+    final List<FoodSuggestion> ret = [];
+    for (var item in data['interpretations']) {
+      ret.add(new FoodSuggestion(
+          name: item['name'],
+          kcalPer100g: (item['kcal_per_100g'] as int).toDouble()));
+    }
+    return ret;
   } catch (e) {
     debugPrint("AI fetch error: $e");
-    return null;
+    return [];
   }
 }
 
-Future<FoodSuggestion?> fetchNutritionFromAi(String query, String? jwt) async {
+Future<DiaryEntry?> fetchNutritionFromAi(String query, String? jwt) async {
   try {
     debugPrint("fetchFromAi called");
     final response = await http.post(
@@ -120,12 +135,15 @@ Future<FoodSuggestion?> fetchNutritionFromAi(String query, String? jwt) async {
     if (response.statusCode != 200) return null;
 
     final data = jsonDecode(response.body);
-    return FoodSuggestion(
-      name: data['english_name'] ?? query,
-      kcalPer100g: (data['calories'] as num?)?.toDouble() ?? 0,
-      proteinPer100g: (data['protein_g'] as num?)?.toDouble() ?? 0,
-      carbsPer100g: (data['carbs_g'] as num?)?.toDouble() ?? 0,
-      fatPer100g: (data['fat_g'] as num?)?.toDouble() ?? 0,
+    return DiaryEntry(
+      meal: data['english_name'] ?? query,
+      timestamp: DateTime.now(),
+      quantity: '100g',
+      calories: (data['calories'] as num?)?.toInt() ?? 0,
+      protein: (data['protein_g'] as num?)?.toDouble() ?? 0,
+      carbs: (data['carbs_g'] as num?)?.toDouble() ?? 0,
+      fat: (data['fat_g'] as num?)?.toDouble() ?? 0,
+      key: 0,
     );
   } catch (e) {
     debugPrint("AI fetch error: $e");

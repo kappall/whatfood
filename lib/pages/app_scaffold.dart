@@ -1,9 +1,9 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:routemaster/routemaster.dart';
+import 'package:whatfood/features/food/screens/food_screen.dart';
 import 'package:whatfood/features/home/screens/home_screen.dart';
-import 'package:whatfood/features/ingredients/screens/ingredients_screen.dart';
-import 'package:whatfood/features/recipes/screens/recipes_screen.dart';
+import 'package:whatfood/features/map/screens/map_screen.dart';
 import 'package:whatfood/features/scanner/screens/scan_screen.dart';
 import 'package:whatfood/l10n/app_localizations.dart';
 
@@ -13,8 +13,8 @@ class AppScaffold extends StatefulWidget {
   static const tabs = [
     '/home',
     '/scan',
-    '/recipes',
-    '/ingredients',
+    '/food',
+    '/map',
   ];
 
   @override
@@ -37,9 +37,9 @@ class _AppScaffoldState extends State<AppScaffold> {
           case 1:
             return const ScanScreen();
           case 2:
-            return const RecipesScreen();
+            return const FoodScreen();
           case 3:
-            return const IngredientsScreen();
+            return const MapScreen();
           default:
             return const Text('Unknown Screen');
         }
@@ -55,15 +55,15 @@ class _AppScaffoldState extends State<AppScaffold> {
           final icons = [
             Icons.home,
             Icons.qr_code_scanner,
-            Icons.receipt_long,
-            Icons.shopping_bag_outlined,
+            Icons.local_dining,
+            Icons.map,
           ];
           final labels = [
             'Home',
             'Scanner',
             l10n.recipesLabel,
-            l10n.ingredientsLabel
-          ];
+            'Map'
+          ]; // TODO: change labels intenational
 
           return BottomNavigationBarItem(
             icon: Column(

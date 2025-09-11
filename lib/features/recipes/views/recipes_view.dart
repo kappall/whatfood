@@ -5,7 +5,7 @@ import 'package:routemaster/routemaster.dart';
 import 'package:whatfood/core/common/error_text.dart';
 import 'package:whatfood/core/common/loader.dart';
 import 'package:whatfood/core/common/recipe_card.dart';
-import 'package:whatfood/features/recipes/controller/recipe_controller.dart';
+import 'package:whatfood/features/food/controllers/recipe_controller.dart';
 
 class RecipesView extends ConsumerStatefulWidget {
   const RecipesView({super.key});

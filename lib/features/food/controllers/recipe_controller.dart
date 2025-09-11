@@ -10,7 +10,7 @@ import 'package:uuid/uuid.dart';
 import 'package:whatfood/core/providers/storage_repository_provider.dart';
 import 'package:whatfood/core/utils.dart';
 import 'package:whatfood/features/auth/controller/auth_controller.dart';
-import 'package:whatfood/features/recipes/repository/recipe_repository.dart';
+import 'package:whatfood/features/food/repositories/recipe_repository.dart';
 import 'package:whatfood/models/Recipe.dart';
 import 'package:whatfood/models/RecipeIngredient.dart';
 

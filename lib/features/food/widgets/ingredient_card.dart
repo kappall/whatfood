@@ -23,15 +23,13 @@ class IngredientCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Expanded(
-              child: Image.network(
-                imageUrl ?? '',
-                fit: BoxFit.cover,
-                errorBuilder: (_, __, ___) => const ColoredBox(
-                  color: Colors.grey,
-                  child: Icon(Icons.broken_image_rounded,
-                      color: Colors.white70, size: 40),
-                ),
+            Image.network(
+              imageUrl ?? '',
+              fit: BoxFit.cover,
+              errorBuilder: (_, __, ___) => const ColoredBox(
+                color: Colors.grey,
+                child: Icon(Icons.broken_image_rounded,
+                    color: Colors.white70, size: 40),
               ),
             ),
             // Name

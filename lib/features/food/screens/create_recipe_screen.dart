@@ -6,7 +6,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:routemaster/routemaster.dart';
 import 'package:whatfood/core/common/loader.dart';
 import 'package:whatfood/core/utils.dart';
-import 'package:whatfood/features/recipes/controller/recipe_controller.dart';
+import 'package:whatfood/features/food/controllers/recipe_controller.dart';
 
 class CreateRecipeScreen extends ConsumerStatefulWidget {
   const CreateRecipeScreen({super.key});

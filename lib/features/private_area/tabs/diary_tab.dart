@@ -61,6 +61,29 @@ class DiaryNotifier extends Notifier<List<DiaryEntry>> {
     await _box.put(key, entry);
     state = [...state, entry];
   }
+
+  Future<void> addEntry(DiaryEntry entry) async {
+    final tempEntry = _copyFrom(entry, 0);
+    final key = await _box.add(tempEntry);
+
+    final finalEntry = _copyFrom(entry, key);
+    await _box.put(key, finalEntry);
+    state = [...state, finalEntry];
+  }
+
+  DiaryEntry _copyFrom(DiaryEntry entry, int key) {
+    return DiaryEntry(
+      meal: entry.meal,
+      timestamp: entry.timestamp,
+      quantity: entry.quantity,
+      calories: entry.calories,
+      protein: entry.protein,
+      fat: entry.fat,
+      carbs: entry.carbs,
+      type: entry.type,
+      key: key,
+    );
+  }
 }
 
 final diaryGroupedProvider = Provider<List<DayGroup>>((ref) {
@@ -351,24 +374,14 @@ class _AddMealInputState extends ConsumerState<_AddMealInput> {
 
     final jwt = await getCognitoJwt();
 
-    FoodSuggestion? food = suggestionSelected ?? await fetchFromUSDA(text);
+    DiaryEntry? food = await fetchFromUSDA(suggestionSelected?.name ?? text);
 
     if (food == null && jwt != null) {
       food = await fetchNutritionFromAi(text, jwt);
     }
 
     if (food != null) {
-      _kcalPer100g = food.kcalPer100g;
-      ref.read(diaryProvider.notifier).add(
-            text,
-            calories: food.kcalPer100g.round(),
-            quantity:
-                _qtyCtrl.text.trim().isEmpty ? null : _qtyCtrl.text.trim(),
-            carbs: food.carbsPer100g,
-            fat: food.fatPer100g,
-            protein: food.proteinPer100g,
-            type: _type,
-          );
+      ref.read(diaryProvider.notifier).addEntry(food);
     } else {
       ref.read(diaryProvider.notifier).add(
             text,
@@ -418,16 +431,17 @@ class _AddMealInputState extends ConsumerState<_AddMealInput> {
                         _debounce =
                             Timer(const Duration(milliseconds: 1000), () async {
                           //debugPrint("fetching suggestions for ${value}");
-                          final res = await fetchNutritionFromAi(value, null);
+                          await normalizeFromAi(value, null);
+                          final res = await normalizeFromAi(value, null);
                           //debugPrint("suggestions are ${res.toString()}");
                           if (res != null) {
-                            setState(() => _suggestions = [res]);
+                            setState(() => _suggestions = res);
                           }
                         });
                       },
                       onSubmitted: (_) => _submit(),
                       style: TextStyle(color: Colors.black),
-                      textInputAction: TextInputAction.next,
+                      textInputAction: TextInputAction.done,
                       decoration: InputDecoration(
                         hintText: 'What did you eat?',
                         hintStyle: TextStyle(color: Colors.grey.shade500),

@@ -6,7 +6,7 @@ import 'package:routemaster/routemaster.dart';
 import 'package:shimmer/shimmer.dart';
 import 'package:whatfood/core/common/error_text.dart';
 import 'package:whatfood/core/common/recipe_card.dart';
-import 'package:whatfood/features/recipes/controller/recipe_controller.dart';
+import 'package:whatfood/features/food/controllers/recipe_controller.dart';
 import 'package:whatfood/l10n/app_localizations.dart';
 
 class RecipesScreen extends ConsumerStatefulWidget {

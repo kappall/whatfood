@@ -40,7 +40,6 @@ class _IngredientDetailScreenState extends State<IngredientDetailScreen>
       final ing = ingredientFromOpenFoodFacts(json);
       debugPrint(ing.toString());
 
-      // similar products (simple: same first category)
       final cat = (json['categories_tags'] as List?)?.firstOrNull;
       debugPrint('Category tag: $cat');
 
@@ -103,7 +102,7 @@ class _IngredientDetailScreenState extends State<IngredientDetailScreen>
       appBar: AppBar(
         title: Text(ing.name),
         leading: IconButton(
-            onPressed: () => Routemaster.of(context).push('/ingredients'),
+            onPressed: () => Routemaster.of(context).pop(),
             icon: Icon(Icons.arrow_back)),
       ),
       floatingActionButton: FloatingActionButton.extended(
