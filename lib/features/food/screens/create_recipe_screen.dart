@@ -155,7 +155,6 @@ class _CreateRecipeScreenState extends ConsumerState<CreateRecipeScreen> {
               ),
               const SizedBox(height: 24),
               _SectionTitle(title: 'Ingredients', onAdd: _addIngredient),
-              _SectionTitle(title: 'Ingredients', onAdd: _addIngredient),
               ListView.builder(
                 shrinkWrap: true,
                 physics: const NeverScrollableScrollPhysics(),

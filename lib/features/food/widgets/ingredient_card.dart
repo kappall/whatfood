@@ -9,28 +9,40 @@ class IngredientCard extends StatelessWidget {
   const IngredientCard({
     super.key,
     required this.ingredient,
-    required this.imageUrl,
+    this.imageUrl,
   });
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: () => Routemaster.of(context).push('/ingredient/${ingredient.id}'),
-      child: Material(
-        elevation: 2,
-        borderRadius: BorderRadius.circular(16),
-        clipBehavior: Clip.antiAlias,
+    return Material(
+      elevation: 2,
+      borderRadius: BorderRadius.circular(16),
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        onTap: () =>
+            Routemaster.of(context).push('/ingredient/${ingredient.id}'),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Image.network(
-              imageUrl ?? '',
-              fit: BoxFit.cover,
-              errorBuilder: (_, __, ___) => const ColoredBox(
-                color: Colors.grey,
-                child: Icon(Icons.broken_image_rounded,
-                    color: Colors.white70, size: 40),
-              ),
+            // Image with fixed aspect ratio
+            AspectRatio(
+              aspectRatio: 4 / 3,
+              child: imageUrl != null && imageUrl!.isNotEmpty
+                  ? FadeInImage.assetNetwork(
+                      placeholder: 'assets/images/placeholder.png',
+                      image: imageUrl!,
+                      fit: BoxFit.cover,
+                      imageErrorBuilder: (_, __, ___) => const ColoredBox(
+                        color: Colors.grey,
+                        child: Icon(Icons.broken_image_rounded,
+                            color: Colors.white70, size: 40),
+                      ),
+                    )
+                  : const ColoredBox(
+                      color: Colors.grey,
+                      child: Icon(Icons.broken_image_rounded,
+                          color: Colors.white70, size: 40),
+                    ),
             ),
             // Name
             Padding(

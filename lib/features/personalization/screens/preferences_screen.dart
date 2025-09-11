@@ -60,9 +60,12 @@ class _PreferencesScreenState extends ConsumerState<PreferencesScreen> {
                 },
               )),
           const SizedBox(height: 24),
-          ElevatedButton(
-            onPressed: _onContinue,
-            child: const Text("Continue"),
+          Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: ElevatedButton(
+              onPressed: _onContinue,
+              child: const Text("Continue"),
+            ),
           ),
         ],
       ),
