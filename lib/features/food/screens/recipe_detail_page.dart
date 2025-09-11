@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:routemaster/routemaster.dart';
 import 'package:whatfood/features/food/controllers/recipe_controller.dart';
@@ -13,19 +14,60 @@ class RecipeDetailPage extends ConsumerStatefulWidget {
 }
 
 class _RecipeDetailPageState extends ConsumerState<RecipeDetailPage>
-    with SingleTickerProviderStateMixin {
+    with TickerProviderStateMixin {
   late final TabController _tabController;
+  late final AnimationController _fabController;
+  late final AnimationController _headerController;
+  late final Animation<double> _fabAnimation;
+  late final Animation<double> _headerAnimation;
+
+  final ScrollController _scrollController = ScrollController();
   int _servings = 1;
+  bool _isScrolled = false;
+  bool _isSaved = false;
 
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: 3, vsync: this);
+    _fabController = AnimationController(
+      duration: const Duration(milliseconds: 300),
+      vsync: this,
+    );
+    _headerController = AnimationController(
+      duration: const Duration(milliseconds: 200),
+      vsync: this,
+    );
+
+    _fabAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(parent: _fabController, curve: Curves.easeInOut),
+    );
+    _headerAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(parent: _headerController, curve: Curves.easeInOut),
+    );
+
+    _scrollController.addListener(_onScroll);
+    _fabController.forward();
+  }
+
+  void _onScroll() {
+    final isScrolled = _scrollController.offset > 200;
+    if (isScrolled != _isScrolled) {
+      setState(() => _isScrolled = isScrolled);
+      if (isScrolled) {
+        _headerController.forward();
+      } else {
+        _headerController.reverse();
+      }
+    }
   }
 
   @override
   void dispose() {
     _tabController.dispose();
+    _fabController.dispose();
+    _headerController.dispose();
+    _scrollController.dispose();
     super.dispose();
   }
 
@@ -40,27 +82,44 @@ class _RecipeDetailPageState extends ConsumerState<RecipeDetailPage>
         if (recipe == null) return _buildError('Recipe not found');
         _servings = int.tryParse(recipe.servings ?? '1') ?? 1;
 
-        return Scaffold(
-          extendBodyBehindAppBar: true,
-          floatingActionButton: _FloatingMenu(recipe: recipe),
-          body: SafeArea(
-            top: false,
-            child: CustomScrollView(
-              slivers: [
-                _buildSliverHeader(recipe),
-                _buildActionChips(),
-                _buildSliverTabs(),
-                SliverFillRemaining(
-                  child: TabBarView(
-                    controller: _tabController,
-                    children: [
-                      _Overview(recipe: recipe, servings: _servings),
-                      _Instructions(recipe: recipe),
-                      _Nutrition(recipe: recipe),
-                    ],
-                  ),
-                ),
+        return Theme(
+          data: Theme.of(context).copyWith(
+            appBarTheme: const AppBarTheme(
+              backgroundColor: Colors.transparent,
+              elevation: 0,
+              systemOverlayStyle: SystemUiOverlayStyle.light,
+            ),
+          ),
+          child: Scaffold(
+            extendBodyBehindAppBar: true,
+            floatingActionButton: _ModernFloatingActions(
+              recipe: recipe,
+              animation: _fabAnimation,
+              onSave: () => setState(() => _isSaved = !_isSaved),
+              isSaved: _isSaved,
+            ),
+            body: NestedScrollView(
+              controller: _scrollController,
+              headerSliverBuilder: (context, innerBoxIsScrolled) => [
+                _buildModernSliverHeader(recipe),
               ],
+              body: Column(
+                children: [
+                  _buildStatsBar(recipe),
+                  _buildModernTabs(),
+                  Expanded(
+                    child: TabBarView(
+                      controller: _tabController,
+                      physics: const NeverScrollableScrollPhysics(),
+                      children: [
+                        _ModernOverview(recipe: recipe, servings: _servings),
+                        _ModernInstructions(recipe: recipe),
+                        _ModernNutrition(recipe: recipe),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
         );
@@ -68,330 +127,298 @@ class _RecipeDetailPageState extends ConsumerState<RecipeDetailPage>
     );
   }
 
-  Widget _buildSliverHeader(Recipe recipe) => SliverAppBar(
-        pinned: true,
-        stretch: true,
-        collapsedHeight: 72,
-        expandedHeight: 320,
-        leading: Center(
-          child: Padding(
-            padding: const EdgeInsets.all(8),
-            child: CircleAvatar(
-              backgroundColor: Colors.black26,
-              child: BackButton(color: Colors.white),
-            ),
-          ),
-        ),
-        flexibleSpace: FlexibleSpaceBar(
-          stretchModes: [StretchMode.blurBackground],
-          titlePadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-          title: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+  Widget _buildModernSliverHeader(Recipe recipe) {
+    return SliverAppBar(
+      expandedHeight: 400,
+      floating: false,
+      pinned: true,
+      stretch: true,
+      elevation: 0,
+      backgroundColor: Colors.transparent,
+      leading: AnimatedBuilder(
+        animation: _headerAnimation,
+        builder: (context, child) {
+          return Container(
+            margin: const EdgeInsets.all(8),
             decoration: BoxDecoration(
-              color: Colors.black54,
-              borderRadius: BorderRadius.circular(8),
+              color: _isScrolled
+                  ? Theme.of(context).colorScheme.surface.withOpacity(0.9)
+                  : Colors.black.withOpacity(0.3),
+              borderRadius: BorderRadius.circular(12),
+              border: _isScrolled
+                  ? Border.all(
+                      color: Theme.of(context)
+                          .colorScheme
+                          .outline
+                          .withOpacity(0.2))
+                  : null,
             ),
-            child: Text(
-              recipe.title ?? 'Recipe',
-              style: Theme.of(context)
-                  .textTheme
-                  .headlineSmall
-                  ?.copyWith(color: Colors.white),
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
+            child: IconButton(
+              onPressed: () => Navigator.of(context).pop(),
+              icon: Icon(
+                Icons.arrow_back_ios_new,
+                color: _isScrolled
+                    ? Theme.of(context).colorScheme.onSurface
+                    : Colors.white,
+              ),
             ),
-          ),
-          background: Hero(
-            tag: 'recipe-${widget.recipeId}',
-            child: Image.network(
-              recipe.coverImage ?? '',
-              fit: BoxFit.cover,
-              errorBuilder: (_, __, ___) =>
-                  ColoredBox(color: Colors.grey[300]!),
-            ),
-          ),
-        ),
-      );
-
-  Widget _buildActionChips() => SliverToBoxAdapter(
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(24, 12, 24, 0),
-          child: Wrap(
-            spacing: 8,
-            alignment: WrapAlignment.center,
-            children: [
-              ActionChip(
-                label: const Text('Save'),
-                avatar: const Icon(Icons.bookmark_outline, size: 18),
-                onPressed: () {},
+          );
+        },
+      ),
+      actions: [
+        AnimatedBuilder(
+          animation: _headerAnimation,
+          builder: (context, child) {
+            return Container(
+              margin: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: _isScrolled
+                    ? Theme.of(context).colorScheme.surface.withOpacity(0.9)
+                    : Colors.black.withOpacity(0.3),
+                borderRadius: BorderRadius.circular(12),
+                border: _isScrolled
+                    ? Border.all(
+                        color: Theme.of(context)
+                            .colorScheme
+                            .outline
+                            .withOpacity(0.2))
+                    : null,
               ),
-              ActionChip(
-                label: const Text('Share'),
-                avatar: const Icon(Icons.share, size: 18),
-                onPressed: () {},
+              child: IconButton(
+                onPressed: () {
+                  HapticFeedback.lightImpact();
+                  // Share functionality
+                },
+                icon: Icon(
+                  Icons.share_outlined,
+                  color: _isScrolled
+                      ? Theme.of(context).colorScheme.onSurface
+                      : Colors.white,
+                ),
               ),
-              ActionChip(
-                label: const Text('Comment'),
-                avatar: const Icon(Icons.comment, size: 18),
-                onPressed: () {},
-              ),
-            ],
-          ),
+            );
+          },
         ),
-      );
-
-  Widget _buildSliverTabs() => SliverPersistentHeader(
-        pinned: true,
-        delegate: _TabDelegate(
-          TabBar(
-            controller: _tabController,
-            tabs: const [
-              Tab(icon: Icon(Icons.info_outline), text: 'Overview'),
-              Tab(icon: Icon(Icons.list_alt), text: 'Instructions'),
-              Tab(icon: Icon(Icons.health_and_safety), text: 'Nutrition'),
-            ],
-          ),
-        ),
-      );
-
-  Widget _buildSkeleton() => const Scaffold(
-        body: Center(child: CircularProgressIndicator.adaptive()),
-      );
-
-  Widget _buildError(String msg) => Scaffold(
-        body: Center(
-          child: Text(msg, style: Theme.of(context).textTheme.titleMedium),
-        ),
-      );
-}
-
-class _Overview extends StatefulWidget {
-  final Recipe recipe;
-  final int servings;
-  const _Overview({required this.recipe, required this.servings});
-
-  @override
-  State<_Overview> createState() => _OverviewState();
-}
-
-class _OverviewState extends State<_Overview> {
-  late int _servings;
-  late TextEditingController _controller;
-
-  @override
-  void initState() {
-    super.initState();
-    _servings = widget.servings;
-    _controller = TextEditingController(text: _servings.toString());
-  }
-
-  void _updateServings(int newServings) {
-    final clamped = newServings.clamp(1, 12);
-    setState(() {
-      _servings = clamped;
-      _controller.text = clamped.toString();
-      _controller.selection = TextSelection.fromPosition(
-          TextPosition(offset: _controller.text.length));
-    });
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final scale =
-        _servings / (int.tryParse(widget.recipe.servings ?? '1') ?? 1);
-    return Center(
-      child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 600),
-        child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: SingleChildScrollView(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                if (widget.recipe.description != null) ...[
-                  Text(widget.recipe.description!,
-                      style: Theme.of(context).textTheme.bodyLarge),
-                  const SizedBox(height: 24),
-                ],
-                Text('Servings',
-                    style: Theme.of(context).textTheme.titleMedium),
-                const SizedBox(height: 8),
-                Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    IconButton(
-                      icon: const Icon(Icons.remove),
-                      onPressed: () => _updateServings(_servings - 1),
-                    ),
-                    SizedBox(
-                      width: 50,
-                      child: TextField(
-                        controller: _controller,
-                        keyboardType: TextInputType.number,
-                        textAlign: TextAlign.center,
-                        decoration: const InputDecoration(
-                          border: OutlineInputBorder(),
-                          isDense: true,
-                          contentPadding: EdgeInsets.symmetric(vertical: 8),
+      ],
+      flexibleSpace: FlexibleSpaceBar(
+        stretchModes: const [
+          StretchMode.zoomBackground,
+          StretchMode.blurBackground,
+        ],
+        background: Stack(
+          fit: StackFit.expand,
+          children: [
+            Hero(
+              tag: 'recipe-${widget.recipeId}',
+              child: Container(
+                decoration: BoxDecoration(
+                  image: DecorationImage(
+                    image: NetworkImage(recipe.coverImage ?? ''),
+                    fit: BoxFit.cover,
+                    onError: (_, __) {},
+                  ),
+                ),
+                child: recipe.coverImage == null
+                    ? Container(
+                        color: Theme.of(context).colorScheme.surfaceVariant,
+                        child: Icon(
+                          Icons.restaurant_menu,
+                          size: 80,
+                          color: Theme.of(context)
+                              .colorScheme
+                              .onSurfaceVariant
+                              .withOpacity(0.5),
                         ),
-                        onChanged: (value) {
-                          final parsed = int.tryParse(value);
-                          if (parsed != null) {
-                            _updateServings(parsed);
-                          }
-                        },
-                      ),
-                    ),
-                    IconButton(
-                      icon: const Icon(Icons.add),
-                      onPressed: () => _updateServings(_servings + 1),
-                    ),
+                      )
+                    : null,
+              ),
+            ),
+            Container(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [
+                    Colors.transparent,
+                    Colors.transparent,
+                    Colors.black.withOpacity(0.3),
+                    Colors.black.withOpacity(0.7),
                   ],
                 ),
-                const SizedBox(height: 24),
-                Text('Ingredients',
-                    style: Theme.of(context).textTheme.titleMedium),
-                const SizedBox(height: 12),
-                ...?widget.recipe.ingredients?.map((e) => Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 4),
-                      child: Text('• ${e.name.trim()}',
-                          style: Theme.of(context).textTheme.bodyLarge),
-                    )),
-              ],
+              ),
             ),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _Instructions extends StatelessWidget {
-  final Recipe recipe;
-  const _Instructions({required this.recipe});
-
-  @override
-  Widget build(BuildContext context) {
-    return Center(
-      child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 600),
-        child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: ListView.separated(
-            shrinkWrap: true,
-            physics: const ClampingScrollPhysics(),
-            itemCount: recipe.instructions?.length ?? 0,
-            separatorBuilder: (_, __) => const SizedBox(height: 16),
-            itemBuilder: (_, i) => Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                CircleAvatar(
-                  radius: 14,
-                  backgroundColor:
-                      Theme.of(context).colorScheme.primaryContainer,
-                  child: Text('${i + 1}',
-                      style: Theme.of(context).textTheme.labelSmall),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Text(recipe.instructions![i],
-                      style: Theme.of(context).textTheme.bodyLarge),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _Nutrition extends StatelessWidget {
-  final Recipe recipe;
-  const _Nutrition({required this.recipe});
-
-  @override
-  Widget build(BuildContext context) {
-    return Center(
-      child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 400),
-        child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: Card(
-            elevation: 0,
-            shape:
-                RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-            child: Padding(
-              padding: const EdgeInsets.all(24),
+            Positioned(
+              left: 24,
+              right: 24,
+              bottom: 80,
               child: Column(
-                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('Health Score',
-                      style: Theme.of(context).textTheme.titleMedium),
-                  const SizedBox(height: 12),
-                  Text('--', style: Theme.of(context).textTheme.displaySmall),
-                  const SizedBox(height: 24),
-                  Table(
-                    border: TableBorder.all(color: Colors.transparent),
-                    children: [
-                      _row('Calories', '-- kcal'),
-                      _row('Protein', '-- g'),
-                      _row('Carbs', '-- g'),
-                      _row('Fat', '-- g'),
-                    ],
+                  Container(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                    decoration: BoxDecoration(
+                      color: Theme.of(context)
+                          .colorScheme
+                          .primary
+                          .withOpacity(0.9),
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: Text(
+                      recipe.category?.toUpperCase() ?? 'RECIPE',
+                      style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                            color: Theme.of(context).colorScheme.onPrimary,
+                            fontWeight: FontWeight.bold,
+                            letterSpacing: 0.5,
+                          ),
+                    ),
                   ),
+                  const SizedBox(height: 12),
+                  Text(
+                    recipe.title ?? 'Untitled Recipe',
+                    style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                          height: 1.2,
+                        ),
+                  ),
+                  if (recipe.description != null) ...[
+                    const SizedBox(height: 8),
+                    Text(
+                      recipe.description!,
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                            color: Colors.white.withOpacity(0.9),
+                          ),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
                 ],
               ),
             ),
-          ),
+          ],
         ),
       ),
     );
   }
 
-  TableRow _row(String label, String value) => TableRow(children: [
-        Padding(
-          padding: const EdgeInsets.symmetric(vertical: 4),
-          child: Text(label),
+  Widget _buildStatsBar(Recipe recipe) {
+    return Container(
+      margin: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.surfaceVariant.withOpacity(0.5),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(
+          color: Theme.of(context).colorScheme.outline.withOpacity(0.1),
         ),
-        Padding(
-          padding: const EdgeInsets.symmetric(vertical: 4),
-          child: Text(value, textAlign: TextAlign.end),
-        ),
-      ]);
-}
-
-class _FloatingMenu extends StatelessWidget {
-  final Recipe recipe;
-  const _FloatingMenu({required this.recipe});
-
-  @override
-  Widget build(BuildContext context) {
-    return FloatingActionButton.small(
-      onPressed: () => _showMenu(context),
-      child: const Icon(Icons.more_horiz),
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceAround,
+        children: [
+          _StatItem(
+            icon: Icons.timer_outlined,
+            label: 'Cook Time',
+            value: '${recipe.cookTimeMinutes ?? '?'} min',
+          ),
+          Container(
+            width: 1,
+            height: 40,
+            color: Theme.of(context).colorScheme.outline.withOpacity(0.2),
+          ),
+          _StatItem(
+            icon: Icons.people_outline,
+            label: 'Servings',
+            value: recipe.servings ?? '?',
+          ),
+          Container(
+            width: 1,
+            height: 40,
+            color: Theme.of(context).colorScheme.outline.withOpacity(0.2),
+          ),
+          _StatItem(
+            icon: Icons.favorite_outline,
+            label: 'Likes',
+            value: '${recipe.likes?.length ?? 0}',
+          ),
+        ],
+      ),
     );
   }
 
-  void _showMenu(BuildContext context) {
-    showModalBottomSheet(
-      context: context,
-      shape: const RoundedRectangleBorder(
-          borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
-      builder: (_) => SafeArea(
-        child: ListView(
-          shrinkWrap: true,
-          padding: EdgeInsets.zero,
-          children: [
-            ListTile(
-              leading: const Icon(Icons.edit_outlined),
-              title: const Text('Edit'),
-              onTap: () {},
+  Widget _buildModernTabs() {
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 16),
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.surfaceVariant.withOpacity(0.3),
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: TabBar(
+        controller: _tabController,
+        indicator: BoxDecoration(
+          color: Theme.of(context).colorScheme.primary,
+          borderRadius: BorderRadius.circular(12),
+        ),
+        indicatorSize: TabBarIndicatorSize.tab,
+        dividerColor: Colors.transparent,
+        labelColor: Theme.of(context).colorScheme.onPrimary,
+        unselectedLabelColor: Theme.of(context).colorScheme.onSurfaceVariant,
+        labelStyle: const TextStyle(fontWeight: FontWeight.w600),
+        tabs: const [
+          Tab(text: 'Overview'),
+          Tab(text: 'Steps'),
+          Tab(text: 'Nutrition'),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSkeleton() {
+    return Scaffold(
+      body: CustomScrollView(
+        slivers: [
+          const SliverAppBar(
+            expandedHeight: 400,
+            backgroundColor: Colors.grey,
+          ),
+          SliverPadding(
+            padding: const EdgeInsets.all(16),
+            sliver: SliverList(
+              delegate: SliverChildListDelegate([
+                for (int i = 0; i < 5; i++) ...[
+                  Container(
+                    height: 20,
+                    margin: const EdgeInsets.only(bottom: 12),
+                    decoration: BoxDecoration(
+                      color: Colors.grey.shade300,
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                  ),
+                ],
+              ]),
             ),
-            ListTile(
-              leading: const Icon(Icons.flag_outlined),
-              title: const Text('Report'),
-              onTap: () {},
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildError(String msg) {
+    return Scaffold(
+      body: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              Icons.error_outline,
+              size: 64,
+              color: Theme.of(context).colorScheme.error,
+            ),
+            const SizedBox(height: 16),
+            Text(
+              msg,
+              style: Theme.of(context).textTheme.titleMedium,
+              textAlign: TextAlign.center,
             ),
           ],
         ),
@@ -400,24 +427,505 @@ class _FloatingMenu extends StatelessWidget {
   }
 }
 
-class _TabDelegate extends SliverPersistentHeaderDelegate {
-  final TabBar _tabBar;
-  _TabDelegate(this._tabBar);
+class _StatItem extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final String value;
+
+  const _StatItem({
+    required this.icon,
+    required this.label,
+    required this.value,
+  });
 
   @override
-  double get minExtent => _tabBar.preferredSize.height + 8;
-  @override
-  double get maxExtent => _tabBar.preferredSize.height + 8;
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        Icon(
+          icon,
+          color: Theme.of(context).colorScheme.primary,
+          size: 24,
+        ),
+        const SizedBox(height: 8),
+        Text(
+          value,
+          style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                fontWeight: FontWeight.bold,
+              ),
+        ),
+        Text(
+          label,
+          style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
+              ),
+        ),
+      ],
+    );
+  }
+}
+
+class _ModernFloatingActions extends StatelessWidget {
+  final Recipe recipe;
+  final Animation<double> animation;
+  final VoidCallback onSave;
+  final bool isSaved;
+
+  const _ModernFloatingActions({
+    required this.recipe,
+    required this.animation,
+    required this.onSave,
+    required this.isSaved,
+  });
 
   @override
-  Widget build(_, __, ___) {
-    return Container(
-      color: Colors.transparent,
-      alignment: Alignment.center,
-      child: _tabBar,
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: animation,
+      builder: (context, child) {
+        return Transform.scale(
+          scale: animation.value,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              FloatingActionButton.small(
+                onPressed: () {
+                  HapticFeedback.mediumImpact();
+                  onSave();
+                },
+                backgroundColor: isSaved
+                    ? Theme.of(context).colorScheme.primary
+                    : Theme.of(context).colorScheme.surfaceVariant,
+                child: AnimatedSwitcher(
+                  duration: const Duration(milliseconds: 200),
+                  child: Icon(
+                    isSaved ? Icons.bookmark : Icons.bookmark_outline,
+                    key: ValueKey(isSaved),
+                    color: isSaved
+                        ? Theme.of(context).colorScheme.onPrimary
+                        : Theme.of(context).colorScheme.onSurfaceVariant,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 12),
+              FloatingActionButton(
+                onPressed: () {
+                  HapticFeedback.mediumImpact();
+                  _showShoppingList(context);
+                },
+                child: const Icon(Icons.shopping_cart_outlined),
+              ),
+            ],
+          ),
+        );
+      },
     );
   }
 
+  void _showShoppingList(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => DraggableScrollableSheet(
+        initialChildSize: 0.7,
+        minChildSize: 0.5,
+        maxChildSize: 0.9,
+        builder: (context, scrollController) => Container(
+          decoration: BoxDecoration(
+            color: Theme.of(context).colorScheme.surface,
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+          ),
+          child: Column(
+            children: [
+              Container(
+                width: 40,
+                height: 4,
+                margin: const EdgeInsets.symmetric(vertical: 12),
+                decoration: BoxDecoration(
+                  color: Theme.of(context).colorScheme.outline.withOpacity(0.3),
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.all(20),
+                child: Row(
+                  children: [
+                    Icon(
+                      Icons.shopping_bag_outlined,
+                      color: Theme.of(context).colorScheme.primary,
+                    ),
+                    const SizedBox(width: 12),
+                    Text(
+                      'Shopping List',
+                      style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                            fontWeight: FontWeight.bold,
+                          ),
+                    ),
+                    const Spacer(),
+                    FilledButton.tonalIcon(
+                      onPressed: () {},
+                      icon: const Icon(Icons.add_shopping_cart),
+                      label: const Text('Add All'),
+                    ),
+                  ],
+                ),
+              ),
+              Expanded(
+                child: ListView.builder(
+                  controller: scrollController,
+                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                  itemCount: recipe.ingredients?.length ?? 0,
+                  itemBuilder: (context, index) {
+                    final ingredient = recipe.ingredients![index];
+                    return CheckboxListTile(
+                      value: false,
+                      onChanged: (value) {},
+                      title: Text(ingredient.name?.trim() ?? ''),
+                      contentPadding: EdgeInsets.zero,
+                    );
+                  },
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _ModernOverview extends StatefulWidget {
+  final Recipe recipe;
+  final int servings;
+  const _ModernOverview({required this.recipe, required this.servings});
+
   @override
-  bool shouldRebuild(_) => false;
+  State<_ModernOverview> createState() => _ModernOverviewState();
+}
+
+class _ModernOverviewState extends State<_ModernOverview> {
+  late int _servings;
+
+  @override
+  void initState() {
+    super.initState();
+    _servings = widget.servings;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(24),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _buildServingsAdjuster(),
+          const SizedBox(height: 32),
+          _buildIngredientsSection(),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildServingsAdjuster() {
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.primaryContainer.withOpacity(0.3),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: Theme.of(context).colorScheme.primary.withOpacity(0.2),
+        ),
+      ),
+      child: Row(
+        children: [
+          Icon(
+            Icons.people_outline,
+            color: Theme.of(context).colorScheme.primary,
+          ),
+          const SizedBox(width: 12),
+          Text(
+            'Adjust servings',
+            style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.w600,
+                ),
+          ),
+          const Spacer(),
+          Container(
+            decoration: BoxDecoration(
+              color: Theme.of(context).colorScheme.surface,
+              borderRadius: BorderRadius.circular(12),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.05),
+                  blurRadius: 8,
+                  offset: const Offset(0, 2),
+                ),
+              ],
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                IconButton(
+                  onPressed:
+                      _servings > 1 ? () => setState(() => _servings--) : null,
+                  icon: const Icon(Icons.remove),
+                  iconSize: 20,
+                ),
+                Container(
+                  width: 40,
+                  alignment: Alignment.center,
+                  child: Text(
+                    '$_servings',
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                          fontWeight: FontWeight.bold,
+                        ),
+                  ),
+                ),
+                IconButton(
+                  onPressed:
+                      _servings < 12 ? () => setState(() => _servings++) : null,
+                  icon: const Icon(Icons.add),
+                  iconSize: 20,
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildIngredientsSection() {
+    final ingredients = widget.recipe.ingredients ?? [];
+    if (ingredients.isEmpty) {
+      return const Center(child: Text('No ingredients listed'));
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Ingredients',
+          style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                fontWeight: FontWeight.bold,
+              ),
+        ),
+        const SizedBox(height: 16),
+        ...ingredients.asMap().entries.map((entry) {
+          final index = entry.key;
+          final ingredient = entry.value;
+          return Container(
+            margin: const EdgeInsets.only(bottom: 12),
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: Theme.of(context).colorScheme.surface,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: Theme.of(context).colorScheme.outline.withOpacity(0.1),
+              ),
+            ),
+            child: Row(
+              children: [
+                Container(
+                  width: 32,
+                  height: 32,
+                  decoration: BoxDecoration(
+                    color:
+                        Theme.of(context).colorScheme.primary.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Center(
+                    child: Text(
+                      '${index + 1}',
+                      style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                            color: Theme.of(context).colorScheme.primary,
+                            fontWeight: FontWeight.bold,
+                          ),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Text(
+                    ingredient.name?.trim() ?? '',
+                    style: Theme.of(context).textTheme.bodyLarge,
+                  ),
+                ),
+              ],
+            ),
+          );
+        }).toList(),
+      ],
+    );
+  }
+}
+
+class _ModernInstructions extends StatelessWidget {
+  final Recipe recipe;
+  const _ModernInstructions({required this.recipe});
+
+  @override
+  Widget build(BuildContext context) {
+    final instructions = recipe.instructions ?? [];
+    if (instructions.isEmpty) {
+      return const Center(child: Text('No instructions available'));
+    }
+
+    return ListView.builder(
+      padding: const EdgeInsets.all(24),
+      itemCount: instructions.length,
+      itemBuilder: (context, index) {
+        return Container(
+          margin: const EdgeInsets.only(bottom: 24),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                width: 48,
+                height: 48,
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [
+                      Theme.of(context).colorScheme.primary,
+                      Theme.of(context).colorScheme.primary.withOpacity(0.7),
+                    ],
+                  ),
+                  borderRadius: BorderRadius.circular(24),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Theme.of(context)
+                          .colorScheme
+                          .primary
+                          .withOpacity(0.3),
+                      blurRadius: 8,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
+                ),
+                child: Center(
+                  child: Text(
+                    '${index + 1}',
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                          color: Theme.of(context).colorScheme.onPrimary,
+                          fontWeight: FontWeight.bold,
+                        ),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Container(
+                  padding: const EdgeInsets.all(20),
+                  decoration: BoxDecoration(
+                    color: Theme.of(context)
+                        .colorScheme
+                        .surfaceVariant
+                        .withOpacity(0.3),
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(
+                      color: Theme.of(context)
+                          .colorScheme
+                          .outline
+                          .withOpacity(0.1),
+                    ),
+                  ),
+                  child: Text(
+                    instructions[index],
+                    style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                          height: 1.5,
+                        ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+}
+
+class _ModernNutrition extends StatelessWidget {
+  final Recipe recipe;
+  const _ModernNutrition({required this.recipe});
+
+  @override
+  Widget build(BuildContext context) {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(24),
+      child: Column(
+        children: [
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(32),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [
+                  Theme.of(context)
+                      .colorScheme
+                      .primaryContainer
+                      .withOpacity(0.3),
+                  Theme.of(context)
+                      .colorScheme
+                      .secondaryContainer
+                      .withOpacity(0.3),
+                ],
+              ),
+              borderRadius: BorderRadius.circular(24),
+            ),
+            child: Column(
+              children: [
+                Icon(
+                  Icons.health_and_safety_outlined,
+                  size: 48,
+                  color: Theme.of(context).colorScheme.primary,
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  'Health Score',
+                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                        fontWeight: FontWeight.bold,
+                      ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  'Coming Soon',
+                  style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                        color: Theme.of(context).colorScheme.primary,
+                        fontWeight: FontWeight.bold,
+                      ),
+                ),
+                const SizedBox(height: 24),
+                Container(
+                  padding: const EdgeInsets.all(20),
+                  decoration: BoxDecoration(
+                    color:
+                        Theme.of(context).colorScheme.surface.withOpacity(0.7),
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  child: Column(
+                    children: [
+                      Text(
+                        'Nutritional information will be available soon!',
+                        style: Theme.of(context).textTheme.bodyMedium,
+                        textAlign: TextAlign.center,
+                      ),
+                      const SizedBox(height: 16),
+                      FilledButton.tonalIcon(
+                        onPressed: () {},
+                        icon: const Icon(Icons.calculate_outlined),
+                        label: const Text('Calculate Nutrition'),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 }
