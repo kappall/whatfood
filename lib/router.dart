@@ -47,7 +47,7 @@ final loggedInRoutes = RouteMap(routes: {
   '/personalize/goals': (_) => const MaterialPage(child: GoalsScreen()),
   '/personalize/dislikes': (_) => const MaterialPage(child: DislikesScreen()),
   '/create-recipe': (_) => const MaterialPage(child: CreateRecipeScreen()),
-  '/recipe-details/:id': (route) => MaterialPage(
+  '/recipe/:id': (route) => MaterialPage(
         child: RecipeDetailPage(
             recipeId: Uri.decodeComponent(route.pathParameters['id']!)),
       ),

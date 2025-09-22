@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 import 'dart:io';
 import 'dart:math';
 
@@ -7,18 +8,18 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_mlkit_barcode_scanning/google_mlkit_barcode_scanning.dart';
+import 'package:google_mlkit_image_labeling/google_mlkit_image_labeling.dart';
 import 'package:http/http.dart' as http;
 import 'package:image_picker/image_picker.dart';
+import 'package:whatfood/core/utils.dart';
 import 'package:whatfood/features/auth/controller/auth_controller.dart';
+import 'package:whatfood/features/private_area/controllers/food_suggestion_controller.dart';
 import 'dart:convert' as convert;
 
 import 'package:whatfood/features/scanner/painters/barcode_detector_painter.dart';
 import 'package:whatfood/features/scanner/product_modal.dart';
 import 'package:whatfood/features/scanner/utils/ingridients_processor.dart';
-import 'package:whatfood/features/scanner/widgets/detection_toggle.dart';
-import 'package:whatfood/features/scanner/widgets/zoom_control.dart';
-
-enum DetectorViewMode { liveFeed, gallery }
+import 'package:whatfood/models/food_suggestion.dart';
 
 class ScanScreen extends ConsumerStatefulWidget {
   const ScanScreen({super.key});
@@ -40,6 +41,8 @@ class ScanScreenState extends ConsumerState<ScanScreen> {
   double _currentZoomLevel = 1.0;
   double _minAvailableZoom = 1.0;
   double _maxAvailableZoom = 1.0;
+
+  bool _isScanningActive = false;
 
   ImagePicker? _imagePicker;
 
@@ -74,6 +77,7 @@ class ScanScreenState extends ConsumerState<ScanScreen> {
   }
 
   Future<void> _initialize() async {
+    debugPrint("starting live feed");
     try {
       if (_cameras.isEmpty) {
         _cameras = await availableCameras();
@@ -96,6 +100,7 @@ class ScanScreenState extends ConsumerState<ScanScreen> {
   }
 
   Future<void> _startLiveFeed() async {
+    _isScanningActive = true;
     if (_controller != null) {
       try {
         await _stopLiveFeed();
@@ -133,12 +138,12 @@ class ScanScreenState extends ConsumerState<ScanScreen> {
       }
     } catch (e) {
       debugPrint('Error starting camera feed: ${e.toString()}');
-      // Clean up on error
       await _stopLiveFeed();
     }
   }
 
   Future<void> _stopLiveFeed() async {
+    _isScanningActive = false;
     if (_controller == null) return;
 
     try {
@@ -154,7 +159,11 @@ class ScanScreenState extends ConsumerState<ScanScreen> {
   }
 
   void _processCameraImage(CameraImage image) {
-    if (_isBusy || _isModalVisible || _controller == null || !mounted) {
+    if (_isBusy ||
+        _isModalVisible ||
+        _controller == null ||
+        !mounted ||
+        !_isScanningActive) {
       return;
     }
     _isBusy = true;
@@ -170,7 +179,7 @@ class ScanScreenState extends ConsumerState<ScanScreen> {
 
   Future<void> _processImage(InputImage image) async {
     if (_debounceTimer?.isActive ?? false) return;
-    _debounceTimer = Timer(const Duration(seconds: 2), () {});
+    _debounceTimer = Timer(const Duration(seconds: 20), () {});
 
     final barcodes = await _barcodeScanner.processImage(image);
 
@@ -191,14 +200,49 @@ class ScanScreenState extends ConsumerState<ScanScreen> {
         }
         _scannedCode = barcodes.first.rawValue!;
         await _showProductModal();
+        if (mounted) setState(() {});
+        return;
       }
     }
+
+    try {
+      final imageLabeler = ImageLabeler(options: ImageLabelerOptions());
+      final labels = await imageLabeler.processImage(image);
+      imageLabeler.close();
+
+      if (labels.isNotEmpty) {
+        final candidates = labels
+            .take(3)
+            .map((l) => l.label)
+            .where((l) => l.trim().isNotEmpty)
+            .toList();
+
+        for (final candidate in candidates) {
+          final found = await _searchProductByName(candidate);
+          if (found) return;
+        }
+
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('No product match found for the detected item.'),
+              duration: Duration(seconds: 2),
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      debugPrint('Image labeling failed: ${e.toString()}');
+    }
+
     if (mounted) {
       setState(() {});
     }
   }
 
   Future<void> _showProductModal() async {
+    _isScanningActive = false;
+    await _controller?.stopImageStream();
     if (!mounted || _isModalVisible) return;
 
     setState(() => _isModalVisible = true);
@@ -221,7 +265,6 @@ class ScanScreenState extends ConsumerState<ScanScreen> {
             convert.jsonDecode(response.body) as Map<String, dynamic>;
         final productData = jsonResponse['product'];
 
-        // Parse quantity
         final String quantityString =
             productData['quantity']?.toString().trim() ?? '100';
         final List<String> parts = quantityString.split(' ');
@@ -231,7 +274,7 @@ class ScanScreenState extends ConsumerState<ScanScreen> {
         }
 
         final userIntolerances = ref.read(userProvider)!.preferences;
-        // Process ingredients
+
         final ingredientsText = productData['ingredientes_text_en'] ??
             productData['ingredients_text'];
         List<String> processedIngredients = List.empty(),
@@ -246,14 +289,12 @@ class ScanScreenState extends ConsumerState<ScanScreen> {
           ) = IngredientsProcessor.processIngredients(
               ingredientsText, userIntolerances);
 
-          // Show warning for intolerances
           if (intolerableIngredients.isNotEmpty) {
             final shouldContinue =
                 await _showIntoleranceWarningDialog(intolerableIngredients);
             if (!shouldContinue) return;
           }
 
-          // Show warning for unhealthy ingredients
           if (unhealthyIngredients.isNotEmpty) {
             final shouldContinue =
                 await _showUnhealthyWarningDialog(unhealthyIngredients);
@@ -261,7 +302,6 @@ class ScanScreenState extends ConsumerState<ScanScreen> {
           }
         }
 
-        // Show product modal if user wants to continue
         if (!mounted) return;
         await showModalBottomSheet(
           context: context,
@@ -288,6 +328,7 @@ class ScanScreenState extends ConsumerState<ScanScreen> {
         setState(() {
           _customPaint = null;
           _isModalVisible = false;
+          _isScanningActive = true;
         });
       }
       await _restartStream();
@@ -295,7 +336,6 @@ class ScanScreenState extends ConsumerState<ScanScreen> {
   }
 
   Future<void> _restartStream() async {
-    await _controller?.stopImageStream();
     await Future.delayed(Duration(milliseconds: 1500));
     await _controller?.startImageStream(_processCameraImage);
   }
@@ -350,10 +390,10 @@ class ScanScreenState extends ConsumerState<ScanScreen> {
           TextButton(
             onPressed: () => Navigator.of(context).pop(false),
             style: TextButton.styleFrom(
-              foregroundColor: Colors.blueGrey, // Colore del testo
+              foregroundColor: Colors.blueGrey,
               textStyle: const TextStyle(
-                fontSize: 14, // Dimensione del testo
-                fontWeight: FontWeight.bold, // Spessore del testo
+                fontSize: 14,
+                fontWeight: FontWeight.bold,
               ),
             ),
             child: const Text(
@@ -362,10 +402,10 @@ class ScanScreenState extends ConsumerState<ScanScreen> {
           ),
           TextButton(
             style: TextButton.styleFrom(
-              foregroundColor: Colors.redAccent, // Colore del testo
+              foregroundColor: Colors.redAccent,
               textStyle: const TextStyle(
-                fontSize: 16, // Dimensione del testo
-                fontWeight: FontWeight.bold, // Spessore del testo
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
               ),
             ),
             onPressed: () => Navigator.of(context).pop(true),
@@ -470,7 +510,7 @@ class ScanScreenState extends ConsumerState<ScanScreen> {
     DeviceOrientation.landscapeRight: 270,
   };
 
-  bool _isGalleryMode = false;
+  bool _isGalleryMode = true;
 
   @override
   Widget build(BuildContext context) {
@@ -478,31 +518,104 @@ class ScanScreenState extends ConsumerState<ScanScreen> {
       return const Center(child: CircularProgressIndicator());
     }
 
-    return ColoredBox(
-      color: Colors.black,
-      child: Stack(
+    return Scaffold(
+      backgroundColor: Colors.black,
+      body: Stack(
         fit: StackFit.expand,
-        children: <Widget>[
-          Center(
-            child: CameraPreview(
-              _controller!,
-              child:
-                  !_isGalleryMode ? (_customPaint ?? Container()) : Container(),
+        children: [
+          CameraPreview(
+            _controller!,
+            child:
+                !_isGalleryMode ? (_customPaint ?? Container()) : Container(),
+          ),
+          Align(
+            alignment: Alignment.topCenter,
+            child: Container(
+              height: 150,
+              decoration: const BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [Colors.black54, Colors.transparent],
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                ),
+              ),
+              child: SafeArea(
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const Text(
+                          'Scan Product',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
             ),
           ),
-          DetectionToggle(
-            onPressed: _getImage,
-          ),
-          ZoomControl(
-            currentZoomLevel: _currentZoomLevel,
-            minAvailableZoom: _minAvailableZoom,
-            maxAvailableZoom: _maxAvailableZoom,
-            onZoomChanged: (value) async {
-              setState(() {
-                _currentZoomLevel = value;
-              });
-              await _controller?.setZoomLevel(value);
-            },
+          Align(
+            alignment: Alignment.bottomCenter,
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+              decoration: const BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [Colors.transparent, Colors.black54],
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                ),
+              ),
+              child: SafeArea(
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    FloatingActionButton(
+                      heroTag: 'galleryBtn',
+                      onPressed: () => _getImage(ImageSource.gallery),
+                      backgroundColor: Colors.white24,
+                      child:
+                          const Icon(Icons.photo_library, color: Colors.white),
+                    ),
+                    Material(
+                      color: Colors.white24,
+                      borderRadius: BorderRadius.circular(8),
+                      child: SizedBox(
+                        height: 48,
+                        width: 150,
+                        child: Row(
+                          children: [
+                            const Icon(Icons.zoom_out, color: Colors.white),
+                            Expanded(
+                              child: Slider(
+                                value: _currentZoomLevel,
+                                min: _minAvailableZoom,
+                                max: _maxAvailableZoom,
+                                activeColor: Colors.greenAccent,
+                                inactiveColor: Colors.white30,
+                                onChanged: (value) async {
+                                  setState(() {
+                                    _currentZoomLevel = value;
+                                  });
+                                  await _controller?.setZoomLevel(value);
+                                },
+                              ),
+                            ),
+                            const Icon(Icons.zoom_in, color: Colors.white),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
           ),
         ],
       ),
@@ -549,12 +662,45 @@ class ScanScreenState extends ConsumerState<ScanScreen> {
       if (barcodes.isNotEmpty && barcodes.first.rawValue != null) {
         _scannedCode = barcodes.first.rawValue!;
         await _showProductModal();
-      } else {
+        return;
+      }
+
+      try {
+        final base64Image = await imageFileToBase64(path);
+        final concepts = await recognizeFoodWithClarifai(base64Image);
+
+        if (concepts != null && concepts.isNotEmpty) {
+          final filteredConcepts =
+              concepts.where((c) => c['confidence'] > 0.02).toList();
+          if (filteredConcepts.isNotEmpty) {
+            for (final concept in filteredConcepts) {
+              print('${concept['name']} : ${concept['confidence']}');
+            }
+          }
+          final topConcepts =
+              filteredConcepts.take(2).map((c) => c['name']).join(" ");
+          final food = Map<String, String>();
+
+          if (food != null) {
+            _showProductModalFromData(food);
+          }
+
+          if (food == null && mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('No matching product found'),
+                duration: Duration(seconds: 6),
+              ),
+            );
+          }
+        } else if (mounted) {}
+      } catch (e) {
+        debugPrint('Image labeling failed for file: ${e.toString()}');
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('No barcode found in the image'),
-              duration: Duration(seconds: 2),
+            SnackBar(
+              content: Text('Error processing image: ${e.toString()}'),
+              duration: const Duration(seconds: 2),
             ),
           );
         }
@@ -575,6 +721,165 @@ class ScanScreenState extends ConsumerState<ScanScreen> {
           _isGalleryMode = false;
         });
       }
+    }
+  }
+
+  Future<List<Map<String, dynamic>>?> recognizeFoodWithClarifai(
+      String base64Image) async {
+    final url = Uri.parse(
+        'https://api.clarifai.com/v2/users/clarifai/apps/main/models/food-item-v1-recognition/versions/dfebc169854e429086aceb8368662641/outputs');
+    final headers = {
+      'Authorization': 'Key 310eeb39f0f84d70b373f439f396f3d1',
+      'Content-Type': 'application/json',
+    };
+    final body = jsonEncode({
+      'inputs': [
+        {
+          'data': {
+            'image': {
+              'base64': base64Image,
+            }
+          }
+        }
+      ]
+    });
+
+    final response = await http.post(url, headers: headers, body: body);
+
+    if (response.statusCode == 200) {
+      final jsonResponse = jsonDecode(response.body);
+      final concepts =
+          jsonResponse['outputs']?[0]?['data']?['concepts'] as List<dynamic>?;
+
+      if (concepts == null) return null;
+
+      return concepts
+          .map((c) => {
+                'name': c['name'],
+                'confidence': c['value'],
+              })
+          .toList();
+    } else {
+      print('Clarifai API error: ${response.statusCode} - ${response.body}');
+      return null;
+    }
+  }
+
+  Future<String> imageFileToBase64(String imagePath) async {
+    final bytes = await File(imagePath).readAsBytes();
+    return base64Encode(bytes);
+  }
+
+  Future<bool> _searchProductByName(String name) async {
+    final query = name.trim();
+    if (query.isEmpty) return false;
+
+    try {
+      final url = Uri.https(
+        'world.openfoodfacts.org',
+        '/cgi/search.pl',
+        {
+          'search_terms': query,
+          'search_simple': '1',
+          'json': '1',
+          'page_size': '10',
+          'fields':
+              'product_name,brands,ingredients_text,image_url,nutriments,quantity',
+        },
+      );
+
+      final response = await http.get(url);
+      if (response.statusCode != 200) return false;
+
+      final jsonResponse =
+          convert.jsonDecode(response.body) as Map<String, dynamic>;
+      final products = (jsonResponse['products'] as List<dynamic>?) ?? [];
+      debugPrint("my products:  ${products.toString()}");
+
+      if (products.isEmpty) return false;
+
+      Map<String, String>? best;
+      for (final p in products) {
+        final pname = (p['product_name'] ?? '').toString();
+        if (pname.toLowerCase() == query.toLowerCase()) {
+          best = Map<String, String>.from(p as Map);
+          break;
+        }
+      }
+      best ??= Map<String, String>.from(products.first as Map);
+
+      await _showProductModalFromData(best);
+      return true;
+    } catch (e) {
+      debugPrint('Search by name failed: ${e.toString()}');
+      return false;
+    }
+  }
+
+  Future<void> _showProductModalFromData(
+      Map<String, String> productData) async {
+    if (!mounted || _isModalVisible) return;
+    setState(() => _isModalVisible = true);
+
+    try {
+      final String quantityString = '100';
+      final List<String> parts = quantityString.split(' ');
+      int quantity = int.tryParse(parts[0]) ?? 100;
+      if (parts.length > 1 && parts[1].toLowerCase() == 'kg') {
+        quantity *= 1000;
+      }
+
+      final userIntolerances = ref.read(userProvider)!.preferences;
+
+      final ingredientsText =
+          productData['ingredients_text_en'] ?? productData['ingredients_text'];
+      List<String> processedIngredients = List.empty(),
+          intolerableIngredients = List.empty(),
+          unhealthyIngredients = List.empty();
+
+      if (ingredientsText != null) {
+        var (
+          processedIngredients,
+          intolerableIngredients,
+          unhealthyIngredients
+        ) = IngredientsProcessor.processIngredients(
+            ingredientsText, userIntolerances);
+
+        if (intolerableIngredients.isNotEmpty) {
+          final shouldContinue =
+              await _showIntoleranceWarningDialog(intolerableIngredients);
+          if (!shouldContinue) return;
+        }
+
+        if (unhealthyIngredients.isNotEmpty) {
+          final shouldContinue =
+              await _showUnhealthyWarningDialog(unhealthyIngredients);
+          if (!shouldContinue) return;
+        }
+      }
+
+      if (!mounted) return;
+      await showModalBottomSheet(
+        context: context,
+        isScrollControlled: true,
+        useSafeArea: true,
+        backgroundColor: Colors.transparent,
+        builder: (context) => ProductModal(
+          productData: productData,
+          quantity: quantity,
+          processedIngredients: processedIngredients,
+          intolerableIngredients: intolerableIngredients,
+          unhealthyIngredients: unhealthyIngredients,
+        ),
+      );
+    } finally {
+      if (mounted) {
+        setState(() {
+          _customPaint = null;
+          _isModalVisible = false;
+        });
+      }
+      await _restartStream();
     }
   }
 }
