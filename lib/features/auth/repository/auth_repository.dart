@@ -73,8 +73,8 @@ class AuthRepository {
 
   FutureEither<User> signInAsGuest() async {
     try {
-      final username = 'guest_user';
-      final password = 'guest_placeholder_password';
+      final username = 'REDACTED';
+      final password = 'REDACTED';
 
       SignInResult signInResult = await Amplify.Auth.signIn(
         username: username,
@@ -161,7 +161,7 @@ class AuthRepository {
   Future<void> deleteUnconfirmedUser(String email) async {
     final response = await http.post(
       Uri.parse(
-          'https://nnszaho8de.execute-api.eu-north-1.amazonaws.com//delete-user'),
+          'https://REDACTED.execute-api.eu-north-1.amazonaws.com//delete-user'),
       headers: {'Content-Type': 'application/json'},
       body: jsonEncode({'username': email}),
     );

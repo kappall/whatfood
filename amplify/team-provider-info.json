@@ -1,15 +1,15 @@
 {
   "dev": {
     "awscloudformation": {
-      "AuthRoleName": "amplify-whatfood-dev-875f7-authRole",
-      "UnauthRoleArn": "arn:aws:iam::699475918328:role/amplify-whatfood-dev-875f7-unauthRole",
-      "AuthRoleArn": "arn:aws:iam::699475918328:role/amplify-whatfood-dev-875f7-authRole",
+      "AuthRoleName": "amplify-whatfood-dev-XXXXX-authRole",
+      "UnauthRoleArn": "arn:aws:iam::XXXXXXXXXXXX:role/amplify-whatfood-dev-XXXXX-unauthRole",
+      "AuthRoleArn": "arn:aws:iam::XXXXXXXXXXXX:role/amplify-whatfood-dev-XXXXX-authRole",
       "Region": "eu-north-1",
-      "DeploymentBucketName": "amplify-whatfood-dev-875f7-deployment",
-      "UnauthRoleName": "amplify-whatfood-dev-875f7-unauthRole",
-      "StackName": "amplify-whatfood-dev-875f7",
-      "StackId": "arn:aws:cloudformation:eu-north-1:699475918328:stack/amplify-whatfood-dev-875f7/0d143ab0-0101-11f0-acee-0a7c73bc6131",
-      "AmplifyAppId": "d3ugob67htrv7d"
+      "DeploymentBucketName": "amplify-whatfood-dev-XXXXX-deployment",
+      "UnauthRoleName": "amplify-whatfood-dev-XXXXX-unauthRole",
+      "StackName": "amplify-whatfood-dev-XXXXX",
+      "StackId": "arn:aws:cloudformation:eu-north-1:XXXXXXXXXXXX:stack/amplify-whatfood-dev-XXXXX/XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX",
+      "AmplifyAppId": "XXXXXXXXXXXXX"
     },
     "categories": {
       "auth": {
@@ -20,8 +20,8 @@
       },
       "function": {
         "S3Triggerefd75989": {
-          "deploymentBucketName": "amplify-whatfood-dev-875f7-deployment",
-          "s3Key": "amplify-builds/S3Triggerefd75989-546b396f432f41554365-build.zip"
+          "deploymentBucketName": "amplify-whatfood-dev-XXXXX-deployment",
+          "s3Key": "amplify-builds/S3Triggerefd75989-XXXXX-build.zip"
         }
       },
       "api": {
@@ -34,15 +34,15 @@
   },
   "appenv": {
     "awscloudformation": {
-      "AuthRoleName": "amplify-whatfood-appenv-5bd74-authRole",
-      "UnauthRoleArn": "arn:aws:iam::699475918328:role/amplify-whatfood-appenv-5bd74-unauthRole",
-      "AuthRoleArn": "arn:aws:iam::699475918328:role/amplify-whatfood-appenv-5bd74-authRole",
+      "AuthRoleName": "amplify-whatfood-appenv-XXXXX-authRole",
+      "UnauthRoleArn": "arn:aws:iam::XXXXXXXXXXXX:role/amplify-whatfood-appenv-XXXXX-unauthRole",
+      "AuthRoleArn": "arn:aws:iam::XXXXXXXXXXXX:role/amplify-whatfood-appenv-XXXXX-authRole",
       "Region": "eu-north-1",
-      "DeploymentBucketName": "amplify-whatfood-appenv-5bd74-deployment",
-      "UnauthRoleName": "amplify-whatfood-appenv-5bd74-unauthRole",
-      "StackName": "amplify-whatfood-appenv-5bd74",
-      "StackId": "arn:aws:cloudformation:eu-north-1:699475918328:stack/amplify-whatfood-appenv-5bd74/f77e4510-080d-11f0-bea9-0e667f60eb0d",
-      "AmplifyAppId": "d3ugob67htrv7d"
+      "DeploymentBucketName": "amplify-whatfood-appenv-XXXXX-deployment",
+      "UnauthRoleName": "amplify-whatfood-appenv-XXXXX-unauthRole",
+      "StackName": "amplify-whatfood-appenv-XXXXX",
+      "StackId": "arn:aws:cloudformation:eu-north-1:XXXXXXXXXXXX:stack/amplify-whatfood-appenv-XXXXX/XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX",
+      "AmplifyAppId": "XXXXXXXXXXXXX"
     },
     "categories": {
       "auth": {
@@ -50,8 +50,8 @@
       },
       "function": {
         "S3Triggerefd75989": {
-          "deploymentBucketName": "amplify-whatfood-appenv-5bd74-deployment",
-          "s3Key": "amplify-builds/S3Triggerefd75989-546b396f432f41554365-build.zip"
+          "deploymentBucketName": "amplify-whatfood-appenv-XXXXX-deployment",
+          "s3Key": "amplify-builds/S3Triggerefd75989-XXXXX-build.zip"
         }
       },
       "analytics": {
